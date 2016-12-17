@@ -1,6 +1,5 @@
 (require 'csound-opcodes)
 
-
 (defun csound-eldoc-line-escape-count ()
   (save-excursion
     (progn (setq linenums 1)
@@ -56,6 +55,7 @@
 	   (komma-format-list (split-string (replace-regexp-in-string opcode "," statement) ",")))
       (length komma-format-list))))
 
+;;;###autoload
 (defun csound-eldoc-function ()
   "Returns a doc string appropriate for the current context, or nil."
   (let* ((csound-statement (csound-eldoc-statement))
@@ -82,7 +82,9 @@
 				 (if (string= arg opcode-match)
 				     (prog2 (put-text-property 0 (length arg) 'face
 							       (list :foreground "#C70039" :weight (if (string= opcode-match (thing-at-point 'symbol))
-												       'bold 'normal)) arg) arg)
+												       'bold 'normal))
+							       arg)
+					 arg)
 				   (if (or (and (= indx argument-index)
 						(not (string= opcode-match (thing-at-point 'symbol))))
 					   (and inf-arg (string= "[...]" arg)))
@@ -98,4 +100,21 @@
 	;; (car (last template-list))
 	)) 
     ))
+
+;;;###autoload
+(defun csound-turn-on-eldoc () 
+  (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
+  (eldoc-mode))
+
+
+
+;; (defun henda ()
+;;   (interactive)
+;;   (message
+;;    (csound-eldoc-function)))
+
+(provide 'csound-eldoc)
+
+;; asig oscil a1, a2
+
 
