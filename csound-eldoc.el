@@ -1,5 +1,17 @@
 (require 'csound-opcodes)
 
+(defun csound-eldoc-get-template (opcode-list)
+  (progn (setq templ nil
+	       indx 0)
+	 (while (and (< indx (length opcode-list))
+		     (eq templ nil))
+	   (when (eq :template (nth indx opcode-list))
+	     (setq templ t))
+	   (setq indx (1+ indx)))
+	 (if templ
+	     (nth indx opcode-list)
+	   "")))
+
 (defun csound-eldoc-line-escape-count ()
   (save-excursion
     (progn (setq linenums 1)
@@ -32,10 +44,10 @@
 	       opdoce nil)
 	 (dolist (statement statement-list)
 	   (-when-let (res (gethash statement csdoc-opcode-database))
-	     (setq result (nth 9 res)
-		   opcode statement)))
-	 (when result
-	   (let ((rate-list (split-string (replace-regexp-in-string "\n\s" "\n" result) "\n")))
+	     (setq result (csound-eldoc-get-template res)
+		   opcode statement))) 
+	 (when result 
+	   (let ((rate-list (split-string (replace-regexp-in-string "\n\s" "\n" result) "\n")))	     
 	     (if (= (length rate-list) 1)
 		 (list opcode (first rate-list))
 	       (let ((rate-candidate (substring (first statement-list) 0 1)))
@@ -72,25 +84,30 @@
 	     (infinite-args? (string= "[...]" (car (last template-list)))))
 	(setq indx 0 eldocstr "" inf-arg nil)
 	(dolist (arg template-list)
-	  (setq indx (if (string= arg opcode-match) indx (1+ indx))
-		inf-arg (if (and infinite-args?
-				 (< template-list-length argument-index))
-			    t nil)
-		eldocstr (concat eldocstr
-				 ;;(prog2 (put-text-property 0 (length arg) 'face 'error arg) arg)
-				 ;;(string= opcode-match (thing-at-point 'symbol))
-				 (if (string= arg opcode-match)
-				     (prog2 (put-text-property 0 (length arg) 'face
-							       (list :foreground "#C70039" :weight (if (string= opcode-match (thing-at-point 'symbol))
-												       'bold 'normal))
-							       arg)
-					 arg)
-				   (if (or (and (= indx argument-index)
-						(not (string= opcode-match (thing-at-point 'symbol))))
-					   (and inf-arg (string= "[...]" arg)))
-				       (prog2 (put-text-property 0 (length arg) 'face '(:foreground "#A4FF00" :weight bold) arg)
-					   arg)
-				     arg)) " ")))
+	  (setq 
+	   inf-arg (if (and infinite-args?
+			    (< template-list-length argument-index))
+		       t nil)
+	   eldocstr (concat eldocstr
+			    ;;(prog2 (put-text-property 0 (length arg) 'face 'error arg) arg)
+			    ;;(string= opcode-match (thing-at-point 'symbol))
+			    ;; (string= opcode-match (thing-at-point 'symbol))
+			    ;; (if (= indx 0)
+			    ;; 	;;(string= arg opcode-match)
+			    ;;   "" ", ")
+			    (if (string= arg opcode-match)
+				(prog2 (put-text-property 0 (length arg) 'face
+							  (list :foreground "#C70039" :weight (if (string= opcode-match (thing-at-point 'symbol))
+												  'bold 'normal))
+							  arg)
+				    arg)
+			      (if (or (and (= indx argument-index)
+					   (not (string= opcode-match (thing-at-point 'symbol))))
+				      (and inf-arg (string= "[...]" arg)))
+				  (prog2 (put-text-property 0 (length arg) 'face '(:foreground "#A4FF00" :weight bold) arg)
+				      arg)
+				arg))  ", ")
+	   indx (if (string= arg opcode-match) indx (1+ indx))))
 	eldocstr
 	;; argument-index
 	;; template-list
@@ -102,7 +119,7 @@
     ))
 
 ;;;###autoload
-(defun csound-turn-on-eldoc () 
+(defun csound-turn-on-eldoc ()
   (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
   (eldoc-mode))
 

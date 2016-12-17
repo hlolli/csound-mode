@@ -29,30 +29,10 @@
 	    :company-location (lambda (cand)
 				(nth 11 (gethash cand csdoc-opcode-database)))))))
 
-;; (defun csound-eldoc-function ()
-;;   "Returns a doc string appropriate for the current context, or nil."
-;;   (ignore-errors
-;;     (save-restriction
-;;       (narrow-to-region (line-beginning-position) (line-end-position))
-;;       (let* ((beg
-;;               (save-excursion
-;;                 (+ 1 (or
-;;                       (re-search-backward "\\(;\\|{\\)" nil t)
-;;                       (- (point-min) 1)))))
-;;              (end
-;;               (save-excursion
-;;                 (goto-char beg)
-;;                 (forward-symbol 1)
-;;                 (point)))
-;;              (property (buffer-substring-no-properties beg end))
-;; 	     (look (gethash property csdoc-opcode-database)))
-;; 	(message property)
-;; 	(when look
-;; 	  (let* ((templ (nth 9 look))
-;; 		 (fix-space (replace-regexp-in-string "\n\s" "\n" templ)))
-;; 	    (split-string fix-space "\n")))))))
 
-;; (gethash "C" csdoc-opcode-database)
+
+
+;; (gethash "delay" csdoc-opcode-database)
 ;; "\\(,+\s*\\)+\\|\\(\s+,*\\)+"
 ;; (length (split-string (nth 11 (gethash "linseg" csdoc-opcode-database)) "\n"))
 ;; (replace-regexp-in-string "\n\s" "\n" (nth 9 (gethash "oscil" csdoc-opcode-database)))
@@ -65,10 +45,13 @@
   (set (make-local-variable 'font-lock-defaults) '(csound-font-lock-keywords))
   (setq major-mode 'csound-mode)
   (setq mode-name "Csound") 
-  (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
-  ;; (setq-local eldoc-documentation-function 'csound-eldoc-function)
+  ;; (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
+  (setq-local eldoc-documentation-function 'csound-eldoc-function)
   (add-hook 'csound-mode-hook #'eldoc-mode)
-  (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local) 
+  (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
+  (add-hook 'csound-mode-hook (lambda ()
+				(set (make-local-variable 'comment-start) ";;")
+				(set (make-local-variable 'comment-end) "")))
   (run-hooks 'csound-mode-hook))
 
 ;; (eval-after-load 'csound-mode
