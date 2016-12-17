@@ -42,7 +42,7 @@
 (defun csound-eldoc-template-lookup (statement-list)
   (progn (setq result nil
 	       opdoce nil)
-	 (dolist (statement statement-list)
+	 (dolist (statement statement-list) 
 	   (-when-let (res (gethash statement csdoc-opcode-database))
 	     (setq result (csound-eldoc-get-template res)
 		   opcode statement))) 
@@ -59,30 +59,67 @@
 		     (list opcode rate-match)
 		   (list opcode (first rate-list)))))))))
 
-(defun csound-eldoc-argument-index (opcode-match)
-  (save-excursion
-    (let* ((statement (buffer-substring
-		       (line-beginning-position (csound-eldoc-line-escape-count))
-		       (point)))
-	   (komma-format-list (split-string (replace-regexp-in-string opcode "," statement) ",")))
-      (length komma-format-list))))
+
+(defun csound-eldoc-argument-index (opcode-match opcode-index point-on-opcode?)
+  (if point-on-opcode?
+      0
+    (save-excursion
+      (let* ((statement (buffer-substring
+			 (line-beginning-position (csound-eldoc-line-escape-count))
+			 (point)))
+	     (komma-format-list (split-string (replace-regexp-in-string
+					       opcode-match (concat "," opcode-match ",")
+					       statement) ",")))
+	(setq indx 0
+	      pos nil)
+	(dolist (i komma-format-list)
+	  (if (string= opcode-match i)
+	      (setq indx 0
+		    pos t)
+	    (if pos
+		(setq indx (1+ indx))
+	      (setq indx (1- indx)))))
+	;; (message opcode-match)
+	;; (message (number-to-string indx))
+	;;(length komma-format-list)
+	indx))))
+
+
+(defun csound-eldoc-opcode-index (opcode-match template-list)
+  (progn
+    (setq indx 0 match? nil)
+    (while (and (< indx (length template-list))
+		(not match?))
+      (if (string= (nth indx template-list)
+		   opcode-match)
+	  (setq match? t)
+	(setq indx (1+ indx))))
+    indx))
 
 ;;;###autoload
 (defun csound-eldoc-function ()
   "Returns a doc string appropriate for the current context, or nil."
   (let* ((csound-statement (csound-eldoc-statement))
 	 (statement-list (csound-eldoc-statement-list csound-statement))
-	 (template-lookup (csound-eldoc-template-lookup statement-list)))
+	 (template-lookup (csound-eldoc-template-lookup statement-list))) 
     (when template-lookup
       (let* ((opcode-match (first template-lookup))
+	     (point-on-opcode? (string= opcode-match (thing-at-point 'symbol)))
 	     (csound-template (replace-regexp-in-string
-			       "\\[, " "["
-			       (nth 1 template-lookup)))
-	     (template-list (csound-eldoc-statement-list csound-template))
+			       "[^\\[]\\.\\.\\." ""
+			       (replace-regexp-in-string
+				"\\[, " "["
+				(nth 1 template-lookup))))
+	     (template-list (csound-eldoc-statement-list csound-template)) 
 	     (template-list-length (1- (length template-list)))
-	     (argument-index (csound-eldoc-argument-index opcode-match))
+	     (opcode-index (csound-eldoc-opcode-index opcode-match template-list))
+	     (argument-index (csound-eldoc-argument-index opcode-match opcode-index point-on-opcode?))
+	     ;; (argument-index (if (< argument-index opcode-index)
+	     ;; 			 (* -1 argument-index)
+	     ;; 		       (+ opcode-index argument-index)))
 	     (infinite-args? (string= "[...]" (car (last template-list)))))
-	(setq indx 0 eldocstr "" inf-arg nil)
+	(setq indx -1 list-index 0
+	      eldocstr "" inf-arg nil)
 	(dolist (arg template-list)
 	  (setq 
 	   inf-arg (if (and infinite-args?
@@ -95,19 +132,28 @@
 			    ;; (if (= indx 0)
 			    ;; 	;;(string= arg opcode-match)
 			    ;;   "" ", ")
+			    ;; 
 			    (if (string= arg opcode-match)
 				(prog2 (put-text-property 0 (length arg) 'face
-							  (list :foreground "#C70039" :weight (if (string= opcode-match (thing-at-point 'symbol))
-												  'bold 'normal))
-							  arg)
-				    arg)
+							  (list :foreground "#C70039"
+								:weight (if point-on-opcode?
+									    'bold 'normal)) arg) arg)
 			      (if (or (and (= indx argument-index)
-					   (not (string= opcode-match (thing-at-point 'symbol))))
+					   ;;(string= arg (car (last template-list)))
+					   (not point-on-opcode?))
 				      (and inf-arg (string= "[...]" arg)))
 				  (prog2 (put-text-property 0 (length arg) 'face '(:foreground "#A4FF00" :weight bold) arg)
 				      arg)
-				arg))  ", ")
-	   indx (if (string= arg opcode-match) indx (1+ indx))))
+				arg))  (if (or (eq template-list-length list-index)
+					       (string= arg opcode-match)
+					       (string= opcode-match (nth (1+ list-index) template-list)))
+					   " "
+					 ", "))
+	   indx (if (string= arg opcode-match) 1
+		  (if (> 0 indx)
+		      (1- indx)
+		    (1+ indx)))
+	   list-index (1+ list-index)))
 	eldocstr
 	;; argument-index
 	;; template-list
@@ -124,7 +170,7 @@
   (eldoc-mode))
 
 
-
+;; (gethash "xout" csdoc-opcode-database)
 ;; (defun henda ()
 ;;   (interactive)
 ;;   (message
@@ -133,5 +179,6 @@
 (provide 'csound-eldoc)
 
 ;; asig oscil a1, a2
+
 
 

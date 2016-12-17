@@ -44,27 +44,29 @@
         (recur (rest v))))))
 
 (defn spit-emacs-file []
-  (spit "csound-opcodes.el"
+  (spit "/home/hlolli/.emacs.d/hlolli/csound-mode/csound-opcodes.el" ;;"csound-opcodes.el"
         (loop [docs (:content parsed-docs)
                out ""]
           (if (empty? docs)
             (str
-             "(setq csdoc-opcode-database (makehash))\n"
-             out)
+             "(setq csdoc-opcode-database (makehash 'equal))\n"
+             out
+             "\n (provide 'csound-opcodes)")
             (let [doc (first docs)
                   id (-> doc :attrs :id)
                   bottleneck (-> doc :content)
                   template (find-synopsis bottleneck)]
               (recur (rest docs)
-                     (let [strcand (format "(puthash \"%s\" '(:template \"%s\" :doc \"%s\" :html \"%s\") csdoc-opdocde-database)"
+                     (let [strcand (format "(puthash \"%s\" '(:template \"%s\" :doc \"%s\" :html \"%s\") csdoc-opcode-database)"
                                            id (str template) "doc" "seinna")]
                        (if (or (re-find #"null" strcand)
                                (re-find #"ERROR" strcand))
                          out (str out strcand "\n")))))))))
+
 (spit-emacs-file)
 
 
-(count (:content (first (:content parsed-docs))))
-((:content ((:content ((:content parsed-docs) 0)) 5)) 1)
+;; (count (:content (first (:content parsed-docs))))
+;; ((:content ((:content ((:content parsed-docs) 0)) 5)) 1)
 
 
