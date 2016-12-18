@@ -7,6 +7,12 @@
 
 (defvar csound-mode-hook nil)
 
+(defgroup csound-mode nil
+  "Tiny functionality enhancements for evaluating sexps."
+  :prefix "csound-mode-"
+  :group 'csound-mode)
+
+
 (defvar csound-mode-map
   (-let [map (make-keymap)]
     (define-key map "\C-j" 'newline-and-indent)
@@ -51,10 +57,11 @@
   (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
   (add-hook 'csound-mode-hook (lambda ()
 				(set (make-local-variable 'comment-start) ";;")
-				(set (make-local-variable 'comment-end) "")))
+				(set (make-local-variable 'comment-end) ""))) 
   (run-hooks 'csound-mode-hook))
 
-;; (eval-after-load 'csound-mode
-;;   '(progn (load "csound-eldoc.el")))
+(eval-after-load 'csound-mode 
+  '(progn 
+     (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" . csound-mode))))
 
 (provide 'csound-mode)

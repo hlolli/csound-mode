@@ -67,9 +67,11 @@
       (let* ((statement (buffer-substring
 			 (line-beginning-position (csound-eldoc-line-escape-count))
 			 (point)))
-	     (komma-format-list (split-string (replace-regexp-in-string
-					       opcode-match (concat "," opcode-match ",")
-					       statement) ",")))
+	     (komma-format-list (split-string
+				 (replace-regexp-in-string
+				  opcode-match
+				  (concat "," opcode-match ",")
+				  statement) ",")))
 	(setq indx 0
 	      pos nil)
 	(dolist (i komma-format-list)
@@ -79,9 +81,6 @@
 	    (if pos
 		(setq indx (1+ indx))
 	      (setq indx (1- indx)))))
-	;; (message opcode-match)
-	;; (message (number-to-string indx))
-	;;(length komma-format-list)
 	indx))))
 
 
@@ -133,27 +132,32 @@
 			    ;; 	;;(string= arg opcode-match)
 			    ;;   "" ", ")
 			    ;; 
-			    (if (string= arg opcode-match)
-				(prog2 (put-text-property 0 (length arg) 'face
-							  (list :foreground "#C70039"
-								:weight (if point-on-opcode?
-									    'bold 'normal)) arg) arg)
-			      (if (or (and (= indx argument-index)
-					   ;;(string= arg (car (last template-list)))
-					   (not point-on-opcode?))
-				      (and inf-arg (string= "[...]" arg)))
-				  (prog2 (put-text-property 0 (length arg) 'face '(:foreground "#A4FF00" :weight bold) arg)
-				      arg)
-				arg))  (if (or (eq template-list-length list-index)
-					       (string= arg opcode-match)
-					       (string= opcode-match (nth (1+ list-index) template-list)))
-					   " "
-					 ", "))
+			    (when (string= arg opcode-match)
+			      (put-text-property 0 (length arg) 'face
+						 (list :foreground "#C70039"
+						       :weight (if point-on-opcode?
+								   'bold 'normal)) arg))
+			    (if (or (and (= indx argument-index)
+					 ;;(string= arg (car (last template-list)))
+					 (not point-on-opcode?))
+				    (and inf-arg (string= "[...]" arg)))
+				(prog2 (put-text-property 0 (length arg) 'face '(:foreground "#A4FF00" :weight bold) arg)
+				    arg)
+			      arg)
+			    (if (or (eq template-list-length list-index)
+				    (string= arg opcode-match)
+				    (string= opcode-match (nth (1+ list-index) template-list))
+				    (string= "=" arg))
+				" "
+			      ", "))
 	   indx (if (string= arg opcode-match) 1
-		  (if (> 0 indx)
-		      (1- indx)
-		    (1+ indx)))
+		  (if (string= "=" arg)
+		      indx
+		    (if (> 0 indx)
+			(1- indx)
+		      (1+ indx))))
 	   list-index (1+ list-index)))
+	;; (message (length template-list))
 	eldocstr
 	;; argument-index
 	;; template-list
@@ -170,7 +174,7 @@
   (eldoc-mode))
 
 
-;; (gethash "xout" csdoc-opcode-database)
+;; (gethash "0dbfs" csdoc-opcode-database)
 ;; (defun henda ()
 ;;   (interactive)
 ;;   (message
@@ -178,7 +182,7 @@
 
 (provide 'csound-eldoc)
 
-;; asig oscil a1, a2
+
 
 
 

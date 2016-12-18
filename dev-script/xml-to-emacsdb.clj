@@ -1,3 +1,7 @@
+;; Clojure script to generate csound-opcodes.el
+;; Some manual changes may be needed,
+;; Zerodbfs needs to be changed to 0dbfs
+
 (ns xml-to-emacsdb
   (:require [clojure.java.io :as io]
             [clojure.xml :as xml]

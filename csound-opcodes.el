@@ -1203,7 +1203,7 @@ aarra monitor" :doc "doc" :html "seinna") csdoc-opcode-database)
 (puthash "vexp_i" '(:template "vexp_i ifn, ival, ielements[, idstoffset]" :doc "doc" :html "seinna") csdoc-opcode-database)
 (puthash "mvclpf2" '(:template "asig mvclpf2 ain, xcf, xres[, istor]" :doc "doc" :html "seinna") csdoc-opcode-database)
 (puthash "vmultv" '(:template "vmultv ifn1, ifn2, kelements [, kdstoffset] [, ksrcoffset] [,kverbose]" :doc "doc" :html "seinna") csdoc-opcode-database)
-(puthash "Zerodbfs" '(:template "0dbfs = iarg
+(puthash "0dbfs" '(:template "0dbfs = iarg
 0dbfs" :doc "doc" :html "seinna") csdoc-opcode-database)
 (puthash "tableimix" '(:template "tableimix idft, idoff, ilen, is1ft, is1off, is1g, is2ft, is2off, is2g" :doc "doc" :html "seinna") csdoc-opcode-database)
 (puthash "copya2ftab" '(:template "copya2ftab kftbl, tab" :doc "doc" :html "seinna") csdoc-opcode-database)
