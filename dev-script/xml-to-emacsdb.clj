@@ -1,6 +1,7 @@
 ;; Clojure script to generate csound-opcodes.el
 ;; Some manual changes may be needed,
 ;; Zerodbfs needs to be changed to 0dbfs
+;; `tab` and `tb` opcodes need to be split up
 
 (ns xml-to-emacsdb
   (:require [clojure.java.io :as io]
@@ -47,6 +48,21 @@
                                                           (string/trim)))))))))
         (recur (rest v))))))
 
+(defn find-docstring [vek]
+  (loop [v vek]
+    (if (empty? v)
+      ""
+      (if (= (:tag (second (:content (first v)))) :refpurpose)
+        (str (nth (:content (first v)) 3))
+        (recur (rest v))))))
+
+(defn fix-csound-names [id-str]
+  (case id-str
+    "Zerodbfs" "0dbfs"
+    "notequal" "!="
+    "equals" "=="
+    id-str))
+
 (defn spit-emacs-file []
   (spit "/home/hlolli/.emacs.d/hlolli/csound-mode/csound-opcodes.el" ;;"csound-opcodes.el"
         (loop [docs (:content parsed-docs)
@@ -58,19 +74,34 @@
              "\n (provide 'csound-opcodes)")
             (let [doc (first docs)
                   id (-> doc :attrs :id)
-                  bottleneck (-> doc :content)
-                  template (find-synopsis bottleneck)]
+                  id (fix-csound-names id)
+                  template (find-synopsis (-> doc :content))
+                  docstring (if-not (< 3 (count (-> doc :content)))
+                              ""
+                              (let [untrimmed (-> doc
+                                                  :content (nth 3)
+                                                  :content second
+                                                  :content first)]
+                                (if (string? untrimmed)
+                                  (string/trim untrimmed)
+                                  (if (map? untrimmed)
+                                    (-> untrimmed
+                                        :content
+                                        first
+                                        string/trim)
+                                    (str "WTF: " untrimmed)))))]
               (recur (rest docs)
-                     (let [strcand (format "(puthash \"%s\" '(:template \"%s\" :doc \"%s\" :html \"%s\") csdoc-opcode-database)"
-                                           id (str template) "doc" "seinna")]
+                     (let [strcand (format "(puthash \"%s\" '(:template \"%s\" :doc \"%s\") csdoc-opcode-database)"
+                                           id (str template) docstring)]
                        (if (or (re-find #"null" strcand)
-                               (re-find #"ERROR" strcand))
+                               (re-find #"ERROR" strcand)
+                               (re-find #";" strcand))
                          out (str out strcand "\n")))))))))
 
 (spit-emacs-file)
 
 
-;; (count (:content (first (:content parsed-docs))))
+;; (:content ((:content (first (:content parsed-docs))) 3))
 ;; ((:content ((:content ((:content parsed-docs) 0)) 5)) 1)
 
 
