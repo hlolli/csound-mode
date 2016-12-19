@@ -25,7 +25,7 @@
   (interactive)
   (indent-line-to 2))
 
-(cond )
+
 (defun csound-indent-line ()
   "Indent current line."
   (interactive)
@@ -48,6 +48,9 @@
 				(nth 11 (gethash cand csdoc-opcode-database)))))))
 
 
+(defun csound-mode-keybindings ()
+  (local-set-key (kbd "C-c d") #'csound-thing-at-point-doc))
+
 ;; (gethash "delay" csdoc-opcode-database)
 ;; "\\(,+\s*\\)+\\|\\(\s+,*\\)+"
 ;; (length (split-string (nth 11 (gethash "linseg" csdoc-opcode-database)) "\n"))
@@ -67,6 +70,7 @@
   (setq-local eldoc-documentation-function 'csound-eldoc-function)
   (setq-local indent-line-function 'csound-indent-line)
   (add-hook 'csound-mode-hook #'eldoc-mode)
+  (add-hook 'csound-mode-hook #'csound-mode-keybindings)
   (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
   (add-hook 'csound-mode-hook (lambda ()
 				(set (make-local-variable 'comment-start) ";;")
