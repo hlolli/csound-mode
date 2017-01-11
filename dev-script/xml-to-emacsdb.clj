@@ -69,7 +69,7 @@
                out ""]
           (if (empty? docs)
             (str
-             "(setq csdoc-opcode-database (makehash 'equal))\n"
+             "(setq csdoc-opcode-database (make-hash-table))\n"
              out
              "\n (provide 'csound-opcodes)")
             (let [doc (first docs)

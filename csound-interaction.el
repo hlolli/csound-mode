@@ -53,12 +53,19 @@
       (split-window-sensibly)
       (switch-to-buffer-other-window csound-mode--repl-name))))
 
+
 (defun csound-repl--python-version ()
   (let* ((python-version (shell-command-to-string "python -V ")))
     (if (string-match "command not found" python-version)
 	(message "NOT INSTALLED, changeme")
       (message (chomp python-version)))))
 
+(with-output-to-temp-buffer "*csound*"
+  #'(insert-string (shell-command-to-string "csound -z")))
+
+(with-temp-buffer (shell-command "csound -z" "*csound*"))
+(she)
+(shell-command-to-string "csound -z")
 
 (defcustom csound-manual-html-directory
   (expand-file-name "~/csound/manual/html/")
@@ -75,4 +82,5 @@
 	    csdoc-opcode-database)))
 
 (provide 'csound-interaction)
+
 ;;; csound-interaction.el ends here

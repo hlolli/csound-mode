@@ -13,23 +13,53 @@
   :prefix "csound-mode-"
   :group 'csound-mode)
 
-;; (defvar csound-mode-map
-;;   (-let [map (make-keymap)]
-;;     (define-key map "\C-j" 'newline-and-indent)
-;;     map)
-;;   "Keymap for csound-mode")
+(defvar csound-mode-map
+  (let ((map (make-keymap)))
+    (define-key map "\C-j" 'newline-and-indent) map)
+  "Keymap for csound-mode")
 
-(defun csound-xml-line? ())
+(defun csound-indent-xml-line? ()
+  (save-excursion
+    (beginning-of-line 0)
+    (search-forward-regexp "\\<.+\\>" (line-end-position 2) t)))
+
+(defun csound-indent-definstr-line? ()
+  (save-excursion
+    (beginning-of-line 0)
+    (search-forward-regexp "\\(instr\s\\)+" (line-end-position 2) t)))
+
+(defun csound-indent-inside-instr? ()
+  (interactive)
+  (let* ((last-instr (save-excursion (search-backward "\\(instr\s\\)+" (beginning-of-buffer) t 1)))
+	 (lest-endin (save-excursion (search-backward "endin" (beginning-of-buffer) t 1))))
+    (if (not (numberp last-instr))
+	;; nil
+	(message "nei1")
+      (if (not (numberp last-endin))
+	  ;; t
+	  (message "já1")
+	(let ((delta (- last-instr last-endin)))
+	  (if (< 0 delta)
+	      (message "já2") (message "nei2")
+	      ;; t nil
+	      ))))))
 
 (defun henda ()
   (interactive)
-  (indent-line-to 2))
+  (beginning-of-line 0)
+  ;;(search-backward "CsScore" (line-beginning-position))
+  )
+
+
+(defun csound-indent-line () (csound-indent-definstr-line?))
 
 
 (defun csound-indent-line ()
   "Indent current line."
   (interactive)
-  (message "jojo"))
+  (cond ((csound-indent-xml-line?) (indent-to 0)
+	 (csound-indent-definstr-line?) (indent-to 2))))
+
 
 (defun opcode-completion-at-point ()
   (let ((bounds (bounds-of-thing-at-point 'word)))
