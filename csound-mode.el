@@ -1,5 +1,4 @@
 (require 'font-lock)
-(require 'dash)
 (require 'csound-opcodes)
 (require 'csound-eldoc)
 (require 'csound-font-lock)
