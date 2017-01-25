@@ -8,4 +8,5 @@ To load, download the repository and add it to emacs for example like this:
 ```
 ;; Change directory path according to csound-mode dir location.
 (add-to-list 'load-path "~/.emacs.d/csound-mode/")
+(require 'csound-mode)
 ```
