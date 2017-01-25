@@ -155,7 +155,8 @@
   (setq-local eldoc-documentation-function 'csound-eldoc-function)
   (setq-local indent-line-function 'csound-indent-line)
   (add-hook 'csound-mode-hook #'eldoc-mode)
-  (add-hook 'csound-mode-hook #'csound-mode-keybindings)
+  (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
+  (add-hook 'csound-mode-hook #'csound-mode-keybindings) 
   (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
   (add-hook 'csound-mode-hook (lambda ()
 				(set (make-local-variable 'comment-start) ";;")
@@ -164,7 +165,7 @@
 
 (eval-after-load 'csound-mode 
   '(progn
-     (define-auto-insert "\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" 'csound-new-csd)
+     (define-auto-insert "\\.csd\\'" 'csound-new-csd)
      (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" . csound-mode))))
 
 (provide 'csound-mode)

@@ -43,8 +43,9 @@
   (progn (setq result nil
 	       opdoce nil)
 	 (dolist (statement statement-list) 
-	   (-when-let (res (gethash statement csdoc-opcode-database))
-	     (setq result (csound-eldoc-get-template res)
+	   (when (gethash statement csdoc-opcode-database)
+	     (setq result (csound-eldoc-get-template
+			   (gethash statement csdoc-opcode-database))
 		   opcode statement))) 
 	 (when result 
 	   (let ((rate-list (split-string (replace-regexp-in-string "\n\s" "\n" result) "\n")))	     
@@ -95,12 +96,13 @@
 	(setq indx (1+ indx))))
     indx))
 
+
 ;;;###autoload
 (defun csound-eldoc-function ()
-  "Returns a doc string appropriate for the current context, or nil."
+  "Returns a doc string appropriate for the current context, or nil." 
   (let* ((csound-statement (csound-eldoc-statement))
 	 (statement-list (csound-eldoc-statement-list csound-statement))
-	 (template-lookup (csound-eldoc-template-lookup statement-list))) 
+	 (template-lookup (csound-eldoc-template-lookup statement-list)))
     (when template-lookup
       (let* ((opcode-match (first template-lookup))
 	     (point-on-opcode? (string= opcode-match (thing-at-point 'symbol)))
@@ -156,33 +158,9 @@
 		    (if (> 0 indx)
 			(1- indx)
 		      (1+ indx))))
-	   list-index (1+ list-index)))
-	;; (message (length template-list))
-	eldocstr
-	;; argument-index
-	;; template-list
-	;; (list opcode-match statement-list template-list)
-	;; csound-statement
-	;; (replace-regexp-in-string "\\[, " "[" csound-template)
-	;; (car (last template-list))
-	)) 
-    ))
+	   list-index (1+ list-index))) 
+	eldocstr))))
 
-;;;###autoload
-(defun csound-turn-on-eldoc ()
-  (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
-  (eldoc-mode))
-
-
-;; (gethash "0dbfs" csdoc-opcode-database)
-;; (defun henda ()
-;;   (interactive)
-;;   (message
-;;    (csound-eldoc-function)))
 
 (provide 'csound-eldoc)
-
-
-
-
 

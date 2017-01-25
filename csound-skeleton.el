@@ -1,18 +1,14 @@
 ;; Initialize defaults values
-(setq csound-skeleton-default-sr "44100"
-      ;; csound-skeleton-default-kr "1378"
-      csound-skeleton-default-ksmps "32")
 
+(defcustom csound-skeleton-default-sr 44100
+  "Set the default sr value when creating new csound file."
+  :type 'integer
+  :group 'csound-mode)
 
-;; See if global configuarion exists
-;; and overwrite the defaults
-(let* ((file (with-temp-buffer
-	       (insert-file-contents "~/.csound6rc")
-	       (buffer-string))))
-  (when file
-    (let* ((sr (match-data (string-match "\\(-r[[:space:]]?\\)\\([[:digit:]]+\\)" file)))) 
-      (when sr
-	(setq csound-skeleton-default-sr (substring file (nth 4 sr) (nth 5 sr)))))))
+(defcustom csound-skeleton-default-ksmps 32
+  "Set the default ksmps value when creating new csound file."
+  :type 'integer
+  :group 'csound-mode)
 
 
 (define-skeleton csound-new-csd
@@ -21,8 +17,8 @@
   "<CsoundSynthesizer>\n"
   "<CsOptions></CsOptions>\n"
   "<CsInstruments>\n\n"
-  (concat " sr = " csound-skeleton-default-sr "\n")
-  (concat " ksmps = " csound-skeleton-default-ksmps "\n") 
+  (concat " sr = " (number-to-string csound-skeleton-default-sr) "\n")
+  (concat " ksmps = " (number-to-string csound-skeleton-default-ksmps) "\n") 
   " nchnls = 2\n"
   " 0dbfs = 1.0\n"
   "\n\n\n"

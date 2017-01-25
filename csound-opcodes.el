@@ -1,4 +1,4 @@
-(setq csdoc-opcode-database (make-hash-table))
+(setq csdoc-opcode-database (make-hash-table :test 'equal))
 (puthash "shiftin" '(:template "kout[] shiftin asig" :doc "Shifts the contents of an audio variable into a 1-dimensional array.") csdoc-opcode-database)
 (puthash "octpch" '(:template "octpch (pch) (init- or control-rate args only)" :doc "Converts a pitch-class value to octave-point-decimal.") csdoc-opcode-database)
 (puthash "follow2" '(:template "ares follow2 asig, katt, krel" :doc "Another controllable envelope extractor.") csdoc-opcode-database)
