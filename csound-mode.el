@@ -102,7 +102,7 @@
 	       (not (eq 't begin-of-bool?)))
       (indent-line-to (* csound-indentation-spaces (1- tab-count))))
     ;;(indent-line-to (* csound-indentation-spaces tab-count))
-    (prog2 (message "tab count: %d" tab-count) (indent-line-to (* csound-indentation-spaces tab-count)))))
+    (indent-line-to (* csound-indentation-spaces tab-count))))
 
 (defun csound-indent-line ()
   "Indent current line."
