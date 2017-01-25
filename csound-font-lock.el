@@ -114,6 +114,10 @@
 (defconst csound-faces-a-rate-variable
   (push '("\\<a+\\w*" . font-lock-constant-face) csound-font-lock-list))
 
+(setq-local missing-faces
+	    (apply 'concat (mapcar (lambda (s) (concat "\\|\\<" s "\\>"))
+				   '("then" "do" "od" "else" "endif"))))
+
 (defconst csound-faces-opcodes
   (prog2
       (setq mutz "")
@@ -121,7 +125,7 @@
 					  (when (stringp k)
 					    (setq mutz (concat mutz  "\\|\\<" k "\\>"))))
 					csdoc-opcode-database))
-	     (mutz (concat "" (substring mutz 3 (length mutz)) "")))
+	     (mutz (concat "" (substring mutz 3 (length mutz)) missing-faces)))
 	(push `(,mutz . font-lock-builtin-face) csound-font-lock-list))))
 
 (defconst csound-faces-macros

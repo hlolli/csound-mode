@@ -13,10 +13,10 @@
   :prefix "csound-mode-"
   :group 'csound-mode)
 
-(defvar csound-mode-map
-  (let ((map (make-keymap)))
-    (define-key map "\C-j" 'newline-and-indent) map)
-  "Keymap for csound-mode")
+;; (defvar csound-mode-map
+;;   (let ((map (make-keymap)))
+;;     (define-key map "\C-j" 'newline-and-indent) map)
+;;   "Keymap for csound-mode")
 
 (defcustom csound-indentation-spaces 2
   "Set how many spaces are in indentation"
@@ -62,13 +62,21 @@
       (+ 1 (recursive-count regex string (match-end 0)))
     0))
 
+(defun csound-indent-beginning-of-bool? ()
+  (save-excursion
+    (beginning-of-line 1)
+    (if (search-forward-regexp
+	 "\\b\\(if\\)\\b\\|\\b\\(while\\)\\b"
+	 (line-end-position 1) t)
+	1 0)))
+
 (defun csound-indent-end-of-bool? ()
   (save-excursion
     (beginning-of-line 1)
     (if (search-forward-regexp
 	 "\\b\\(endif\\)\\b\\|\\b\\(od\\)\\b\\|\\b\\(else\\)\\b\\|\\b\\(elseif\\)\\b"
-	 (line-end-position 2) t)
-	t nil)))
+	 (line-end-position 1) t)
+	1 0)))
 
 (defun csound-indent-inside-expression-calc (expr-type)
   (let* ((beginning-of-expr (if (eq 'instr expr-type)
@@ -82,33 +90,30 @@
 	 (count-while-statements (recursive-count "\\b\\(while\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
 	 (count-od-statements (recursive-count "\\b\\(od\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
 	 (end-of-bool? (csound-indent-end-of-bool?))
+	 (begin-of-bool? (csound-indent-beginning-of-bool?))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
 				     count-elseif-statements
 				     count-while-statements) 
 				  count-endif-statements 
-				  count-od-statements))))) 
+				  count-od-statements
+				  begin-of-bool?
+				  end-of-bool?))))) 
     ;; (message "%d" tab-count)
-    (when (eq 't end-of-bool?)
-      ;; (message "end of bool!")
+    (when (and (eq 't end-of-bool?)
+	       (not (eq 't begin-of-bool?)))
       (indent-line-to (* csound-indentation-spaces (1- tab-count))))
-    (save-excursion 
-      (indent-line-to (* csound-indentation-spaces tab-count))
-      ;; (beginning-of-line 2)
-      (indent-to (* csound-indentation-spaces tab-count)))))
+    ;;(indent-line-to (* csound-indentation-spaces tab-count))
+    (prog2 (message "tab count: %d" tab-count) (indent-line-to (* csound-indentation-spaces tab-count)))))
 
 (defun csound-indent-line ()
   "Indent current line."
   ;;(interactive)
-  (cond ;;((csound-indent-xml-line?) (indent-to 0))
-   ((csound-indent-begin-of-expr?) (save-excursion
-				     (indent-line-to 0)
-				     (beginning-of-line 2)
-				     (indent-line-to csound-indentation-spaces)))
+  (cond ;;((csound-indent-xml-line?) (indent-to 0))   
+   ((csound-indent-begin-of-expr?) (indent-line-to 0))
    ((csound-indent-end-of-expr?) (indent-line-to 0))
-   ((csound-indent-inside-instr?) (csound-indent-inside-expression-calc 'instr))
+   ((csound-indent-inside-instr?) (csound-indent-inside-expression-calc 'instr))   
    ((csound-indent-inside-opcode?) (csound-indent-inside-expression-calc 'opcode)) 
-   
-   (t (indent-to 0))))
+   (t (indent-line-to 0))))
 
 
 (defun opcode-completion-at-point ()
@@ -129,7 +134,8 @@
 
 
 (defun csound-mode-keybindings ()
-  (local-set-key (kbd "C-c d") #'csound-thing-at-point-doc))
+  (local-set-key (kbd "C-c d") #'csound-thing-at-point-doc)
+  (local-set-key (kbd "C-j") #'newline-and-indent))
 
 ;; (gethash "delay" csdoc-opcode-database)
 ;; "\\(,+\s*\\)+\\|\\(\s+,*\\)+"
