@@ -89,25 +89,23 @@
 			      (save-excursion
 				(search-backward-regexp "\\(opcode\\)\\b" nil t))))
 	 (count-if-statements (recursive-count "\\b\\(if\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
-	 (count-elseif-statements (recursive-count "\\b\\(elseif\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
+	 ;; (count-elseif-statements (recursive-count "\\b\\(elseif\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
 	 (count-endif-statements (recursive-count "\\b\\(endif\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
 	 (count-while-statements (recursive-count "\\b\\(while\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
 	 (count-od-statements (recursive-count "\\b\\(od\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
-	 (end-of-bool? (csound-indent-end-of-bool?))
+	 ;; (end-of-bool? (csound-indent-end-of-bool?))
 	 (begin-of-bool? (csound-indent-beginning-of-bool?))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
-				     count-elseif-statements
+				     ;; count-elseif-statements
 				     count-while-statements) 
 				  count-endif-statements 
 				  count-od-statements
 				  begin-of-bool?
 				  ;;end-of-bool?
-				    ))))) 
-    ;; (message "%d" tab-count)
-       (when (and (eq 't end-of-bool?)
-		  (not (eq 't begin-of-bool?)))
-	 (indent-line-to (* csound-indentation-spaces (1- tab-count))))
-       (indent-line-to (* csound-indentation-spaces tab-count))))
+				  ))))) 
+    ;; (message "tab: %d begin-bool: %d " tab-count begin-of-bool?)
+    ;; (when (and (eq 't end-of-bool?) (not (eq 't begin-of-bool?))) (indent-line-to (* csound-indentation-spaces (1- tab-count))))
+    (indent-line-to (* csound-indentation-spaces tab-count))))
 
 (defun csound-indent-line ()
   "Indent current line."
