@@ -12,6 +12,11 @@
   :prefix "csound-mode-"
   :group 'csound-mode)
 
+(defvar csound-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?_ "w" st) st)
+  "Syntax table for csound-mode")
+
 ;; (defvar csound-mode-map
 ;;   (let ((map (make-keymap)))
 ;;     (define-key map "\C-j" 'newline-and-indent) map)
@@ -65,7 +70,7 @@
   (save-excursion
     (beginning-of-line 1)
     (if (search-forward-regexp
-	 "\\b\\(if\\)\\b\\|\\b\\(while\\)\\b"
+	 "\\b\\(if\\)\\b\\|\\b\\(while\\)\\b\\|\\b\\(else\\)\\b\\|\\b\\(elseif\\)\\b"
 	 (line-end-position 1) t)
 	1 0)))
 
@@ -96,13 +101,13 @@
 				  count-endif-statements 
 				  count-od-statements
 				  begin-of-bool?
-				  end-of-bool?))))) 
+				  ;;end-of-bool?
+				    ))))) 
     ;; (message "%d" tab-count)
-    (when (and (eq 't end-of-bool?)
-	       (not (eq 't begin-of-bool?)))
-      (indent-line-to (* csound-indentation-spaces (1- tab-count))))
-    ;;(indent-line-to (* csound-indentation-spaces tab-count))
-    (indent-line-to (* csound-indentation-spaces tab-count))))
+       (when (and (eq 't end-of-bool?)
+		  (not (eq 't begin-of-bool?)))
+	 (indent-line-to (* csound-indentation-spaces (1- tab-count))))
+       (indent-line-to (* csound-indentation-spaces tab-count))))
 
 (defun csound-indent-line ()
   "Indent current line."
@@ -144,10 +149,11 @@
 
 ;;;###autoload
 (defun csound-mode ()
-  (interactive)
+  (interactive) 
   (kill-all-local-variables)
   (auto-insert-mode)
   (set (make-local-variable 'font-lock-defaults) '(csound-font-lock-keywords))
+  (set-syntax-table csound-mode-syntax-table)
   (setq ad-redefinition-action 'accept)
   (setq major-mode 'csound-mode)
   (setq mode-name "Csound") 

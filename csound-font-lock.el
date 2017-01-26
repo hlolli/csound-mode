@@ -116,7 +116,7 @@
 
 (setq-local missing-faces
 	    (apply 'concat (mapcar (lambda (s) (concat "\\|\\<" s "\\>"))
-				   '("then" "do" "od" "else" "endif"))))
+				   '("then" "do" "od" "else" "elseif" "endif"))))
 
 (defconst csound-faces-opcodes
   (prog2
