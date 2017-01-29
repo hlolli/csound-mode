@@ -1,8 +1,31 @@
+;;; csound-mode.el
+
+;; Copyright (C) 2017  Hlöðver Sigurðsson
+
+;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 (require 'font-lock)
 (require 'csound-opcodes)
 (require 'csound-eldoc)
 (require 'csound-font-lock)
+(require 'csound-score)
 (require 'csound-skeleton)
+(when (fboundp 'module-load)
+  (require 'csound-live-interaction))
 
 
 (defvar csound-mode-hook nil)
@@ -14,23 +37,24 @@
 
 (defvar csound-mode-syntax-table
   (let ((st (make-syntax-table)))
-    (modify-syntax-entry ?_ "w" st) st)
+    ;; Treat some symbols as part of word
+    (modify-syntax-entry ?_ "w" st)
+    (modify-syntax-entry ?. "w" st)
+    (modify-syntax-entry ?+ "w" st)
+    ;; Comment syntax
+    (modify-syntax-entry ?;
+			 "< 1" st)
+    (modify-syntax-entry ?\n
+			 ">" st)
+    st)
   "Syntax table for csound-mode")
 
-;; (defvar csound-mode-map
-;;   (let ((map (make-keymap)))
-;;     (define-key map "\C-j" 'newline-and-indent) map)
-;;   "Keymap for csound-mode")
 
 (defcustom csound-indentation-spaces 2
   "Set how many spaces are in indentation"
   :type 'integer
   :group 'csound-mode)
 
-;; (defun csound-indent-xml-line? ()
-;;   (save-excursion
-;;     (beginning-of-line 0)
-;;     (search-forward-regexp "\\<.+\\>" (line-end-position 2) t)))
 
 (defun csound-indent-begin-of-expr? ()
   (save-excursion
@@ -43,7 +67,6 @@
     (search-forward-regexp "\\b\\(endin\\)\\b\\|\\b\\(endop\\)\\b" (line-end-position 1) t)))
 
 (defun csound-indent-inside-instr? ()
-  ;; (interactive)
   (let* ((last-instr (save-excursion (search-backward-regexp "\\(instr\\)\\b" nil t)))
 	 (last-endin (save-excursion (search-backward-regexp "\\(endin\\)\\b" nil t))))
     (cond ((eq 'nil last-instr) nil)
@@ -52,7 +75,6 @@
 	  (t nil))))
 
 (defun csound-indent-inside-opcode? ()
-  ;; (interactive)
   (let* ((last-opcode (save-excursion (search-backward-regexp "\\(opcode\\)\\b" nil t)))
 	 (last-endop (save-excursion (search-backward-regexp "\\(endop\\)\\b" nil t))))
     (cond ((eq 'nil last-opcode) nil)
@@ -107,10 +129,12 @@
     ;; (when (and (eq 't end-of-bool?) (not (eq 't begin-of-bool?))) (indent-line-to (* csound-indentation-spaces (1- tab-count))))
     (indent-line-to (* csound-indentation-spaces tab-count))))
 
+
 (defun csound-indent-line ()
   "Indent current line."
   ;;(interactive)
-  (cond ;;((csound-indent-xml-line?) (indent-to 0))   
+  (cond ;;((csound-indent-xml-line?) (indent-to 0))
+   ;; ((csound-indent-within-score?) (csound-score-indentation))
    ((csound-indent-begin-of-expr?) (indent-line-to 0))
    ((csound-indent-end-of-expr?) (indent-line-to 0))
    ((csound-indent-inside-instr?) (csound-indent-inside-expression-calc 'instr))   
@@ -137,39 +161,54 @@
 
 (defun csound-mode-keybindings ()
   (local-set-key (kbd "C-c d") #'csound-thing-at-point-doc)
-  (local-set-key (kbd "C-j") #'newline-and-indent))
+  (local-set-key (kbd "C-j") #'newline-and-indent)
+  (local-set-key (kbd "C-c C-s") #'csound-score-align-block))
 
-;; (gethash "delay" csdoc-opcode-database)
-;; "\\(,+\s*\\)+\\|\\(\s+,*\\)+"
-;; (length (split-string (nth 11 (gethash "linseg" csdoc-opcode-database)) "\n"))
-;; (replace-regexp-in-string "\n\s" "\n" (nth 9 (gethash "oscil" csdoc-opcode-database)))
-;; (maphash (lambda (key val) ) csdoc-opcode-database)
 
 ;;;###autoload
 (defun csound-mode ()
   (interactive) 
   (kill-all-local-variables)
   (auto-insert-mode)
-  (set (make-local-variable 'font-lock-defaults) '(csound-font-lock-keywords))
   (set-syntax-table csound-mode-syntax-table)
+
+  (when csound-rainbow-score-parameters?
+    (setq-local font-lock-fontify-region-function #'csound-fontify-region)
+    (setq-local jit-lock-contextually t))
+  
   (setq ad-redefinition-action 'accept)
   (setq major-mode 'csound-mode)
   (setq mode-name "Csound") 
   ;; (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
+  ;; (setq-local font-lock-multiline t)
   (setq-local eldoc-documentation-function 'csound-eldoc-function)
   (setq-local indent-line-function 'csound-indent-line)
+  ;; (font-lock-add-keywords 'csound-mode csound-font-lock-list)
+  
   (add-hook 'csound-mode-hook #'eldoc-mode)
   (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
   (add-hook 'csound-mode-hook #'csound-mode-keybindings) 
   (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
+  (add-hook 'csound-mode-hook (lambda () (font-lock-add-keywords nil csound-font-lock-list)))
+
+  ;; From http://stackoverflow.com/questions/25400328/how-can-i-define-comment-syntax-for-a-major-mode
   (add-hook 'csound-mode-hook (lambda ()
-				(set (make-local-variable 'comment-start) ";;")
-				(set (make-local-variable 'comment-end) ""))) 
-  (run-hooks 'csound-mode-hook))
+				(set (make-local-variable 'comment-start) ";")
+				(set (make-local-variable 'comment-end) "")))
+  
+  (run-hooks 'csound-mode-hook)
+  (csound-font-lock-param--flush-buffer)
+  (when csound-rainbow-score-parameters?
+    (csound-font-lock-param--flush-score)
+    (csound-font-lock--flush-block-comments)))
 
 (eval-after-load 'csound-mode 
-  '(progn
+  '(progn     
      (define-auto-insert "\\.csd\\'" 'csound-new-csd)
-     (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" . csound-mode))))
+     (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" . csound-mode))
+     (setq-local jit-lock-chunk-size 400)))
+
 
 (provide 'csound-mode)
+
+;;; csound-mode.el ends here
