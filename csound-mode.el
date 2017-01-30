@@ -37,15 +37,18 @@
 
 (defvar csound-mode-syntax-table
   (let ((st (make-syntax-table)))
-    ;; Treat some symbols as part of word
+
     (modify-syntax-entry ?_ "w" st)
-    (modify-syntax-entry ?. "w" st)
     (modify-syntax-entry ?+ "w" st)
+    (modify-syntax-entry ?. "w" st)
+    (modify-syntax-entry ?! "w" st) 
     ;; Comment syntax
     (modify-syntax-entry ?;
 			 "< 1" st)
     (modify-syntax-entry ?\n
 			 ">" st)
+    ;;(modify-syntax-entry ?[
+    ;;		   "w" st)
     st)
   "Syntax table for csound-mode")
 
@@ -189,12 +192,13 @@
   (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
   (add-hook 'csound-mode-hook #'csound-mode-keybindings) 
   (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
-  (add-hook 'csound-mode-hook (lambda () (font-lock-add-keywords nil csound-font-lock-list)))
-
+  (add-hook 'csound-mode-hook (lambda ()
+				(font-lock-add-keywords nil csound-font-lock-list)
+				(csound-repl--create-buffer)))
   ;; From http://stackoverflow.com/questions/25400328/how-can-i-define-comment-syntax-for-a-major-mode
   (add-hook 'csound-mode-hook (lambda ()
 				(set (make-local-variable 'comment-start) ";")
-				(set (make-local-variable 'comment-end) "")))
+				(set (make-local-variable 'comment-end) ""))) 
   
   (run-hooks 'csound-mode-hook)
   (csound-font-lock-param--flush-buffer)
@@ -202,11 +206,11 @@
     (csound-font-lock-param--flush-score)
     (csound-font-lock--flush-block-comments)))
 
-(eval-after-load 'csound-mode 
-  '(progn     
-     (define-auto-insert "\\.csd\\'" 'csound-new-csd)
-     (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" . csound-mode))
-     (setq-local jit-lock-chunk-size 400)))
+	  (eval-after-load 'csound-mode 
+	    '(progn     
+	       (define-auto-insert "\\.csd\\'" 'csound-new-csd)
+	       (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" . csound-mode))
+	       (setq-local jit-lock-chunk-size 400)))
 
 
 (provide 'csound-mode)

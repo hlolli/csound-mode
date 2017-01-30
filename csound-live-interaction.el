@@ -37,6 +37,7 @@
 	     (setq indx (1+ indx))))
 	 exists?))
 
+
 (defun csound-repl--create-buffer ()
   (interactive)
   (when (not (csound-repl--buffer-already-exists?))
@@ -45,7 +46,6 @@
        csound-mode--repl-name)
       (split-window-sensibly)
       (switch-to-buffer-other-window csound-mode--repl-name))))
-
 
 (defcustom csound-manual-html-directory
   (expand-file-name "~/csound/manual/html/")

@@ -161,7 +161,7 @@
 (defun csound-font-lock--fontify-score ()
   (if (save-excursion
 	(beginning-of-line)
-	(search-forward-regexp "\\(^\\s-*\\|^\\t-*\\)i+[0-9\\\".*]*\\b" (line-end-position) t 1))
+	(search-forward-regexp "\\(^\\s-*\\|^\\t-*\\)i+\\|f+[0-9\\\".*]*\\b" (line-end-position) t 1))
       (progn
 	(setq beg-word nil
 	      end-word nil
@@ -171,7 +171,7 @@
 			      (beginning-of-line)
 			      (search-forward ";" (line-end-position) t 1))
 	      start-of-i (save-excursion
-			   (search-forward-regexp "\\bi" (line-end-position) t 1)))
+			   (search-forward-regexp "\\bi\\|\\bf" (line-end-position) t 1)))
 	(if (and (not start-of-i)
 		 comment-start)
 	    (font-lock-prepend-text-property (1- comment-start) (line-end-position) 'face "font-lock-comment-face")
@@ -185,8 +185,9 @@
 		(if (not passed-i?)
 		    (progn (if start-of-i
 			       (goto-char start-of-i)
-			     (search-forward "i" (line-end-position) t 1))
-			   (if (string-equal "i" (thing-at-point 'word t))
+			     (search-forward-regexp "i\\|f" (line-end-position) t 1))
+			   (if (or (string-equal "i" (thing-at-point 'word t))
+				   (string-equal "f" (thing-at-point 'word t)))
 			       (prog2 (setq passed-i? t)
 				   (font-lock-prepend-text-property (1- (point)) (point) 'face "csound-i-score-face")))
 			   (progn 
@@ -202,10 +203,14 @@
 		  ;; If passed i marker
 		  (progn
 		    ;; (message "line: %d" (line-number-at-pos))
-		    (setq beg-word (1- (search-forward-regexp "\\sw"))
-			  end-word (let ((e (search-forward-regexp "\\s-\\|$" (line-end-position))))
-				     (if (< e end-line)
-					 e end-line)))
+		    (setq beg-word (save-excursion
+				     (min (1- (or (search-forward-regexp "\\sw" (line-end-position) t 1) (line-end-position)))))
+			  end-word (save-excursion
+				     (goto-char beg-word)
+				     (let ((e (search-forward-regexp "\\s-\\|$" (line-end-position))))
+				       (if (< e end-line)
+					   e end-line))))
+		    (goto-char end-word)
 		    ;; (add-text-properties beg-word end-word `(face ,(funcall #'csound-font-lock-param-delimiters-default-pick-face depth)))
 		    (font-lock-prepend-text-property beg-word end-word 'face (funcall #'csound-font-lock-param-delimiters-default-pick-face depth))
 		    ;; (message ": %d" depth)
