@@ -21,6 +21,8 @@
 (require 'csound-opcodes)
 (require 'comint)
 (require 'async)
+(require 'font-lock)
+(require 'csound-font-lock)
 
 (module-load "emacscsnd.so")
 
@@ -53,6 +55,7 @@
 	(with-current-buffer (buffer-name) (funcall 'csound-interactive-mode))
 	(switch-to-buffer-other-window prev-buffer)))))
 
+;; (csound-mode--message-buffer-create)
 
 (defun generate-random-uuid ()
   "Insert a random UUID.
@@ -69,7 +72,10 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	  (random (expt 16 6))))
 
 
-(defconst csound-live-interaction-prompt "csnd> ")
+(defconst csound-live-interaction-prompt
+  (let ((prompt "csnd> ")) 
+    (put-text-property 0 (length prompt) 'read-only t prompt)
+    prompt))
 
 (defvar csound-live-interaction--input nil)
 
@@ -89,21 +95,24 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 
 
 
+(setq csound-interactive--welcome-message
+      (let ((s (concat ";; Welcome to Csound interactive message buffer.\n\n")))
+	(put-text-property 0 (length s) 'face 'font-lock-comment-face s)
+	s))
+
 (define-derived-mode
   csound-interactive-mode comint-mode "CsoundInteractive"
   "Csound Interactive Message Buffer and REPL."
-  ;;:syntax-table js1-mode-syntax-table
-
+  :syntax-table csound-mode-syntax-table
   ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt)))
-  (setq comint-input-sender 'csound-live-interaction--input-sender)
-
+  (setq comint-input-sender 'csound-live-interaction--input-sender)  
   (unless (comint-check-proc (current-buffer))
     ;; Was cat, but on non-Unix platforms that might not exist, so
     ;; use hexl instead, which is part of the Emacs distribution.
     (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl")))
       (set-process-query-on-exit-flag csnd-proc nil)
-      ;; Add a silly header
-      (insert "Interactive Csound Buffer\n")
+      (setq-local font-lock-defaults '(csound-font-lock-list))
+      (insert csound-interactive--welcome-message)
       (set-marker
        (process-mark csnd-proc) (point))
       (comint-output-filter csnd-proc csound-live-interaction-prompt))))
@@ -121,6 +130,26 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 ;;        (csoundPopFirstMessage csound))))
 ;;  (lambda () nil))
 
+
+;; (async-start
+;;  (lambda ()
+;;    (test-csoundAPI)
+;;    (sleep-for 3)
+;;    nil)
+;;  (lambda (result)
+;;    (message "Finish")))
+
+;; (async-start
+;;  ;; What to do in the child process
+;;  (lambda ()
+;;    (message "This is a test")
+;;    (sleep-for 3)
+;;    222)
+
+;;  ;; What to do when it finishes
+;;  (lambda (result)
+;;    (message "Async process done, result should be 222: %s"
+;; 	    result)))
 
 
 (defun test-csoundAPI ()
@@ -152,8 +181,10 @@ endin")
   (csoundReadScore csound sco)
 
   (csoundStart csound)
-
-  (csoundPerform csound))
+  (while (eq 0 (csoundPerformKsmps csound)))
+  (csoundStop csound)
+  (csoundPerform csound)
+  )
 
 ;; (defcustom csound-manual-html-directory
 ;;   (expand-file-name "~/csound/manual/html/")

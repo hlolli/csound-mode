@@ -35,23 +35,6 @@
   :prefix "csound-mode-"
   :group 'csound-mode)
 
-(defvar csound-mode-syntax-table
-  (let ((st (make-syntax-table)))
-
-    (modify-syntax-entry ?_ "w" st)
-    (modify-syntax-entry ?+ "w" st)
-    (modify-syntax-entry ?. "w" st)
-    (modify-syntax-entry ?! "w" st) 
-    ;; Comment syntax
-    (modify-syntax-entry ?;
-			 "< 1" st)
-    (modify-syntax-entry ?\n
-			 ">" st)
-    ;;(modify-syntax-entry ?[
-    ;;		   "w" st)
-    st)
-  "Syntax table for csound-mode")
-
 
 (defcustom csound-indentation-spaces 2
   "Set how many spaces are in indentation"

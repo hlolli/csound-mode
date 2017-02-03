@@ -26,6 +26,21 @@
   :type 'boolean
   :group 'csound-mode)
 
+(defvar csound-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?_ "w" st)
+    (modify-syntax-entry ?+ "w" st)
+    (modify-syntax-entry ?. "w" st)
+    (modify-syntax-entry ?! "w" st) 
+    ;; Comment syntax
+    (modify-syntax-entry ?;
+			 "< 1" st)
+    (modify-syntax-entry ?\n
+			 ">" st)
+    ;;(modify-syntax-entry ?[
+    ;;		   "w" st)
+    st)
+  "Syntax table for csound-mode")
 
 (defvar csound-font-lock-list '())
 
@@ -113,7 +128,7 @@
 	(push `(,mutz . font-lock-builtin-face) csound-font-lock-list))))
 
 (defconst csound-faces-macros
-  (push '("#[[:alpha:]]*\\|\\$[[:alpha:]]*" . font-lock-preprocessor-face)
+  (push '("\\#[[:alpha:]]*\\|\\$[[:alpha:]]*" . font-lock-preprocessor-face)
 	csound-font-lock-list))
 
 (defconst csound-faces-s-rate-variables
