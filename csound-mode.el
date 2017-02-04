@@ -35,12 +35,10 @@
   :prefix "csound-mode-"
   :group 'csound-mode)
 
-
 (defcustom csound-indentation-spaces 2
   "Set how many spaces are in indentation"
   :type 'integer
   :group 'csound-mode)
-
 
 (defun csound-indent-begin-of-expr? ()
   (save-excursion
@@ -67,7 +65,6 @@
 	  ((and (numberp last-opcode) (eq 'nil last-endop)) t)
 	  ((< last-endop last-opcode) t)
 	  (t nil))))
-
 
 (defun recursive-count (regex string start)
   (if (string-match regex string start)
@@ -148,7 +145,8 @@
 (defun csound-mode-keybindings ()
   (local-set-key (kbd "C-c d") #'csound-thing-at-point-doc)
   (local-set-key (kbd "C-j") #'newline-and-indent)
-  (local-set-key (kbd "C-c C-s") #'csound-score-align-block))
+  (local-set-key (kbd "C-c C-s") #'csound-score-align-block)
+  (local-set-key (kbd "C-M-x") #'csound-evaluate))
 
 
 ;;;###autoload
@@ -157,10 +155,6 @@
   (kill-all-local-variables)
   (auto-insert-mode)
   (set-syntax-table csound-mode-syntax-table)
-
-  (when csound-rainbow-score-parameters?
-    (setq-local font-lock-fontify-region-function #'csound-fontify-region)
-    (setq-local jit-lock-contextually t))
   
   (setq ad-redefinition-action 'accept)
   (setq major-mode 'csound-mode)
@@ -177,24 +171,27 @@
   (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
   (add-hook 'csound-mode-hook (lambda ()
 				(font-lock-add-keywords nil csound-font-lock-list)
-				(csound-repl--create-buffer)))
+				(when csound-rainbow-score-parameters?
+				  (setq-local font-lock-fontify-region-function #'csound-fontify-region)
+				  (setq-local jit-lock-contextually t))
+				(csound-font-lock-param--flush-buffer)
+				(when csound-rainbow-score-parameters?
+				  (csound-font-lock-param--flush-score)
+				  (csound-font-lock--flush-block-comments))))
   ;; From http://stackoverflow.com/questions/25400328/how-can-i-define-comment-syntax-for-a-major-mode
   (add-hook 'csound-mode-hook (lambda ()
 				(set (make-local-variable 'comment-start) ";")
-				(set (make-local-variable 'comment-end) ""))) 
-  
-  (run-hooks 'csound-mode-hook)
-  (csound-font-lock-param--flush-buffer)
-  (when csound-rainbow-score-parameters?
-    (csound-font-lock-param--flush-score)
-    (csound-font-lock--flush-block-comments)))
+				(set (make-local-variable 'comment-end) "")))
+  (add-hook 'csound-mode-hook (lambda ()
+				(when (fboundp 'module-load)
+				  (csound-mode--message-buffer-create)
+				  (csound-live-interaction--boot-instance))))
+  (run-hooks 'csound-mode-hook))
 
-	  (eval-after-load 'csound-mode 
-	    '(progn     
-	       (define-auto-insert "\\.csd\\'" 'csound-new-csd)
-	       (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" . csound-mode))
-	       (setq-local jit-lock-chunk-size 400)))
-
+(eval-after-load 'csound-mode
+  '(progn     
+     (define-auto-insert "\\.csd\\'" 'csound-new-csd)
+     (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" . csound-mode))))
 
 (provide 'csound-mode)
 

@@ -18,11 +18,10 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(require 'csound-opcodes)
 (require 'comint)
-(require 'async)
-(require 'font-lock)
 (require 'csound-font-lock)
+(require 'csound-opcodes)
+(require 'font-lock)
 
 (module-load "emacscsnd.so")
 
@@ -94,11 +93,40 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   (comint-output-filter proc csound-live-interaction-prompt))
 
 
-
 (setq csound-interactive--welcome-message
       (let ((s (concat ";; Welcome to Csound interactive message buffer.\n\n")))
 	(put-text-property 0 (length s) 'face 'font-lock-comment-face s)
 	s))
+
+(defvar csound-interactive-mode-hook nil)
+
+;; https://github.com/jorgenschaefer/comint-scroll-to-bottom
+
+(defun comint-add-scroll-to-bottom ()
+  "Activate `comint-scroll-to-bottom'.
+This should be put in `comint-mode-hook' or any derived mode."
+  (add-hook 'window-scroll-functions 'comint-scroll-to-bottom nil t))
+
+
+(defun comint-scroll-to-bottom (window display-start)
+  "Recenter WINDOW so that point is on the last line.
+This is added to `window-scroll-functions' by
+`comint-add-scroll-to-bottom'.
+The code is shamelessly taken (but adapted) from ERC."
+  (let ((proc (get-buffer-process (current-buffer))))
+    (when (and proc
+               window
+               (window-live-p window))
+      (let ((resize-mini-windows nil))
+        (save-selected-window
+          (select-window window)
+          (save-restriction
+            (widen)
+            (when (>= (point) (process-mark proc))
+              (save-excursion
+                (goto-char (point-max))
+                (recenter -1)
+                (sit-for 0)))))))))
 
 (define-derived-mode
   csound-interactive-mode comint-mode "CsoundInteractive"
@@ -110,81 +138,122 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
     ;; Was cat, but on non-Unix platforms that might not exist, so
     ;; use hexl instead, which is part of the Emacs distribution.
     (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl")))
+      (setq csound-live-interaction--process-tty-name
+	    (process-tty-name csnd-proc))
       (set-process-query-on-exit-flag csnd-proc nil)
       (setq-local font-lock-defaults '(csound-font-lock-list))
       (insert csound-interactive--welcome-message)
       (set-marker
        (process-mark csnd-proc) (point))
-      (comint-output-filter csnd-proc csound-live-interaction-prompt))))
+      (comint-output-filter csnd-proc csound-live-interaction-prompt)))
+  (add-hook 'csound-interactive-mode-hook 'comint-add-scroll-to-bottom)
+  ;;(add-hook 'csound-interactive-mode-hook (lambda () (csound-mode--message-buffer-create)))
+  )
 
 
-;; (async-start 
-;;  (lambda ()
-;;    (while (< 0 (csoundGetMessageCnt csound))
-;;      (save-excursion
-;;        (switch-to-buffer csound-mode--message-buffer-name)
-;;        (goto-char (buffer-size))
-;;        (beginning-of-line)
-;;        (insert (csoundGetFirstMessage csound))
-;;        (switch-to-prev-buffer)
-;;        (csoundPopFirstMessage csound))))
-;;  (lambda () nil))
+(defun csound-live-interaction--boot-instance ()
+  (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
+			    CSOUNDINIT_NO_SIGNAL_HANDLER))
+  (if (boundp 'csound)
+      (prog2 (csoundStop csound)
+	  (csoundCleanup csound))
+    (setq csound (csoundCreate))) 
+  (csoundMessageTty csound csound-live-interaction--process-tty-name)
+  (csoundSetOption csound "-odac")
+  (csoundReadScore csound "e 360000000")
+  (csoundStart csound)
+  (csoundAsyncPerform csound))
 
 
-;; (async-start
-;;  (lambda ()
-;;    (test-csoundAPI)
-;;    (sleep-for 3)
-;;    nil)
-;;  (lambda (result)
-;;    (message "Finish")))
-
-;; (async-start
-;;  ;; What to do in the child process
-;;  (lambda ()
-;;    (message "This is a test")
-;;    (sleep-for 3)
-;;    222)
-
-;;  ;; What to do when it finishes
-;;  (lambda (result)
-;;    (message "Async process done, result should be 222: %s"
-;; 	    result)))
+(defun csound--expression ()
+  (save-excursion 
+    (end-of-line) 
+    (let* ((beg (search-backward-regexp "^\\s-*\\<instr\\>\\|^\\s-*\\<opcode\\>" nil t))
+	   (end (search-forward-regexp "^\\s-*\\<endin\\>\\|^\\s-*\\<endop\\>" nil t)))
+      (if (and beg end)
+	  (list beg end)
+	(throw 'no-expression
+	       "No instrument or opcode expression was found.")))))
 
 
+(defun csound-live-interaction--insert-message (msg)
+  (save-current-buffer
+    (set-buffer csound-mode--message-buffer-name)
+    (goto-char (buffer-size))
+    ;; (comint-next-prompt 1)
+    ;; (switch-to-prev-buffer)
+    (if (prog2 (beginning-of-line)
+	    (search-forward csound-live-interaction-prompt nil t 1))
+	(progn 
+	  (beginning-of-line)
+	  (end-of-line 0)
+	  (insert (concat "\n" msg )))
+      (progn 
+	(goto-char (buffer-size))
+	(end-of-line 1)
+	(insert (concat "\n" msg))))))
+
+(defun csound-live-interaction--errorp (pre-eval-size)
+  (save-current-buffer
+    (set-buffer csound-mode--message-buffer-name)
+    (goto-char pre-eval-size)
+    (if (search-forward "error: " nil t 1)
+	t nil)))
+
+(defun csound-live-interaction-evaluate-region (start end)
+  (interactive "r\nP")
+  (let* ((expression-string (buffer-substring start end))
+	 (message-buffer-size (buffer-size
+			       (get-buffer csound-mode--message-buffer-name))))	 
+    (csoundCompileOrc csound expression-string)
+    (if (csound-live-interaction--errorp
+	 message-buffer-size)
+	(message "The expression is invalid")
+      (csound-live-interaction--insert-message
+       (concat ";; Evaluated: "
+	       (buffer-substring start (save-excursion
+					 (goto-char start)
+					 (line-end-position))))))))
+
+(defun csound-evaluate ()
+  (interactive)
+  (if (region-active-p)
+      (csound-live-interaction-evaluate-region
+       (region-beginning)
+       (region-end))
+    (apply 'csound-live-interaction-evaluate-region (csound--expression))))
+
+;; (list-processes)
+;; (test-csoundAPI)
 (defun test-csoundAPI ()
   (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
 			    CSOUNDINIT_NO_SIGNAL_HANDLER))
-
-  (setq csound (csoundCreate))
-  
-  (csoundCreateMessageBuffer csound 0)
-
-  (csound-mode--message-buffer-create)
-  
-  (csoundSetOption csound "-odac")
-  
+  (setq csound (csoundCreate)) 
+  (csoundMessageTty csound csound-live-interaction--process-tty-name)
+  ;; (csoundCreateMessageBuffer csound 0)
+  ;; (csound-mode--message-buffer-create)  
+  (csoundSetOption csound "-odac")  
   (setq orc "
 sr=44100
 ksmps=32
 nchnls=2
 0dbfs=1
 instr 1 
-aout vco2 0.5, 440
+aout vco2 0.1, 240
 outs aout, aout
-endin")
-
+endin")  
   (csoundCompileOrc csound orc)
+  ;; (csoundEvalCode csound orc)
 
   (setq sco "i1 0 1")
-
+  ;; (csoundDestroyMessageBuffer csound)
   (csoundReadScore csound sco)
 
   (csoundStart csound)
-  (while (eq 0 (csoundPerformKsmps csound)))
-  (csoundStop csound)
-  (csoundPerform csound)
-  )
+  ;; (while (eq 0 (csoundPerformKsmps csound)))
+  ;; (csoundStop csound)
+  ;; (csoundCleanup csound)
+  (csoundAsyncPerform csound))
 
 ;; (defcustom csound-manual-html-directory
 ;;   (expand-file-name "~/csound/manual/html/")
@@ -200,9 +269,16 @@ endin")
 ;;    (gethash (thing-at-point 'symbol)
 ;; 	    csdoc-opcode-database)))
 
+;; (async-start
+;;  `(lambda ()
+;;     (while ,(csoundGetFirstMessage csound)
+;;       (print ,(csoundGetFirstMessage csound))
+;;       ,(csoundPopFirstMessage csound)))
+;;  'ignore)
 
+;; (shell-command-to-string "/bin/echo hello")
 
-(progn (csound-mode--message-buffer-create))
+;; (csoundGetFirstMessage csound)
 
 (provide 'csound-live-interaction)
 

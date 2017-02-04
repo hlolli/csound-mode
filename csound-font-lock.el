@@ -80,7 +80,7 @@
 ;;   (push '("\\(\\/\\*.*\\(?:\n.*\\)*?\\*\\/?\\)" . font-lock-comment-face)  csound-font-lock-list))
 
 (defconst csound-faces-p-parameter-variable
-  (push '("p[[:digit:]]+" . 'csound-p-face)
+  (push '("\\bp[[:digit:]]+" . 'csound-p-face)
 	csound-font-lock-list))
 
 (defconst csound-faces-end-statement
