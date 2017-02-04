@@ -44,6 +44,18 @@
 
 (defvar csound-font-lock-list '())
 
+(defface csound-eval-flash
+  '((((class color)) (:background "blue" :foreground "white" :bold t))
+    (t (:inverse-video t)))
+  "Face for highlighting during evaluation."
+  :group 'csound-mode)
+
+(defface csound-eval-flash-error
+  '((((class color)) (:foreground "red" :bold t))
+    (t (:inverse-video t)))
+  "Face for highlighting signaled errors during evaluation."
+  :group 'csound-fu)
+
 (defface csound-p-face
   '((((class color)) (:foreground "#F9E79F" :bold t)))
   "Face for csound p3, p4 ..."

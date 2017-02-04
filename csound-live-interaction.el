@@ -155,12 +155,12 @@ The code is shamelessly taken (but adapted) from ERC."
   (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
 			    CSOUNDINIT_NO_SIGNAL_HANDLER))
   (if (boundp 'csound)
-      (prog2 (csoundStop csound)
+      (prog2 (csoundReset csound)
 	  (csoundCleanup csound))
     (setq csound (csoundCreate))) 
   (csoundMessageTty csound csound-live-interaction--process-tty-name)
   (csoundSetOption csound "-odac")
-  (csoundReadScore csound "e 360000000")
+  (csoundReadScore csound "e 360000")
   (csoundStart csound)
   (csoundAsyncPerform csound))
 
@@ -197,31 +197,55 @@ The code is shamelessly taken (but adapted) from ERC."
   (save-current-buffer
     (set-buffer csound-mode--message-buffer-name)
     (goto-char pre-eval-size)
-    (if (search-forward "error: " nil t 1)
+    (if (search-forward-regexp "error" nil t 1)
 	t nil)))
+
+(defun csound-live-interaction--flash-region (start end errorp)
+  (setq flash-start start
+	flash-end end)
+  (if errorp
+      (hlt-highlight-region flash-start flash-end 'csound-eval-flash-error)
+    (hlt-highlight-region flash-start flash-end 'csound-eval-flash))
+  (run-with-idle-timer 0.15 nil
+		       (lambda ()
+			 (hlt-unhighlight-region flash-start flash-end))))
 
 (defun csound-live-interaction-evaluate-region (start end)
   (interactive "r\nP")
-  (let* ((expression-string (buffer-substring start end))
-	 (message-buffer-size (buffer-size
-			       (get-buffer csound-mode--message-buffer-name))))	 
-    (csoundCompileOrc csound expression-string)
-    (if (csound-live-interaction--errorp
-	 message-buffer-size)
-	(message "The expression is invalid")
-      (csound-live-interaction--insert-message
-       (concat ";; Evaluated: "
-	       (buffer-substring start (save-excursion
-					 (goto-char start)
-					 (line-end-position))))))))
+  (setq expression-string (buffer-substring start end)
+	message-buffer-size (buffer-size
+			     (get-buffer csound-mode--message-buffer-name))
+	reg-start start reg-end end)
+  (csoundCompileOrc csound expression-string)
+  (run-with-idle-timer
+   0.02 nil
+   (lambda ()
+     (if (csound-live-interaction--errorp message-buffer-size)
+	 (prog2
+	     (csound-live-interaction--flash-region reg-start reg-end t)
+	     (message "The expression is invalid"))
+       (prog2
+	   (csound-live-interaction--flash-region reg-start reg-end nil)
+	   (csound-live-interaction--insert-message
+	    (concat ";; Evaluated: "
+		    (buffer-substring reg-start (save-excursion
+						  (goto-char reg-start)
+						  (line-end-position))))))))))
+
+(defun csound-live-interaction-play-region (start end)
+  (interactive "r\nP")
+  )
 
 (defun csound-evaluate ()
   (interactive)
-  (if (region-active-p)
-      (csound-live-interaction-evaluate-region
-       (region-beginning)
-       (region-end))
-    (apply 'csound-live-interaction-evaluate-region (csound--expression))))
+  (if (save-excursion
+	(search-backward-regexp "<CsScore>" nil t 1))
+      nil 
+    (if (region-active-p)
+	(csound-live-interaction-evaluate-region
+	 (region-beginning)
+	 (region-end))
+      (apply 'csound-live-interaction-evaluate-region (csound--expression)))))
 
 ;; (list-processes)
 ;; (test-csoundAPI)
@@ -241,14 +265,14 @@ nchnls=2
 instr 1 
 aout vco2 0.1, 240
 outs aout, aout
-endin")  
+endin") ;;(csoundInputMessage)  
   (csoundCompileOrc csound orc)
   ;; (csoundEvalCode csound orc)
-
-  (setq sco "i1 0 1")
+  
+  (setq sco "i 1 0 1")
   ;; (csoundDestroyMessageBuffer csound)
   (csoundReadScore csound sco)
-
+  ;; (csoundInputMessage csound sco)
   (csoundStart csound)
   ;; (while (eq 0 (csoundPerformKsmps csound)))
   ;; (csoundStop csound)
