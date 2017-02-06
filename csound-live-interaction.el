@@ -70,7 +70,6 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	  (random (expt 16 6))
 	  (random (expt 16 6))))
 
-
 (defconst csound-live-interaction-prompt
   (let ((prompt "csnd> ")) 
     (put-text-property 0 (length prompt) 'read-only t prompt)
@@ -161,6 +160,8 @@ The code is shamelessly taken (but adapted) from ERC."
   (csoundMessageTty csound csound-live-interaction--process-tty-name)
   (csoundSetOption csound "-odac")
   (csoundReadScore csound "e 360000")
+  ;; TODO make this customizeable or automatic
+  (csoundCompileOrc csound "sr=44100\nksmps=32\nnchnls=2\n0dbfs=1")
   (csoundStart csound)
   (csoundAsyncPerform csound))
 
@@ -174,6 +175,23 @@ The code is shamelessly taken (but adapted) from ERC."
 	  (list beg end)
 	(throw 'no-expression
 	       "No instrument or opcode expression was found.")))))
+
+(defun csound-live-interaction--newline-seperated-score-block ()
+  (let ((beg-block (save-excursion
+		     (end-of-line 0)
+		     (while (search-backward-regexp
+			     "\\(^\\s-*\\|^\\t-*\\)i+[0-9\\\".*]*\\b"
+			     (line-beginning-position 1) t 1)
+		       (end-of-line 0))
+		     (line-beginning-position 2)))
+	(end-block (save-excursion
+		     (end-of-line 1)
+		     (while (search-backward-regexp
+			     "\\(^\\s-*\\|^\\t-*\\)i+[0-9\\\".*]*\\b"
+			     (line-beginning-position 1) t 1)
+		       (end-of-line 2))
+		     (line-end-position 0))))
+    (list beg-block end-block)))
 
 
 (defun csound-live-interaction--insert-message (msg)
@@ -197,7 +215,7 @@ The code is shamelessly taken (but adapted) from ERC."
   (save-current-buffer
     (set-buffer csound-mode--message-buffer-name)
     (goto-char pre-eval-size)
-    (if (search-forward-regexp "error" nil t 1)
+    (if (search-forward-regexp "error: " nil t 1)
 	t nil)))
 
 (defun csound-live-interaction--flash-region (start end errorp)
@@ -234,13 +252,29 @@ The code is shamelessly taken (but adapted) from ERC."
 
 (defun csound-live-interaction-play-region (start end)
   (interactive "r\nP")
-  )
+  (message "%s" (buffer-substring start end))
+  (setq expression-string (buffer-substring start end)
+	message-buffer-size (buffer-size
+			     (get-buffer csound-mode--message-buffer-name))
+	reg-start start reg-end end)
+  (csoundInputMessage csound expression-string)
+  (run-with-idle-timer
+   0.02 nil
+   (lambda ()
+     (if (csound-live-interaction--errorp message-buffer-size)
+	 (csound-live-interaction--flash-region reg-start reg-end t)
+       (csound-live-interaction--flash-region reg-start reg-end nil)))))
 
 (defun csound-evaluate ()
   (interactive)
   (if (save-excursion
 	(search-backward-regexp "<CsScore>" nil t 1))
-      nil 
+      (if (region-active-p)
+	  (csound-live-interaction-play-region
+	   (region-beginning)
+	   (region-end))
+	(apply 'csound-live-interaction-play-region
+	       (csound-live-interaction--newline-seperated-score-block)))
     (if (region-active-p)
 	(csound-live-interaction-evaluate-region
 	 (region-beginning)
