@@ -170,14 +170,15 @@
   (add-hook 'csound-mode-hook #'csound-mode-keybindings) 
   (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
   (add-hook 'csound-mode-hook (lambda ()
-				(font-lock-add-keywords nil csound-font-lock-list)
-				(when csound-rainbow-score-parameters?
-				  (setq-local font-lock-fontify-region-function #'csound-fontify-region)
-				  (setq-local jit-lock-contextually t))
-				(csound-font-lock-param--flush-buffer)
-				(when csound-rainbow-score-parameters?
-				  (csound-font-lock-param--flush-score)
-				  (csound-font-lock--flush-block-comments))))
+  				(font-lock-add-keywords nil csound-font-lock-list)
+  				(when csound-rainbow-score-parameters?
+  				  (setq-local font-lock-fontify-region-function 'csound-fontify-region)
+  				  (setq-local jit-lock-contextually t)
+				  )
+  				(csound-font-lock-param--flush-buffer)
+  				(when csound-rainbow-score-parameters?
+  				  (csound-font-lock-param--flush-score)
+  				  (csound-font-lock--flush-block-comments))))
   ;; From http://stackoverflow.com/questions/25400328/how-can-i-define-comment-syntax-for-a-major-mode
   (add-hook 'csound-mode-hook (lambda ()
 				(set (make-local-variable 'comment-start) ";")

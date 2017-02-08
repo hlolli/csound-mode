@@ -154,8 +154,11 @@ The code is shamelessly taken (but adapted) from ERC."
   (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
 			    CSOUNDINIT_NO_SIGNAL_HANDLER))
   (if (boundp 'csound)
-      (prog2 (csoundReset csound)
-	  (csoundCleanup csound))
+      (progn
+	(csoundStop csound)
+	(sleep-for 0.1)
+      	(csoundReset csound) 
+      	(csoundCleanup csound))
     (setq csound (csoundCreate))) 
   (csoundMessageTty csound csound-live-interaction--process-tty-name)
   (csoundSetOption csound "-odac")
@@ -287,7 +290,7 @@ The code is shamelessly taken (but adapted) from ERC."
   (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
 			    CSOUNDINIT_NO_SIGNAL_HANDLER))
   (setq csound (csoundCreate)) 
-  (csoundMessageTty csound csound-live-interaction--process-tty-name)
+  ;; (csoundMessageTty csound csound-live-interaction--process-tty-name)
   ;; (csoundCreateMessageBuffer csound 0)
   ;; (csound-mode--message-buffer-create)  
   (csoundSetOption csound "-odac")  
@@ -311,7 +314,10 @@ endin") ;;(csoundInputMessage)
   ;; (while (eq 0 (csoundPerformKsmps csound)))
   ;; (csoundStop csound)
   ;; (csoundCleanup csound)
-  (csoundAsyncPerform csound))
+  (csoundPerform csound)
+  (csoundAsyncPerform csound)
+  (csoundReset csound)
+  )
 
 ;; (defcustom csound-manual-html-directory
 ;;   (expand-file-name "~/csound/manual/html/")
