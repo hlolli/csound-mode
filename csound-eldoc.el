@@ -100,8 +100,8 @@
 ;;;###autoload
 (defun csound-eldoc-function ()
   "Returns a doc string appropriate for the current context, or nil." 
-  (let* ((csound-statement (csound-eldoc-statement))
-	 (statement-list (csound-eldoc-statement-list csound-statement))
+  (let* ((csound-statement (csound-eldoc-statement)) 
+	 (statement-list (csound-eldoc-statement-list csound-statement)) 
 	 (template-lookup (csound-eldoc-template-lookup statement-list)))
     (when template-lookup
       (let* ((opcode-match (first template-lookup))

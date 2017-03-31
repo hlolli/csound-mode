@@ -23,7 +23,7 @@
 (require 'csound-opcodes)
 (require 'font-lock)
 
-(module-load "emacscsnd.so")
+(ignore-errors (module-load "emacscsnd.so"))
 
 (defcustom csound-mode--message-buffer-name "*Csound Messages*"
   "Buffer name given to the csound-mode repl."
@@ -127,30 +127,8 @@ The code is shamelessly taken (but adapted) from ERC."
                 (recenter -1)
                 (sit-for 0)))))))))
 
-(define-derived-mode
-  csound-interactive-mode comint-mode "CsoundInteractive"
-  "Csound Interactive Message Buffer and REPL."
-  :syntax-table csound-mode-syntax-table
-  ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt)))
-  (setq comint-input-sender 'csound-live-interaction--input-sender)  
-  (unless (comint-check-proc (current-buffer))
-    ;; Was cat, but on non-Unix platforms that might not exist, so
-    ;; use hexl instead, which is part of the Emacs distribution.
-    (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl")))
-      (setq csound-live-interaction--process-tty-name
-	    (process-tty-name csnd-proc))
-      (set-process-query-on-exit-flag csnd-proc nil)
-      (setq-local font-lock-defaults '(csound-font-lock-list))
-      (insert csound-interactive--welcome-message)
-      (set-marker
-       (process-mark csnd-proc) (point))
-      (comint-output-filter csnd-proc csound-live-interaction-prompt)))
-  (add-hook 'csound-interactive-mode-hook 'comint-add-scroll-to-bottom)
-  ;;(add-hook 'csound-interactive-mode-hook (lambda () (csound-mode--message-buffer-create)))
-  )
 
-
-(defun csound-live-interaction--boot-instance ()
+(defun csound-live-interaction--boot-instance (tty-name)
   (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
 			    CSOUNDINIT_NO_SIGNAL_HANDLER))
   (if (boundp 'csound)
@@ -160,7 +138,8 @@ The code is shamelessly taken (but adapted) from ERC."
       	(csoundReset csound) 
       	(csoundCleanup csound))
     (setq csound (csoundCreate))) 
-  (csoundMessageTty csound csound-live-interaction--process-tty-name)
+  (when (boundp 'tty-name)
+    (csoundMessageTty csound tty-name))
   (csoundSetOption csound "-odac")
   (csoundReadScore csound "e 360000")
   ;; TODO make this customizeable or automatic
@@ -168,6 +147,20 @@ The code is shamelessly taken (but adapted) from ERC."
   (csoundStart csound)
   (csoundAsyncPerform csound))
 
+(defmacro csound-live-interaction--restart (tty-name)
+  `(if (boundp 'csound)
+       (progn
+	 (csoundStop csound)
+	 (sleep-for 0.1)
+	 (csoundReset csound) 
+	 (csoundCleanup csound) 
+	 (csoundMessageTty csound tty-name)
+	 (csoundSetOption csound "-odac")
+	 (csoundReadScore csound "e 360000")
+	 ;; TODO make this customizeable or automatic
+	 (csoundCompileOrc csound "sr=44100\nksmps=32\nnchnls=2\n0dbfs=1")
+	 (csoundStart csound)
+	 (csoundAsyncPerform csound))))
 
 (defun csound--expression ()
   (save-excursion 
@@ -273,16 +266,57 @@ The code is shamelessly taken (but adapted) from ERC."
   (if (save-excursion
 	(search-backward-regexp "<CsScore>" nil t 1))
       (if (region-active-p)
-	  (csound-live-interaction-play-region
-	   (region-beginning)
-	   (region-end))
+	  (prog2
+	      (csound-live-interaction-play-region
+	       (region-beginning)
+	       (region-end))
+	      (deactivate-mark))
 	(apply 'csound-live-interaction-play-region
 	       (csound-live-interaction--newline-seperated-score-block)))
     (if (region-active-p)
-	(csound-live-interaction-evaluate-region
-	 (region-beginning)
-	 (region-end))
+	(prog2
+	    (csound-live-interaction-evaluate-region
+	     (region-beginning)
+	     (region-end))
+	    (deactivate-mark))
       (apply 'csound-live-interaction-evaluate-region (csound--expression)))))
+
+(defun csound-evaluate-line ()
+  (interactive)
+  (if (save-excursion
+	(search-backward-regexp "<CsScore>" nil t 1))
+      (csound-live-interaction-play-region
+       (line-beginning-position)
+       (line-end-position)) 
+    (csound-live-interaction-evaluate-region
+     (line-beginning-position)
+     (line-end-position))))
+
+
+(define-derived-mode
+  csound-interactive-mode comint-mode "CsoundInteractive"
+  "Csound Interactive Message Buffer and REPL."
+  :syntax-table csound-mode-syntax-table
+  ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt)))
+  (setq comint-input-sender 'csound-live-interaction--input-sender)  
+  (unless (comint-check-proc (current-buffer))
+    ;; Was cat, but on non-Unix platforms that might not exist, so
+    ;; use hexl instead, which is part of the Emacs distribution.
+    (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl")))
+      (setq csound-live-interaction--process-tty-name
+	    (process-tty-name csnd-proc))
+      (set-process-query-on-exit-flag csnd-proc nil)
+      (setq-local font-lock-defaults '(csound-font-lock-list))
+      (insert csound-interactive--welcome-message)
+      (set-marker
+       (process-mark csnd-proc) (point))
+      (comint-output-filter csnd-proc csound-live-interaction-prompt)
+      (csound-mode--message-buffer-create)
+      (csound-live-interaction--boot-instance
+       csound-live-interaction--process-tty-name)))
+  (add-hook 'csound-interactive-mode-hook 'comint-add-scroll-to-bottom)
+  ;;(add-hook 'csound-interactive-mode-hook (lambda () (csound-mode--message-buffer-create)))
+  )
 
 ;; (list-processes)
 ;; (test-csoundAPI)

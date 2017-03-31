@@ -18,7 +18,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-;; (require 'csound-score)
+(require 'shut-up)
 
 (defcustom csound-rainbow-score-parameters? t
   "Color each parameter field for
@@ -29,7 +29,8 @@
 (defvar csound-mode-syntax-table
   (let ((st (make-syntax-table)))
     (modify-syntax-entry ?_ "w" st)
-    (modify-syntax-entry ?+ "w" st)
+    ;; (modify-syntax-entry ?+ "w" st)
+    ;; (modify-syntax-entry ?- "w" st)
     (modify-syntax-entry ?. "w" st)
     (modify-syntax-entry ?! "w" st) 
     ;; Comment syntax
@@ -244,10 +245,40 @@
 		    (setq depth (1+ depth)))))))))
     (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil)))
 
+;; (defun csound-fontify-region (beg end &optional loud)
+;;   (save-excursion
+;;     (when (save-excursion (search-backward-regexp "<CsScore>" nil t 1))
+;;       (csound-font-lock--fontify-score))))
+
 (defun csound-fontify-region (beg end &optional loud)
-  (save-excursion
-    (when (save-excursion (search-backward-regexp "<CsScore>" nil t 1))
-      (csound-font-lock--fontify-score))))
+  (shut-up
+    (save-excursion
+      (if (save-excursion (search-backward-regexp "<CsScore>" nil t 1)) ;;(csound-indent-within-score?) 
+	  (csound-font-lock--fontify-score)
+	;; All normal font-lock calls
+	(let ((open-comment (save-excursion (search-backward "/*" (point-min) t 1)))
+	      (close-comment (save-excursion (search-backward "*/" (point-min) t 1))))
+	  (if (and open-comment
+		   (or (not close-comment)
+		       (< close-comment open-comment)))
+	      (font-lock-prepend-text-property (- open-comment 2)
+					       (or (save-excursion (search-forward "*/" (point-max) t 1))
+						   (point-max))
+					       'face 'font-lock-comment-face)
+	    (let ((last-line (save-excursion (goto-char end) (line-number-at-pos))))
+	      (goto-char beg)
+	      (setq inide-comment-block? nil)
+	      (when (not (save-excursion
+			   (beginning-of-buffer)
+			   (search-forward-regexp "</CsInstruments>" end t 1)))
+		(while (< (line-number-at-pos) last-line)
+		  (when (not (save-excursion
+			       (beginning-of-line)
+			       (search-forward-regexp "\\(^\\s-*\\|^\\t-*\\)i+[0-9\\\".*]*\\b" (line-end-position) t 1)))
+		    ;; (message "region line %d" (line-number-at-pos))
+		    ;;(font-lock-default-fontify-region beg end nil) 
+		    (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil))
+		  (beginning-of-line 2))))))))))
 
 ;; (defconst csound-score--font-lock-keywords
 ;;   '(csound-score-param-delimiters--propertize))

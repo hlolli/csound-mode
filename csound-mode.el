@@ -133,20 +133,20 @@
             csdoc-opcode-database
             :exclusive 'no
             :company-docsig (lambda (cand)
-			      (replace-regexp-in-string
-			       "\n\s" "\n"
-			       (nth 11 (gethash cand csdoc-opcode-database))))
+			      (chomp (replace-regexp-in-string
+				      "\n\\|\s+" "\s"
+				      (nth 3 (gethash cand csdoc-opcode-database)))))
             :company-doc-buffer (lambda (cand)
-				  (nth 11 (gethash cand csdoc-opcode-database)))
-	    :company-location (lambda (cand)
-				(nth 11 (gethash cand csdoc-opcode-database)))))))
-
+				  (prin1-to-string (nth 11 (gethash cand csdoc-opcode-database))))
+	    ;;:company-location (lambda (cand) (nth 11 (gethash cand csdoc-opcode-database)))
+	    ))))
 
 (defun csound-mode-keybindings ()
   (local-set-key (kbd "C-c d") #'csound-thing-at-point-doc)
   (local-set-key (kbd "C-j") #'newline-and-indent)
   (local-set-key (kbd "C-c C-s") #'csound-score-align-block)
-  (local-set-key (kbd "C-M-x") #'csound-evaluate))
+  (local-set-key (kbd "C-M-x") #'csound-evaluate)
+  (local-set-key (kbd "C-x C-e") #'csound-evaluate-line))
 
 
 ;;;###autoload
@@ -183,16 +183,12 @@
   (add-hook 'csound-mode-hook (lambda ()
 				(set (make-local-variable 'comment-start) ";")
 				(set (make-local-variable 'comment-end) "")))
-  (add-hook 'csound-mode-hook (lambda ()
-				(when (fboundp 'module-load)
-				  (csound-mode--message-buffer-create)
-				  (csound-live-interaction--boot-instance))))
   (run-hooks 'csound-mode-hook))
 
 (eval-after-load 'csound-mode
   '(progn     
      (define-auto-insert "\\.csd\\'" 'csound-new-csd)
-     (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'" . csound-mode))))
+     (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'\\|\\.udo\\'" . csound-mode))))
 
 (provide 'csound-mode)
 
