@@ -126,6 +126,10 @@
 (defconst csound-faces-a-rate-variable
   (push '("\\<a+\\w*" . font-lock-constant-face) csound-font-lock-list))
 
+(defconst csound-faces-goto-symbol
+  (push '("\\<\\w*:\\B" . font-lock-constant-face) csound-font-lock-list))
+
+
 (setq-local missing-faces
 	    (apply 'concat (mapcar (lambda (s) (concat "\\|\\<" s "\\>"))
 				   '("then" "do" "od" "else" "elseif" "endif"))))

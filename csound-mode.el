@@ -83,9 +83,10 @@
   (save-excursion
     (beginning-of-line 1)
     (if (search-forward-regexp
-	 "\\b\\(endif\\)\\b\\|\\b\\(od\\)\\b\\|\\b\\(else\\)\\b\\|\\b\\(elseif\\)\\b"
+	 "\\b\\(endif\\)\\b\\|\\b\\(od\\)\\b\\|\\b\\(else\\)\\b\\|\\b\\(elseif\\)\\b\\|\\<\\w*:\\B"
 	 (line-end-position 1) t)
 	1 0)))
+
 
 (defun csound-indent-inside-expression-calc (expr-type)
   (let* ((beginning-of-expr (if (eq 'instr expr-type)
@@ -93,21 +94,30 @@
 				  (search-backward-regexp "\\(instr\\)\\b" nil t))
 			      (save-excursion
 				(search-backward-regexp "\\(opcode\\)\\b" nil t))))
-	 (count-if-statements (recursive-count "\\b\\(if\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
+	 (expression-to-point (buffer-substring beginning-of-expr (line-end-position 1)))
+	 (count-if-statements (recursive-count "\\b\\(if\\)\\b" expression-to-point 0))
 	 ;; (count-elseif-statements (recursive-count "\\b\\(elseif\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
-	 (count-endif-statements (recursive-count "\\b\\(endif\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
-	 (count-while-statements (recursive-count "\\b\\(while\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
-	 (count-od-statements (recursive-count "\\b\\(od\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
+	 (count-endif-statements (recursive-count "\\b\\(endif\\)\\b" expression-to-point 0))
+	 (count-while-statements (recursive-count "\\b\\(while\\)\\b" expression-to-point 0))
+	 (count-od-statements (recursive-count "\\b\\(od\\)\\b" expression-to-point 0))
+	 (after-goto-statement (if (string-match-p "\\<\\w*:\\B" expression-to-point) 1 0))
+	 (line-at-goto-statement (if (save-excursion
+				       (beginning-of-line)
+				       (search-forward-regexp "\\<\\w*:" (line-end-position 1) t 1)) 
+				     1 0))
 	 ;; (end-of-bool? (csound-indent-end-of-bool?))
 	 (begin-of-bool? (csound-indent-beginning-of-bool?))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
+				     after-goto-statement
 				     ;; count-elseif-statements
 				     count-while-statements) 
 				  count-endif-statements 
-				  count-od-statements
+				  count-od-statements 
 				  begin-of-bool?
+				  line-at-goto-statement
 				  ;;end-of-bool?
-				  ))))) 
+				  )))))
+    ;; (message "gotos: %d, bool-begin: %d" after-goto-statement line-at-goto-statement)
     ;; (message "tab: %d begin-bool: %d " tab-count begin-of-bool?)
     ;; (when (and (eq 't end-of-bool?) (not (eq 't begin-of-bool?))) (indent-line-to (* csound-indentation-spaces (1- tab-count))))
     (indent-line-to (* csound-indentation-spaces tab-count))))
