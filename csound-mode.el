@@ -24,8 +24,7 @@
 (require 'csound-font-lock)
 (require 'csound-score)
 (require 'csound-skeleton)
-(when (fboundp 'module-load)
-  (require 'csound-live-interaction))
+(require 'csound-live-interaction)
 
 
 (defvar csound-mode-hook nil)
@@ -206,6 +205,8 @@
   (add-hook 'csound-mode-hook #'csound-mode-keybindings) 
   (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
   (add-hook 'csound-mode-hook (lambda ()
+				(when csound-shared-library-loaded?
+				  (csound-mode--message-buffer-create))
   				(font-lock-add-keywords nil csound-font-lock-list)
   				(when csound-rainbow-score-parameters?
   				  (setq-local font-lock-fontify-region-function 'csound-fontify-region)

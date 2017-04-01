@@ -23,9 +23,10 @@
 (require 'csound-opcodes)
 (require 'font-lock)
 
-(ignore-errors (module-load "emacscsnd.so"))
+(setq csound-shared-library-loaded?
+      (ignore-errors (module-load "emacscsnd.so")))
 
-(defcustom csound-mode--message-buffer-name "*Csound Messages*"
+(defcustom csound-mode--message-buffer-name "*Csound REPL*"
   "Buffer name given to the csound-mode repl."
   :group 'csound-mode
   :type 'constant)
@@ -140,10 +141,10 @@ The code is shamelessly taken (but adapted) from ERC."
     (setq csound (csoundCreate))) 
   (when (boundp 'tty-name)
     (csoundMessageTty csound tty-name))
-  (csoundSetOption csound "-odac")
-  (csoundReadScore csound "e 360000")
+  (csoundSetOption csound "-odac") 
   ;; TODO make this customizeable or automatic
   (csoundCompileOrc csound "sr=44100\nksmps=32\nnchnls=2\n0dbfs=1")
+  (csoundReadScore csound "e 360000")
   (csoundStart csound)
   (csoundAsyncPerform csound))
 
@@ -248,7 +249,7 @@ The code is shamelessly taken (but adapted) from ERC."
 
 (defun csound-live-interaction-play-region (start end)
   (interactive "r\nP")
-  (message "%s" (buffer-substring start end))
+  ;; (message "%s" (buffer-substring start end))
   (setq expression-string (buffer-substring start end)
 	message-buffer-size (buffer-size
 			     (get-buffer csound-mode--message-buffer-name))
