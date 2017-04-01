@@ -32,7 +32,8 @@
     ;; (modify-syntax-entry ?+ "w" st)
     ;; (modify-syntax-entry ?- "w" st)
     (modify-syntax-entry ?. "w" st)
-    (modify-syntax-entry ?! "w" st) 
+    (modify-syntax-entry ?! "w" st)
+    (modify-syntax-entry ?% "$" st) 
     ;; Comment syntax
     (modify-syntax-entry ?;
 			 "< 1" st)
@@ -329,6 +330,12 @@
       (beginning-of-line)
       (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil))))
 
+(defun csound-font-flush ()
+  (interactive)
+  (progn (csound-font-lock-param--flush-buffer)
+	 (csound-font-lock-param--flush-score)
+	 (csound-font-lock--flush-block-comments)
+	 (csound-font-lock-param--bugfix)))
 
 (provide 'csound-font-lock)
 

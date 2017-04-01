@@ -42,11 +42,24 @@
 (defun csound-eldoc-template-lookup (statement-list)
   (progn (setq result nil
 	       opdoce nil)
-	 (dolist (statement statement-list) 
-	   (when (gethash statement csdoc-opcode-database)
-	     (setq result (csound-eldoc-get-template
-			   (gethash statement csdoc-opcode-database))
-		   opcode statement))) 
+	 ;; Functional syntax lookup
+	 (when (save-excursion (search-backward-regexp "(" (line-beginning-position) t 1))
+	   (save-excursion (progn (setq cand (thing-at-point 'symbol (search-backward-regexp "(" (line-beginning-position) t 1)))
+				  (while (and (not cand)
+					      (not (eq (point) (line-beginning-position))))
+				    (setq cand (thing-at-point 'symbol))
+				    (backward-char))
+				  (when (gethash cand csdoc-opcode-database)
+				    (setq result (csound-eldoc-get-template
+						  (gethash cand csdoc-opcode-database))
+					  opcode cand)))))
+	 ;; Normal statement lookup
+	 (when (not result)
+	   (dolist (statement statement-list) 
+	     (when (gethash statement csdoc-opcode-database)
+	       (setq result (csound-eldoc-get-template
+			     (gethash statement csdoc-opcode-database))
+		     opcode statement)))) 
 	 (when result 
 	   (let ((rate-list (split-string (replace-regexp-in-string "\n\s" "\n" result) "\n")))	     
 	     (if (= (length rate-list) 1)
@@ -101,7 +114,7 @@
 (defun csound-eldoc-function ()
   "Returns a doc string appropriate for the current context, or nil." 
   (let* ((csound-statement (csound-eldoc-statement)) 
-	 (statement-list (csound-eldoc-statement-list csound-statement)) 
+	 (statement-list (csound-eldoc-statement-list csound-statement))
 	 (template-lookup (csound-eldoc-template-lookup statement-list)))
     (when template-lookup
       (let* ((opcode-match (first template-lookup))
