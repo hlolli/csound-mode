@@ -76,7 +76,11 @@
      ["schedwhen" "schedwhen ktrigger, kinsnum, kwhen, kdur [, ip4] [, ip5] [...]"
       "Adds a new score event."]
      ["massign" "massign midichn, instr" "assigns midi channel to instrument"]
-     ])))
+     ["event" "event \"scorechar\", kinsnum, kdelay, kdur, [, kp4] [, kp5] [, ...]" "Generates a score event from an instrument."]
+     ["event_i" "event_i \"scorechar\", iinsnum, idelay, idur, [, ip4] [, ip5] [, ...]" "Generates a score event from an instrument."]
+     ["prints" "prints \"string\" [, kval1] [, kval2] [...]" "Prints at init-time using a printf() style syntax."]
+     ["printks" "printks \"string\", itime [, kval1] [, kval2] [...]" "Prints at k-rate using a printf() style syntax."]
+     ["printks2" "printks2 \"string\", kval" "Prints a new value every time a control variable changes using a printf() style syntax."]])))
 
 (defn spit-emacs-file []
   (spit "csound-opcodes.el"

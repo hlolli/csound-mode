@@ -38,7 +38,7 @@
     ;; (modify-syntax-entry ?| "\"" st)
     (modify-syntax-entry ?\\ "\\" st)
     ;; Comment syntax
-    (modify-syntax-entry ?# "<" st)
+    (modify-syntax-entry ?\; "<" st)
     (modify-syntax-entry ?\n ">" st)
     (modify-syntax-entry ?/ ". 14b" st)
     (modify-syntax-entry ?* ". 23b" st) 
@@ -151,7 +151,7 @@
 	(push `(,mutz . font-lock-builtin-face) csound-font-lock-list))))
 
 (defconst csound-faces-macros
-  (push '("\\#[[:alpha:]]*\\|\\$[[:alpha:]]*" . font-lock-preprocessor-face)
+  (push '("\\#\\w*\\|\\$\\w*" . font-lock-preprocessor-face)
 	csound-font-lock-list))
 
 (defconst csound-faces-s-rate-variables

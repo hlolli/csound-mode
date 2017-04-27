@@ -33,9 +33,14 @@
     (setq str (replace-match "" t t str)))
   str)
 
+(defun untab (str)
+  (while (string-match "\t" str)
+    (setq str (replace-match " " t t str)))
+  str)
+
 (defun csound-eldoc-statement-list (string-statement)
   (split-string
-   (chomp string-statement)
+   (untab (chomp string-statement))
    "\\(,+\s*\\)+\\|\\(\s+,*\\)+"))
 
 
