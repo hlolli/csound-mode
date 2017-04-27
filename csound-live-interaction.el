@@ -144,7 +144,8 @@ The code is shamelessly taken (but adapted) from ERC."
   (csoundSetOption csound "-odac") 
   ;; TODO make this customizeable or automatic
   (csoundCompileOrc csound "sr=44100\nksmps=32\nnchnls=2\n0dbfs=1")
-  (csoundReadScore csound "e 360000")
+  ;; (csoundReadScore csound "e 0 3600")
+  (csoundInputMessage csound "e 0 3600")
   (csoundStart csound)
   (csoundAsyncPerform csound))
 
@@ -157,7 +158,7 @@ The code is shamelessly taken (but adapted) from ERC."
 	 (csoundCleanup csound) 
 	 (csoundMessageTty csound tty-name)
 	 (csoundSetOption csound "-odac")
-	 (csoundReadScore csound "e 360000")
+	 (csoundReadScore csound "e 0 360000")
 	 ;; TODO make this customizeable or automatic
 	 (csoundCompileOrc csound "sr=44100\nksmps=32\nnchnls=2\n0dbfs=1")
 	 (csoundStart csound)

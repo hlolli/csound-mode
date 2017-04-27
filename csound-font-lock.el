@@ -33,12 +33,15 @@
     ;; (modify-syntax-entry ?- "w" st)
     (modify-syntax-entry ?. "w" st)
     (modify-syntax-entry ?! "w" st)
-    (modify-syntax-entry ?% "$" st) 
+    (modify-syntax-entry ?% "$" st)
+    (modify-syntax-entry ?\" "\"\"" st)
+    ;; (modify-syntax-entry ?| "\"" st)
+    (modify-syntax-entry ?\\ "\\" st)
     ;; Comment syntax
-    (modify-syntax-entry ?;
-			 "< 1" st)
-    (modify-syntax-entry ?\n
-			 ">" st)
+    (modify-syntax-entry ?# "<" st)
+    (modify-syntax-entry ?\n ">" st)
+    (modify-syntax-entry ?/ ". 14b" st)
+    (modify-syntax-entry ?* ". 23b" st) 
     ;;(modify-syntax-entry ?[
     ;;		   "w" st)
     st)
@@ -65,33 +68,35 @@
 
 (defface csound-i-score-face
   '((((class color)) (:inherit font-lock-builtin-face :bold t)))
-  "Face for csound p3, p4 ..."
+  ""
   :group 'csound-mode)
 
 
 (defface csound-f-rate-global-face
   '((((class color)) (:inherit font-lock-negation-char-face :bold t)))
-  "Face for csound p3, p4 ..."
+  ""
   :group 'csound-mode)
 
 (defface csound-a-rate-global-face
   '((((class color)) (:inherit font-lock-constant-face :bold t)))
-  "Face for csound p3, p4 ..."
+  ""
   :group 'csound-mode)
 
 (defface csound-k-rate-global-face
   '((((class color)) (:inherit font-lock-function-name-face :bold t)))
-  "Face for csound p3, p4 ..."
+  ""
   :group 'csound-mode)
 
 (defface csound-i-rate-global-face
   '((((class color)) (:inherit font-lock-variable-name-face :bold t)))
-  "Face for csound p3, p4 ..."
+  ""
   :group 'csound-mode)
 
 
 ;; (defconst csound-block-comments
-;;   (push '("\\(\\/\\*.*\\(?:\n.*\\)*?\\*\\/?\\)" . font-lock-comment-face)  csound-font-lock-list))
+;;   (push '("\\(\\/\\*.*\\(?:\n.*\\)*?\\*\\/?\\)" . font-lock-comment-face)  csound-font-lock-list)) 
+
+
 
 (defconst csound-faces-p-parameter-variable
   (push '("\\bp[[:digit:]]+" . 'csound-p-face)
@@ -157,6 +162,10 @@
 
 (defconst csound-faces-comments
   (push '(";+.*" . font-lock-comment-face)  csound-font-lock-list))
+
+(defconst csound-faces-string
+  (push '("\\s\"\\(.*?\\)[^\\]\\s\""
+	  . font-lock-string-face) csound-font-lock-list))
 
 ;; (defconst csound-font-lock-keywords
 ;;   (font-lock-add-keywords 'csound-mode csound-font-lock-list))
