@@ -22,9 +22,9 @@
 (require 'csound-opcodes)
 (require 'csound-eldoc)
 (require 'csound-font-lock)
+(require 'csound-repl)
 (require 'csound-score)
 (require 'csound-skeleton)
-(require 'csound-live-interaction)
 
 
 (defvar csound-mode-hook nil)
@@ -80,14 +80,14 @@
   (save-excursion
     (beginning-of-line 1)
     (if (and (search-forward-regexp
-	      "\\b\\(if\\)\\b\\|\\b\\(while\\)\\b\\|\\b\\(else\\)\\b\\|\\b\\(elseif\\)\\b"
+	      "\\b\\(if\\)\\b\\|\\b\\(while\\)\\b\\|\\b\\(else\\)\\b\\|\\b\\(elseif\\)\\b\\|\\b\\(until\\)\\b"
 	      (line-end-position 1) t)
 	     ;; if in mix with gotos
 	     ;; dont have endif therefore
 	     ;; dont create logical blocks
 	     (prog2
 		 (beginning-of-line 1)
-		 (not (search-forward-regexp "goto" (line-end-position 1) t))))
+		 (not (search-forward-regexp "[a\\|k\\|i]?goto" (line-end-position 1) t))))
 	1 0)))
 
 (defun csound-indent-end-of-bool? ()
@@ -184,7 +184,6 @@
   (local-set-key (kbd "C-M-x") #'csound-evaluate)
   (local-set-key (kbd "C-x C-e") #'csound-evaluate-line))
 
-
 ;;;###autoload
 (defun csound-mode ()
   (interactive) 
@@ -197,30 +196,28 @@
   (setq mode-name "Csound") 
   ;; (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
   ;; (setq-local font-lock-multiline t)
+
   (setq-local eldoc-documentation-function 'csound-eldoc-function)
-  (setq-local indent-line-function 'csound-indent-line)
+  (setq-local indent-line-function 'csound-indent-line) 
+  (setq-local comment-start ";; ")
+  (setq-local comment-end "")
+  
   ;; (font-lock-add-keywords 'csound-mode csound-font-lock-list)
   
   (add-hook 'csound-mode-hook #'eldoc-mode)
   (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
   (add-hook 'csound-mode-hook #'csound-mode-keybindings) 
   (add-hook 'completion-at-point-functions 'opcode-completion-at-point nil 'local)
+
   (add-hook 'csound-mode-hook (lambda ()
-				(when csound-shared-library-loaded?
-				  (csound-mode--message-buffer-create))
   				(font-lock-add-keywords nil csound-font-lock-list)
   				(when csound-rainbow-score-parameters?
   				  (setq-local font-lock-fontify-region-function 'csound-fontify-region)
-  				  (setq-local jit-lock-contextually t)
-				  )
+  				  (setq-local jit-lock-contextually t))
   				(csound-font-lock-param--flush-buffer)
   				(when csound-rainbow-score-parameters?
   				  (csound-font-lock-param--flush-score)
   				  (csound-font-lock--flush-block-comments))))
-  ;; From http://stackoverflow.com/questions/25400328/how-can-i-define-comment-syntax-for-a-major-mode
-  (add-hook 'csound-mode-hook (lambda ()
-				(set (make-local-variable 'comment-start) ";")
-				(set (make-local-variable 'comment-end) "")))
   (run-hooks 'csound-mode-hook))
 
 (eval-after-load 'csound-mode
@@ -231,3 +228,4 @@
 (provide 'csound-mode)
 
 ;;; csound-mode.el ends here
+

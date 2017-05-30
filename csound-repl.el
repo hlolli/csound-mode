@@ -1,4 +1,4 @@
-;;; csound-interaction.el
+;;; csound-repl.el
 
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
@@ -23,39 +23,82 @@
 (require 'csound-opcodes)
 (require 'font-lock)
 
-(setq csound-shared-library-loaded?
-      (ignore-errors (module-load "emacscsnd.so")))
+(setq-local csound-shared-library-loaded?
+	    (ignore-errors (module-load "emacscsnd.so")))
 
-(defcustom csound-mode--message-buffer-name "*Csound REPL*"
+(defcustom csound-mode--repl-buffer-name "*Csound REPL*"
   "Buffer name given to the csound-mode repl."
-  :group 'csound-mode
-  :type 'constant)
+  :group 'csound-mode-repl
+  :type 'string)
 
+(defcustom csound-mode--repl-sr 44100
+  "Sample rate of the csound repl"
+  :group 'csound-mode-repl
+  :type 'integer)
 
-(defun csound-mode--message-buffer-already-exists? ()
+(defcustom csound-mode--repl-ksmps 32
+  "ksmps value of the csound repl"
+  :group 'csound-mode-repl
+  :type 'integer)
+
+(defcustom csound-mode--repl-nchnls 2
+  "Number of out channels for the csound repl"
+  :group 'csound-mode-repl
+  :type 'integer)
+
+(defcustom csound-mode--repl-0dbfs 1
+  "0dbfs value of the csound repl"
+  :group 'csound-mode-repl
+  :type 'integer)
+
+(defun csound-mode--get-repl-options ()
+  (format "sr=%d\nksmps=%d\nnchnls=%d\n0dbfs=%d"
+	  csound-mode--repl-sr
+	  csound-mode--repl-ksmps
+	  csound-mode--repl-nchnls
+	  csound-mode--repl-0dbfs))
+
+(defun csound-mode--repl-buffer-already-exists? ()
   (progn (setq indx 0
 	       exists? nil)
 	 (while (and (< indx (length (buffer-list)))
 		     (not exists?))
 	   (if (string-match
-		csound-mode--message-buffer-name
+		csound-mode--repl-buffer-name
 		(buffer-name (nth indx (buffer-list))))
 	       (setq exists? t)
 	     (setq indx (1+ indx))))
 	 exists?))
 
-(defun csound-mode--message-buffer-create ()
-  (when (not (csound-mode--message-buffer-already-exists?))
+(defun csound-mode--repl-buffer-create ()
+  (when (not (csound-mode--repl-buffer-already-exists?))
     (let ((prev-buffer (buffer-name)))
       (save-excursion
 	(generate-new-buffer
-	 csound-mode--message-buffer-name)
+	 csound-mode--repl-buffer-name)
 	(split-window-sensibly)
-	(switch-to-buffer-other-window csound-mode--message-buffer-name)
+	(switch-to-buffer-other-window csound-mode--repl-buffer-name)
 	(with-current-buffer (buffer-name) (funcall 'csound-interactive-mode))
 	(switch-to-buffer-other-window prev-buffer)))))
 
-;; (csound-mode--message-buffer-create)
+(defun csound-repl-start ()
+  (interactive)
+  (csound-mode--repl-buffer-create))
+
+(defun csound-mode--last-visited-csd ()
+  "This decides which filename is given to repl buffer."
+  (let ((indx--last-visited 0)
+	(match-p nil)
+	(last-file "not-found")
+	(len (length (buffer-list))))
+    (while (and (< indx--last-visited len)
+		(not match-p))
+      (if (string-match-p ".csd$" (buffer-name (nth indx--last-visited (buffer-list))))
+	  (prog2
+	      (setq-local last-file (buffer-name (nth indx--last-visited (buffer-list))))
+	      (setq-local match-p t))
+	(setq-local indx--last-visited (1+ indx--last-visited))))
+    last-file))
 
 (defun generate-random-uuid ()
   "Insert a random UUID.
@@ -92,11 +135,19 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       (puthash id (process-buffer proc) csound-live-interaction--input-history)))
   (comint-output-filter proc csound-live-interaction-prompt))
 
-
-(setq csound-interactive--welcome-message
-      (let ((s (concat ";; Welcome to Csound interactive message buffer.\n\n")))
-	(put-text-property 0 (length s) 'face 'font-lock-comment-face s)
-	s))
+(defun csound-mode--generate-repl-welcome-message (cur-file)
+  (let ((s (format (concat ";;  csound-mode 1.0.0\n"
+			   ";;  file: " cur-file "\n"
+			   ";;  sr: %d\n"
+			   ";;  ksmps: %d\n"
+			   ";;  nchnls: %d\n"
+			   ";;  0dbfs: %d\n\n\n")
+		   csound-mode--repl-sr
+		   csound-mode--repl-ksmps
+		   csound-mode--repl-nchnls
+		   csound-mode--repl-0dbfs)))
+    (put-text-property 0 (length s) 'face 'font-lock-doc-string-face s)
+    s))
 
 (defvar csound-interactive-mode-hook nil)
 
@@ -143,7 +194,7 @@ The code is shamelessly taken (but adapted) from ERC."
     (csoundMessageTty csound tty-name))
   (csoundSetOption csound "-odac") 
   ;; TODO make this customizeable or automatic
-  (csoundCompileOrc csound "sr=44100\nksmps=32\nnchnls=2\n0dbfs=1")
+  (csoundCompileOrc csound (csound-mode--get-repl-options))
   ;; (csoundReadScore csound "e 0 3600")
   (csoundInputMessage csound "e 0 3600")
   (csoundStart csound)
@@ -160,7 +211,7 @@ The code is shamelessly taken (but adapted) from ERC."
 	 (csoundSetOption csound "-odac")
 	 (csoundReadScore csound "e 0 360000")
 	 ;; TODO make this customizeable or automatic
-	 (csoundCompileOrc csound "sr=44100\nksmps=32\nnchnls=2\n0dbfs=1")
+	 (csoundCompileOrc csound (csound-mode--get-repl-options))
 	 (csoundStart csound)
 	 (csoundAsyncPerform csound))))
 
@@ -194,7 +245,7 @@ The code is shamelessly taken (but adapted) from ERC."
 
 (defun csound-live-interaction--insert-message (msg)
   (save-current-buffer
-    (set-buffer csound-mode--message-buffer-name)
+    (set-buffer csound-mode--repl-buffer-name)
     (goto-char (buffer-size))
     ;; (comint-next-prompt 1)
     ;; (switch-to-prev-buffer)
@@ -211,7 +262,7 @@ The code is shamelessly taken (but adapted) from ERC."
 
 (defun csound-live-interaction--errorp (pre-eval-size)
   (save-current-buffer
-    (set-buffer csound-mode--message-buffer-name)
+    (set-buffer csound-mode--repl-buffer-name)
     (goto-char pre-eval-size)
     (if (search-forward-regexp "error: " nil t 1)
 	t nil)))
@@ -230,7 +281,7 @@ The code is shamelessly taken (but adapted) from ERC."
   (interactive "r\nP")
   (setq expression-string (buffer-substring start end)
 	message-buffer-size (buffer-size
-			     (get-buffer csound-mode--message-buffer-name))
+			     (get-buffer csound-mode--repl-buffer-name))
 	reg-start start reg-end end)
   (csoundCompileOrc csound expression-string)
   (run-with-idle-timer
@@ -240,20 +291,20 @@ The code is shamelessly taken (but adapted) from ERC."
 	 (prog2
 	     (csound-live-interaction--flash-region reg-start reg-end t)
 	     (message "The expression is invalid"))
-       (prog2
-	   (csound-live-interaction--flash-region reg-start reg-end nil)
-	   (csound-live-interaction--insert-message
-	    (concat ";; Evaluated: "
-		    (buffer-substring reg-start (save-excursion
-						  (goto-char reg-start)
-						  (line-end-position))))))))))
+       (progn
+	 (csound-live-interaction--flash-region reg-start reg-end nil)
+	 (csound-live-interaction--insert-message
+	  (concat ";; Evaluated: "
+		  (buffer-substring reg-start (save-excursion
+						(goto-char reg-start)
+						(line-end-position))))))))))
 
 (defun csound-live-interaction-play-region (start end)
   (interactive "r\nP")
   ;; (message "%s" (buffer-substring start end))
   (setq expression-string (buffer-substring start end)
 	message-buffer-size (buffer-size
-			     (get-buffer csound-mode--message-buffer-name))
+			     (get-buffer csound-mode--repl-buffer-name))
 	reg-start start reg-end end)
   (csoundInputMessage csound expression-string)
   (run-with-idle-timer
@@ -300,25 +351,23 @@ The code is shamelessly taken (but adapted) from ERC."
   "Csound Interactive Message Buffer and REPL."
   :syntax-table csound-mode-syntax-table
   ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt)))
-  (setq comint-input-sender 'csound-live-interaction--input-sender)  
+  (setq-local comint-input-sender 'csound-live-interaction--input-sender)  
   (unless (comint-check-proc (current-buffer))
     ;; Was cat, but on non-Unix platforms that might not exist, so
     ;; use hexl instead, which is part of the Emacs distribution.
     (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl")))
-      (setq csound-live-interaction--process-tty-name
-	    (process-tty-name csnd-proc))
+      (setq-local csound-live-interaction--process-tty-name
+		  (process-tty-name csnd-proc))
       (set-process-query-on-exit-flag csnd-proc nil)
       (setq-local font-lock-defaults '(csound-font-lock-list))
-      (insert csound-interactive--welcome-message)
+      (insert (csound-mode--generate-repl-welcome-message (csound-mode--last-visited-csd))) 
       (set-marker
        (process-mark csnd-proc) (point))
       (comint-output-filter csnd-proc csound-live-interaction-prompt)
-      (csound-mode--message-buffer-create)
+      (csound-mode--repl-buffer-create)
       (csound-live-interaction--boot-instance
        csound-live-interaction--process-tty-name)))
-  (add-hook 'csound-interactive-mode-hook 'comint-add-scroll-to-bottom)
-  ;;(add-hook 'csound-interactive-mode-hook (lambda () (csound-mode--message-buffer-create)))
-  )
+  (add-hook 'csound-interactive-mode-hook 'comint-add-scroll-to-bottom))
 
 ;; (list-processes)
 ;; (test-csoundAPI)
@@ -328,7 +377,7 @@ The code is shamelessly taken (but adapted) from ERC."
   (setq csound (csoundCreate)) 
   ;; (csoundMessageTty csound csound-live-interaction--process-tty-name)
   ;; (csoundCreateMessageBuffer csound 0)
-  ;; (csound-mode--message-buffer-create)  
+  ;; (csound-mode--repl-buffer-create)  
   (csoundSetOption csound "-odac")  
   (setq orc "
 sr=44100
@@ -380,7 +429,7 @@ endin") ;;(csoundInputMessage)
 
 ;; (csoundGetFirstMessage csound)
 
-(provide 'csound-live-interaction)
+(provide 'csound-repl)
 
 ;;; csound-interaction.el ends here
 
