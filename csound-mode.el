@@ -18,13 +18,19 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+(setq csound-shared-library-loaded-p
+      (or (ignore-errors (module-load "emacscsnd.so"))
+	  (ignore-errors (module-load "./emacscsnd.so"))))
+
 (require 'font-lock)
 (require 'csound-opcodes)
 (require 'csound-eldoc)
 (require 'csound-font-lock)
-(require 'csound-repl)
+(when csound-shared-library-loaded-p
+  (require 'csound-repl))
 (require 'csound-score)
 (require 'csound-skeleton)
+(require 'shut-up)
 
 
 (defvar csound-mode-hook nil)
@@ -188,7 +194,6 @@
 (defun csound-mode ()
   (interactive) 
   (kill-all-local-variables)
-  (auto-insert-mode)
   (set-syntax-table csound-mode-syntax-table)
   
   (setq ad-redefinition-action 'accept)
@@ -214,10 +219,14 @@
   				(when csound-rainbow-score-parameters?
   				  (setq-local font-lock-fontify-region-function 'csound-fontify-region)
   				  (setq-local jit-lock-contextually t))
-  				(csound-font-lock-param--flush-buffer)
+  				(shut-up
+				  (with-silent-modifications
+				    (csound-font-lock-param--flush-buffer)))
   				(when csound-rainbow-score-parameters?
-  				  (csound-font-lock-param--flush-score)
-  				  (csound-font-lock--flush-block-comments))))
+  				  (shut-up
+				    (with-silent-modifications
+				      (csound-font-lock-param--flush-score)
+				      (csound-font-lock--flush-block-comments))))))
   (run-hooks 'csound-mode-hook))
 
 (eval-after-load 'csound-mode
