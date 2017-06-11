@@ -17,6 +17,13 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;; Eldoc functionality for csound-mode
+
+;;; Code:
+
+
 (require 'csound-opcodes)
 (require 'csound-util)
 
@@ -191,3 +198,4 @@
 
 (provide 'csound-eldoc)
 
+;;; csound-eldoc.el ends here

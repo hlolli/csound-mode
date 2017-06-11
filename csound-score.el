@@ -17,6 +17,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;; See README.md (https://github.com/hlolli/csound-mode/blob/master/README.md)
+
+;;; Code:
 
 (require 'csound-font-lock)
 
@@ -98,6 +103,8 @@ Prefix arg means align that many columns. (default is all)"
 ;; end of align-cols
 
 (defun csound-score-align-block ()
+  "Align score block so that all
+parameter are of same space width."
   (interactive)
   ;; See if point is on an score event line
   (when (save-excursion

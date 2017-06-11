@@ -17,6 +17,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;;; Repl functionality for csound-mode
+
+;;; Code:
 
 (require 'comint)
 (require 'csound-font-lock)
@@ -83,10 +88,6 @@
 	(with-current-buffer (buffer-name) (funcall 'csound-interactive-mode))
 	(switch-to-buffer-other-window prev-buffer)))))
 
-(defun csound-repl-start ()
-  (interactive)
-  (csound-mode--repl-buffer-create))
-
 (defun csound-mode--last-visited-csd ()
   "This decides which filename is given to repl buffer."
   (let ((indx--last-visited 0)
@@ -116,16 +117,16 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	  (random (expt 16 6))
 	  (random (expt 16 6))))
 
-(defconst csound-live-interaction-prompt
+(defconst csound-repl-prompt
   (let ((prompt "csnd> ")) 
     (put-text-property 0 (length prompt) 'read-only t prompt)
     prompt))
 
-(defvar csound-live-interaction--input nil)
+(defvar csound-repl--input nil)
 
-(defvar csound-live-interaction--input-history (make-hash-table :test 'equal))
+(defvar csound-repl--input-history (make-hash-table :test 'equal))
 
-(defun csound-live-interaction--input-sender (proc input)
+(defun csound-repl--input-sender (proc input)
   (unless (eq 0 (length input)) 
     (let ((id (generate-random-uuid))
 	  (buffer-read-only nil)
@@ -133,12 +134,12 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	  (split-input (-> input chomp split-string)))
       (read-csound-repl (intern (first split-input)) csound split-input)
       ;; (comint-output-filter proc (format "%s\n" return-val))
-      (push (cons id input) csound-live-interaction--input) 
+      (push (cons id input) csound-repl--input) 
       ;; (message "%s" input)
-      (puthash id (process-buffer proc) csound-live-interaction--input-history)
+      (puthash id (process-buffer proc) csound-repl--input-history)
       ;; (save-excursion (set-buffer csound-mode--repl-buffer-name) (point-max))
       ))
-  (comint-output-filter proc csound-live-interaction-prompt))
+  (comint-output-filter proc csound-repl-prompt))
 
 (defun csound-mode--generate-repl-welcome-message (cur-file)
   (let ((s (format (concat "\n"
@@ -157,7 +158,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 
 (defvar csound-interactive-mode-hook nil)
 
-(defun csound-live-interaction--boot-instance (tty-name)
+(defun csound-repl--boot-instance (tty-name)
   (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
 			    CSOUNDINIT_NO_SIGNAL_HANDLER))
   (if (boundp 'csound)
@@ -177,7 +178,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   (csoundStart csound)
   (csoundAsyncPerform csound))
 
-(defmacro csound-live-interaction--restart (tty-name)
+(defmacro csound-repl--restart (tty-name)
   `(if (boundp 'csound)
        (progn
 	 (csoundStop csound)
@@ -202,7 +203,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	(throw 'no-expression
 	       "No instrument or opcode expression was found.")))))
 
-(defun csound-live-interaction--newline-seperated-score-block ()
+(defun csound-repl--newline-seperated-score-block ()
   (let ((beg-block (save-excursion
 		     (end-of-line 0)
 		     (while (search-backward-regexp
@@ -220,14 +221,14 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
     (list beg-block end-block)))
 
 
-(defun csound-live-interaction--insert-message (msg)
+(defun csound-repl--insert-message (msg)
   (save-current-buffer
     (set-buffer csound-mode--repl-buffer-name)
     (goto-char (buffer-size))
     ;; (comint-next-prompt 1)
     ;; (switch-to-prev-buffer)
     (if (prog2 (beginning-of-line)
-	    (search-forward csound-live-interaction-prompt nil t 1))
+	    (search-forward csound-repl-prompt nil t 1))
 	(progn 
 	  (beginning-of-line)
 	  (end-of-line 0)
@@ -238,14 +239,14 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	(insert (concat msg "\n"))))
     (goto-char (1+ (buffer-size)))))
 
-(defun csound-live-interaction--errorp (pre-eval-size)
+(defun csound-repl--errorp (pre-eval-size)
   (save-current-buffer
     (set-buffer csound-mode--repl-buffer-name)
     (goto-char pre-eval-size)
     (if (search-forward-regexp "error: " nil t 1)
 	t nil)))
 
-(defun csound-live-interaction--flash-region (start end errorp)
+(defun csound-repl--flash-region (start end errorp)
   (setq flash-start start
 	flash-end end)
   (if errorp
@@ -255,8 +256,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 		       (lambda ()
 			 (hlt-unhighlight-region flash-start flash-end))))
 
-(defun csound-live-interaction-evaluate-region (start end)
-  (interactive "r\nP")
+(defun csound-repl-evaluate-orchestra-region (start end)
   (setq expression-string (buffer-substring start end)
 	message-buffer-size (buffer-size
 			     (get-buffer csound-mode--repl-buffer-name))
@@ -265,21 +265,17 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   (run-with-idle-timer
    0.02 nil
    (lambda ()
-     (if (csound-live-interaction--errorp message-buffer-size)
-	 (prog2
-	     (csound-live-interaction--flash-region reg-start reg-end t)
-	     (message "The expression is invalid"))
+     (if (csound-repl--errorp message-buffer-size)
+	 (csound-repl--flash-region reg-start reg-end t) 
        (progn
-	 (csound-live-interaction--flash-region reg-start reg-end nil)
-	 (csound-live-interaction--insert-message
+	 (csound-repl--flash-region reg-start reg-end nil)
+	 (csound-repl--insert-message
 	  (concat ";; Evaluated: "
 		  (buffer-substring reg-start (save-excursion
 						(goto-char reg-start)
 						(line-end-position))))))))))
 
-(defun csound-live-interaction-play-region (start end)
-  (interactive "r\nP")
-  ;; (message "%s" (buffer-substring start end))
+(defun csound-repl-evaluate-score-region (start end)
   (setq expression-string (buffer-substring start end)
 	message-buffer-size (buffer-size
 			     (get-buffer csound-mode--repl-buffer-name))
@@ -288,11 +284,12 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   (run-with-idle-timer
    0.02 nil
    (lambda ()
-     (if (csound-live-interaction--errorp message-buffer-size)
-	 (csound-live-interaction--flash-region reg-start reg-end t)
-       (csound-live-interaction--flash-region reg-start reg-end nil)))))
+     (if (csound-repl--errorp message-buffer-size)
+	 (csound-repl--flash-region reg-start reg-end t)
+       (csound-repl--flash-region reg-start reg-end nil)))))
 
-(defun csound-evaluate ()
+(defun csound-evaluate-region ()
+  "Evaluate any csound code in region."
   (interactive)
   (if (not (csound-mode--repl-buffer-already-exists?))
       (message "csound-repl instance was not found")
@@ -300,32 +297,39 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	  (search-backward-regexp "<CsScore" nil t 1))
 	(if (region-active-p)
 	    (prog2
-		(csound-live-interaction-play-region
+		(csound-repl-evaluate-score-region
 		 (region-beginning)
 		 (region-end))
 		(deactivate-mark))
-	  (apply 'csound-live-interaction-play-region
-		 (csound-live-interaction--newline-seperated-score-block)))
+	  (if (save-excursion
+		(beginning-of-line 1)
+		(search-forward-regexp "i[0-9\"]?" (line-end-position) t 1))
+	      (apply 'csound-repl-evaluate-score-region
+		     (csound-repl--newline-seperated-score-block))
+	    (csound-repl-evaluate-score-region
+	     (line-beginning-position)
+	     (line-end-position))))
       (if (region-active-p)
 	  (prog2
-	      (csound-live-interaction-evaluate-region
+	      (csound-repl-evaluate-orchestra-region
 	       (region-beginning)
 	       (region-end))
 	      (deactivate-mark))
-	(apply 'csound-live-interaction-evaluate-region (csound--expression))))))
+	(apply 'csound-repl-evaluate-orchestra-region (csound--expression))))))
 
 (defun csound-evaluate-line ()
+  "Evaluate csound expression on current line."
   (interactive)
   (if (not (csound-mode--repl-buffer-already-exists?))
       (message "csound-repl instance was not found")
     (if (save-excursion
-	  (search-backward-regexp "<CsScore>" nil t 1))
-	(csound-live-interaction-play-region
+	  (search-backward-regexp "<CsScore" nil t 1))
+	(csound-repl-evaluate-score-region
 	 (line-beginning-position)
-	 (line-end-position)) 
-      (csound-live-interaction-evaluate-region
-       (line-beginning-position)
-       (line-end-position)))))
+	 (line-end-position))	
+	(csound-repl-evaluate-orchestra-region
+	 (line-beginning-position)
+	 (line-end-position)))))
 
 
 (define-derived-mode
@@ -333,16 +337,16 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   "Csound Interactive Message Buffer and REPL."
   :syntax-table csound-mode-syntax-table
   ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt)))
-  (setq-local comint-input-sender 'csound-live-interaction--input-sender)  
+  (setq-local comint-input-sender 'csound-repl--input-sender)  
   (unless (comint-check-proc (current-buffer))
     ;; Was cat, but on non-Unix platforms that might not exist, so
     ;; use hexl instead, which is part of the Emacs distribution.
     (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl")))
-      (setq csound-live-interaction--process-tty-name
+      (setq csound-repl--process-tty-name
 	    (process-tty-name csnd-proc))
       (set-process-query-on-exit-flag csnd-proc nil)
       (set-process-filter csnd-proc (lambda (_ stdin)
-				      (csound-live-interaction--insert-message stdin)))
+				      (csound-repl--insert-message stdin)))
       (setq-local font-lock-defaults '(csound-font-lock-list))
       (setq-local comint-prompt-read-only t)
       (setq-local comint-scroll-to-bottom-on-input t)
@@ -352,14 +356,13 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	      (csound-mode--generate-repl-welcome-message (csound-mode--last-visited-csd))) 
       (set-marker
        (process-mark csnd-proc) (point))
-      (comint-output-filter csnd-proc csound-live-interaction-prompt)
+      (comint-output-filter csnd-proc csound-repl-prompt)
       (csound-mode--repl-buffer-create)
-      (csound-live-interaction--boot-instance
-       csound-live-interaction--process-tty-name)))
+      (csound-repl--boot-instance
+       csound-repl--process-tty-name)))
   ;;(add-hook 'csound-interactive-mode-hook)
   )
 
 (provide 'csound-repl)
 
-;;; csound-interaction.el ends here
-
+;;; csound-repl.el ends here

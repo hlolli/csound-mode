@@ -1,4 +1,4 @@
-;;; csound-font-lock.el
+;;; csound-repl-interaction.el
 
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
@@ -17,6 +17,13 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;; See README.md (https://github.com/hlolli/csound-mode/blob/master/README.md)
+
+;;; Code:
+
+
 (require 'multi)
 
 (module-load "emacscsnd.so")
@@ -31,3 +38,5 @@
   (csoundInputMessage csound  (string-join args " ")))
 
 (provide 'csound-repl-interaction)
+
+;;; csound-repl-interaction.el ends here

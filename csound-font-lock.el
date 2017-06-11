@@ -17,8 +17,14 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(require 'shut-up)
+;;; Commentary
 
+;; See README.md (https://github.com/hlolli/csound-mode/blob/master/README.md)
+
+;;; Code:
+
+
+(require 'shut-up)
 
 (defcustom csound-rainbow-score-parameters? t
   "Color each parameter field for
@@ -321,7 +327,6 @@
       (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil))))
 
 (defun csound-font-flush ()
-  (interactive)
   (progn (csound-font-lock-param--flush-buffer)
 	 (csound-font-lock-param--flush-score)
 	 (csound-font-lock--flush-block-comments)
