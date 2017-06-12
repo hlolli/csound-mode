@@ -27,7 +27,7 @@
 (require 'csound-util)
 
 (defcustom csound-indentation-spaces 2
-  "Set how many spaces are in indentation"
+  "Set how many spaces are in indentation."
   :type 'integer
   :group 'csound-mode)
 
@@ -110,16 +110,16 @@
 	 (after-goto-statement (if (string-match-p "\\<\\w*:\\B" expression-to-point) 1 0))
 	 (line-at-goto-statement (if (save-excursion
 				       (beginning-of-line)
-				       (search-forward-regexp "\\<\\w*:" (line-end-position 1) t 1)) 
+				       (search-forward-regexp "\\<\\w*:" (line-end-position 1) t 1))
 				     1 0))
 	 ;; (end-of-bool? (csound-indent-end-of-bool?))
 	 (begin-of-bool? (csound-indent-beginning-of-bool?))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
 				     after-goto-statement
 				     ;; count-elseif-statements
-				     count-while-statements) 
-				  count-endif-statements 
-				  count-od-statements 
+				     count-while-statements)
+				  count-endif-statements
+				  count-od-statements
 				  begin-of-bool?
 				  line-at-goto-statement
 				  goto-if-mix
@@ -138,8 +138,8 @@
      ;; ((csound-indent-within-score?) (csound-score-indentation))
      ((csound-indent-begin-of-expr?) (indent-line-to 0))
      ((csound-indent-end-of-expr?) (indent-line-to 0))
-     ((csound-indent-inside-instr? boundry) (csound-indent-inside-expression-calc 'instr))   
-     ((csound-indent-inside-opcode? boundry) (csound-indent-inside-expression-calc 'opcode)) 
+     ((csound-indent-inside-instr? boundry) (csound-indent-inside-expression-calc 'instr))
+     ((csound-indent-inside-opcode? boundry) (csound-indent-inside-expression-calc 'opcode))
      (t (indent-line-to 0)))))
 
 (provide 'csound-indentation)

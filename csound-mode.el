@@ -52,7 +52,7 @@
 
 
 (defun csound-play ()
-  "Play the csound file."
+  "Play the csound file in current buffer."
   (interactive)
   (compile (format "csound -odac %s" (buffer-file-name))))
 
@@ -73,7 +73,6 @@
 	    ))))
 
 (defun csound-api-compile ()
-  (interactive)
   (case system-type
     ((or gnu/linux darwin cygwin)
      (progn (compile "make -C ./csoundAPI_emacsLisp")
@@ -136,7 +135,6 @@
   (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
   (add-hook 'csound-mode-hook #'csound-mode-keybindings)
   (add-hook 'completion-at-point-functions 'csound-opcode-completion-at-point nil 'local)
-
   (add-hook 'csound-mode-hook (lambda ()
   				(font-lock-add-keywords nil csound-font-lock-list)
   				(when csound-rainbow-score-parameters?

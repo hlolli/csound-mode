@@ -19,7 +19,7 @@
 
 ;;; Commentary
 
-;; See README.md (https://github.com/hlolli/csound-mode/blob/master/README.md)
+;; Font lock functionalities for csound-mode.
 
 ;;; Code:
 
