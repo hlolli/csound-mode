@@ -65,9 +65,9 @@
             csdoc-opcode-database
             :exclusive 'no
             :company-docsig (lambda (cand)
-			      (chomp (replace-regexp-in-string
-				      "\n\\|\s+" "\s"
-				      (nth 3 (gethash cand csdoc-opcode-database)))))
+			      (csound-chomp (replace-regexp-in-string
+					     "\n\\|\s+" "\s"
+					     (nth 3 (gethash cand csdoc-opcode-database)))))
             :company-doc-buffer (lambda (cand)
 				  (prin1-to-string (nth 11 (gethash cand csdoc-opcode-database))))
 	    ;;:company-location (lambda (cand) (nth 11 (gethash cand csdoc-opcode-database)))

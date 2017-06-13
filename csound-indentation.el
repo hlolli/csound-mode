@@ -98,7 +98,7 @@
 				(search-backward-regexp "\\(opcode\\)\\b" nil t))))
 	 (ending-of-current-line (line-end-position))
 	 (expression-to-point (buffer-substring beginning-of-expr (line-end-position 1)))
-	 (count-if-statements (recursive-count  "\\b\\(if\\)\\b" expression-to-point 0))
+	 (count-if-statements (csound-recursive-count  "\\b\\(if\\)\\b" expression-to-point 0))
 	 (goto-if-mix (save-excursion
 			(prog2
 			    (goto-char beginning-of-expr)

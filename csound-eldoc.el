@@ -56,7 +56,7 @@
 
 (defun csound-eldoc-statement-list (string-statement)
   (split-string
-   (untab (chomp string-statement))
+   (csound-untab (csound-chomp string-statement))
    "\\(,+\s*\\)+\\|\\(\s+,*\\)+"))
 
 

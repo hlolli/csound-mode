@@ -24,6 +24,7 @@
 ;;; Code:
 
 (require 'csound-font-lock)
+(require 'csound-util)
 
 ;; align-cols.el
 ;; Author: Matthias Helmling <matt@acid.rhein-neckar.de>

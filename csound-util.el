@@ -23,19 +23,19 @@
 ;;; Code:
 
 
-(defun chomp (str)
+(defun csound-chomp (str)
   "Chomp leading and tailing whitespace from STR."
   (while (string-match "\\`\n+\\|^\\s-+\\|\\s-+$\\|\n+\\'"
 		       str)
     (setq str (replace-match "" t t str)))
   str)
 
-(defun untab (str)
+(defun csound-untab (str)
   (while (string-match "\t" str)
     (setq str (replace-match " " t t str)))
   str)
 
-(defun recursive-count (regex string start)
+(defun csound-recursive-count (regex string start)
   (if (string-match regex string start)
       (+ 1 (recursive-count regex string (match-end 0)))
     0))

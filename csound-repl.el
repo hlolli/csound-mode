@@ -131,7 +131,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
     (let ((id (generate-random-uuid))
 	  (buffer-read-only nil)
 	  (lb (- (line-beginning-position) 5))
-	  (split-input (-> input chomp split-string)))
+	  (split-input (-> input csound-chomp split-string)))
       (read-csound-repl (intern (first split-input)) csound split-input)
       ;; (comint-output-filter proc (format "%s\n" return-val))
       (push (cons id input) csound-repl--input) 
