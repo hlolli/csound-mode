@@ -2,7 +2,8 @@
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 1.0.0-alpha
+;; Version: 0.1.0-alpha
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

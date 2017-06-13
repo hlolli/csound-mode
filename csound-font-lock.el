@@ -23,7 +23,7 @@
 
 ;;; Code:
 
-
+(require 'font-lock)
 (require 'shut-up)
 
 (defcustom csound-rainbow-score-parameters? t
