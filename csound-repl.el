@@ -195,13 +195,15 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 
 (defun csound--expression ()
   (save-excursion 
-    (end-of-line) 
-    (let* ((beg (search-backward-regexp "^\\s-*\\<instr\\>\\|^\\s-*\\<opcode\\>" nil t))
+    (end-of-line)
+    (let* ((fallback (list (line-beginning-position) (line-end-position)))
+	   (beg (search-backward-regexp "^\\s-*\\<instr\\>\\|^\\s-*\\<opcode\\>" nil t))
 	   (end (search-forward-regexp "^\\s-*\\<endin\\>\\|^\\s-*\\<endop\\>" nil t)))
-      (if (and beg end)
+      (if (and beg end (< beg (first fallback) end))
 	  (list beg end)
-	(throw 'no-expression
-	       "No instrument or opcode expression was found.")))))
+	fallback
+	;; (throw 'no-expression "No instrument or opcode expression was found.")
+	))))
 
 (defun csound-repl--newline-seperated-score-block ()
   (let ((beg-block (save-excursion

@@ -51,11 +51,44 @@
   :prefix "csound-mode-"
   :group 'csound-mode)
 
+;; https://stackoverflow.com/questions/11043004/emacs-compile-buffer-auto-close
+(defun csound-bury-compile-buffer-if-successful (buffer string)
+  "Bury a compilation buffer if succeeded without error"
+  (when (and
+         (buffer-live-p buffer)
+         (string-match "compilation" (buffer-name buffer))
+         (string-match "finished" string)
+         (not
+          (with-current-buffer buffer
+            (goto-char (point-min))
+            (search-forward-regexp "error[^s]" nil t))))
+    (bury-buffer buffer)))
 
 (defun csound-play ()
   "Play the csound file in current buffer."
   (interactive)
   (compile (format "csound -odac %s" (buffer-file-name))))
+
+(defun csound-render (bit filename)
+  "Render csound to file."
+  (interactive
+   (list
+    (read-string "File bit-value(16/24/32), defaults to 16: ")
+    (read-string (format "Filename, defaults to %s.wav: " (file-name-base)))))
+  ;;(compile (format "csound -o %s" (buffer-file-name)))
+  ;; (message "var1: %s var2: %s" var1 var2)
+  (let ((filename (if (string= "" filename)
+		      (concat (file-name-base) ".wav")
+		    filename)))
+    (compile (format "csound %s -o %s --format=%s %s"
+		     (buffer-file-name)
+		     filename 
+		     (-> (split-string filename "\\.")
+			 rest first)
+		     (case bit
+		       ("32" "-f")
+		       ("24" "-3")
+		       (t "-s"))))))
 
 (defun csound-opcode-completion-at-point ()
   (let ((bounds (bounds-of-thing-at-point 'word)))
@@ -110,8 +143,11 @@
   (csound-mode--repl-buffer-create))
 
 (defun csound-mode-keybindings ()
+  (local-set-key (kbd "C-c C-p") #'csound-play)
+  (local-set-key (kbd "C-c C-r") #'csound-render) 
+  ;; (local-set-key (kbd "C-c d") #'csound-thing-at-point-doc)
+  ;; REPL Keybindings
   (local-set-key (kbd "C-c C-z") #'csound-repl-start)
-  (local-set-key (kbd "C-c d") #'csound-thing-at-point-doc)
   (local-set-key (kbd "C-c C-s") #'csound-score-align-block)
   (local-set-key (kbd "C-M-x") #'csound-evaluate-region)
   (local-set-key (kbd "C-x C-e") #'csound-evaluate-line))
@@ -131,11 +167,14 @@
   (setq-local indent-line-function 'csound-indent-line)
   (setq-local comment-start ";; ")
   (setq-local comment-end "")
+  (setq compilation-scroll-output t)
   
   (add-hook 'csound-mode-hook #'eldoc-mode)
-  (set (make-local-variable 'eldoc-documentation-function) 'csound-eldoc-function)
+  
   (add-hook 'csound-mode-hook #'csound-mode-keybindings)
   (add-hook 'completion-at-point-functions 'csound-opcode-completion-at-point nil 'local)
+  (add-hook 'compilation-finish-functions #'csound-bury-compile-buffer-if-successful nil 'local)
+  
   (add-hook 'csound-mode-hook (lambda ()
   				(font-lock-add-keywords nil csound-font-lock-list)
   				(when csound-rainbow-score-parameters?

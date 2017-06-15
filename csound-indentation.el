@@ -104,9 +104,9 @@
 			    (goto-char beginning-of-expr)
 			    (csound-indent-count-goto-if-mix ending-of-current-line 0))))
 	 ;; (count-elseif-statements (recursive-count "\\b\\(elseif\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
-	 (count-endif-statements (recursive-count "\\b\\(endif\\)\\b" expression-to-point 0))
-	 (count-while-statements (recursive-count "\\b\\(while\\)\\b" expression-to-point 0))
-	 (count-od-statements (recursive-count "\\b\\(od\\)\\b" expression-to-point 0))
+	 (count-endif-statements (csound-recursive-count "\\b\\(endif\\)\\b" expression-to-point 0))
+	 (count-while-statements (csound-recursive-count "\\b\\(while\\)\\b" expression-to-point 0))
+	 (count-od-statements (csound-recursive-count "\\b\\(od\\)\\b" expression-to-point 0))
 	 (after-goto-statement (if (string-match-p "\\<\\w*:\\B" expression-to-point) 1 0))
 	 (line-at-goto-statement (if (save-excursion
 				       (beginning-of-line)
