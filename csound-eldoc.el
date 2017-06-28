@@ -61,38 +61,43 @@
 
 
 (defun csound-eldoc-template-lookup (statement-list)
-  (progn (setq result nil
-	       opdoce nil)
-	 ;; Functional syntax lookup
-	 (when (save-excursion (search-backward-regexp "(" (line-beginning-position) t 1))
-	   (save-excursion (progn (setq cand (thing-at-point 'symbol (search-backward-regexp "(" (line-beginning-position) t 1)))
-				  (while (and (not cand)
-					      (not (eq (point) (line-beginning-position))))
-				    (setq cand (thing-at-point 'symbol))
-				    (backward-char))
-				  (when (gethash cand csdoc-opcode-database)
-				    (setq result (csound-eldoc-get-template
-						  (gethash cand csdoc-opcode-database))
-					  opcode cand)))))
-	 ;; Normal statement lookup
-	 (when (not result)
-	   (dolist (statement statement-list) 
-	     (when (gethash statement csdoc-opcode-database)
-	       (setq result (csound-eldoc-get-template
-			     (gethash statement csdoc-opcode-database))
-		     opcode statement)))) 
-	 (when result 
-	   (let ((rate-list (split-string (replace-regexp-in-string "\n\s" "\n" result) "\n")))	     
-	     (if (= (length rate-list) 1)
-		 (list opcode (first rate-list))
-	       (let ((rate-candidate (substring (first statement-list) 0 1)))
-		 (setq rate-match nil)
-		 (dolist (xrate rate-list)
-		   (when (string= rate-candidate (substring xrate 0 1))
-		     (setq rate-match xrate)))
-		 (if rate-match
-		     (list opcode rate-match)
-		   (list opcode (first rate-list)))))))))
+  (let ((result nil)
+	(opdoce nil)
+	(last-open-paren (save-excursion (search-backward "(" (line-beginning-position) t 1)))
+	(last-close-paren (save-excursion (search-backward ")" (line-beginning-position) t 1))))
+    ;; Functional syntax lookup
+    (when (and last-open-paren
+	       (> last-open-paren
+		  (or last-close-paren
+		      (line-beginning-position))))
+      (save-excursion (progn (setq cand (thing-at-point 'symbol (search-backward-regexp "(" (line-beginning-position) t 1)))
+			     (while (and (not cand)
+					 (not (eq (point) (line-beginning-position))))
+			       (setq cand (thing-at-point 'symbol))
+			       (backward-char))
+			     (when (gethash cand csdoc-opcode-database)
+			       (setq result (csound-eldoc-get-template
+					     (gethash cand csdoc-opcode-database))
+				     opcode cand)))))
+    ;; Normal statement lookup
+    (when (not result)
+      (dolist (statement statement-list)
+	(when (gethash statement csdoc-opcode-database)
+	  (setq result (csound-eldoc-get-template
+			(gethash statement csdoc-opcode-database))
+		opcode statement))))
+    (when result
+      (let ((rate-list (split-string (replace-regexp-in-string "\n\s" "\n" result) "\n")))
+	(if (= (length rate-list) 1)
+	    (list opcode (first rate-list))
+	  (let ((rate-candidate (substring (first statement-list) 0 1)))
+	    (setq rate-match nil)
+	    (dolist (xrate rate-list)
+	      (when (string= rate-candidate (substring xrate 0 1))
+		(setq rate-match xrate)))
+	    (if rate-match
+		(list opcode rate-match)
+	      (list opcode (first rate-list)))))))))
 
 
 (defun csound-eldoc-argument-index (opcode-match opcode-index point-on-opcode?)
@@ -149,9 +154,6 @@
 	     (template-list-length (1- (length template-list)))
 	     (opcode-index (csound-eldoc-opcode-index opcode-match template-list))
 	     (argument-index (csound-eldoc-argument-index opcode-match opcode-index point-on-opcode?))
-	     ;; (argument-index (if (< argument-index opcode-index)
-	     ;; 			 (* -1 argument-index)
-	     ;; 		       (+ opcode-index argument-index)))
 	     (infinite-args? (string= "[...]" (car (last template-list)))))
 	(setq indx -1 list-index 0
 	      eldocstr "" inf-arg nil)
@@ -161,18 +163,12 @@
 			    (< template-list-length argument-index))
 		       t nil)
 	   eldocstr (concat eldocstr
-			    ;;(prog2 (put-text-property 0 (length arg) 'face 'error arg) arg)
-			    ;;(string= opcode-match (thing-at-point 'symbol))
-			    ;; (string= opcode-match (thing-at-point 'symbol))
-			    ;; (if (= indx 0)
-			    ;; 	;;(string= arg opcode-match)
-			    ;;   "" ", ")
-			    ;; 
 			    (when (string= arg opcode-match)
 			      (put-text-property 0 (length arg) 'face
 						 (list :foreground "#C70039"
 						       :weight (if point-on-opcode?
-								   'bold 'normal)) arg))
+								   'bold 'normal))
+						 arg))
 			    (if (or (and (= indx argument-index)
 					 ;;(string= arg (car (last template-list)))
 					 (not point-on-opcode?))

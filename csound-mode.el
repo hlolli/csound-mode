@@ -177,13 +177,13 @@
   
   (add-hook 'csound-mode-hook (lambda ()
   				(font-lock-add-keywords nil csound-font-lock-list)
-  				(when csound-rainbow-score-parameters?
+  				(when csound-rainbow-score-parameters-p
   				  (setq-local font-lock-fontify-region-function 'csound-fontify-region)
   				  (setq-local jit-lock-contextually t))
   				(shut-up
 				  (with-silent-modifications
 				    (csound-font-lock-param--flush-buffer)))
-  				(when csound-rainbow-score-parameters?
+  				(when csound-rainbow-score-parameters-p
   				  (shut-up
 				    (with-silent-modifications
 				      (csound-font-lock-param--flush-score)

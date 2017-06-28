@@ -26,7 +26,7 @@
 (require 'font-lock)
 (require 'shut-up)
 
-(defcustom csound-rainbow-score-parameters? t
+(defcustom csound-rainbow-score-parameters-p t
   "Color each parameter field for
    not events within CsScore/.sco"
   :type 'boolean
@@ -197,7 +197,7 @@
       (let ((beg-word nil)
 	    (end-word nil)
 	    (end-line (line-end-position 1))
-	    (passed-i? nil)
+	    (passed-i-p nil)
 	    (depth 2)
 	    (comment-begin (save-excursion
 			     (beginning-of-line)
@@ -207,7 +207,7 @@
 	(if (and (not start-of-i)
 		 comment-begin)
 	    (font-lock-prepend-text-property (1- comment-begin) (line-end-position) 'face "font-lock-comment-face")
-	  (when csound-rainbow-score-parameters?
+	  (when csound-rainbow-score-parameters-p
 	    (save-excursion
 	      (beginning-of-line 1)
 	      (while (< (point) end-line) 
@@ -215,18 +215,18 @@
 			 (>= (point) comment-begin))
 		    (prog2 (font-lock-prepend-text-property (1- comment-begin) (line-end-position) 'face "font-lock-comment-face")
 			(goto-char end-line))
-		  (if (not passed-i?)
+		  (if (not passed-i-p)
 		      (progn (if start-of-i
 				 (goto-char start-of-i)
 			       (search-forward-regexp "i\\|f\\|a\\|t" (line-end-position) t 1))
 			     (if (or (string-equal "i" (thing-at-point 'word t))
 				     (string-equal "f" (thing-at-point 'word t)))
-				 (prog2 (setq passed-i? t)
+				 (prog2 (setq passed-i-p t)
 				     (font-lock-prepend-text-property (1- (point)) (point) 'face "csound-i-score-face")))
 			     (progn 
 			       (setq beg-word (point)
 				     end-word (search-forward-regexp "\\s-\\|$" (line-end-position))
-				     passed-i? t)
+				     passed-i-p t)
 			       ;; Recolor i to overwrite i-rate behaviour
 			       (font-lock-prepend-text-property (1- beg-word) beg-word 'face "csound-i-score-face")
 			       ;; Color P1 values

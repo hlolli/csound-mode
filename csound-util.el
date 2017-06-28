@@ -37,7 +37,7 @@
 
 (defun csound-recursive-count (regex string start)
   (if (string-match regex string start)
-      (+ 1 (recursive-count regex string (match-end 0)))
+      (+ 1 (csound-recursive-count regex string (match-end 0)))
     0))
 
 (provide 'csound-util)
