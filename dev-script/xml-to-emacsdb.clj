@@ -1,13 +1,28 @@
+  (when csound-font-lock-rainbow-score-parameters-p
+    (shut-up
+      (with-silent-modifications
+	(csound-font-lock-param--flush-score)
+	(csound-font-lock--flush-block-comments))))
+
 ;; Clojure script to generate csound-opcodes.el
 ;; Some manual changes may be needed,
 ;; Zerodbfs needs to be changed to 0dbfs
 ;; `tab` and `tb` opcodes need to be split up
-
 (ns xml-to-emacsdb
   (:require [clojure.java.io :as io]
             [clojure.xml :as xml]
             [clojure.string :as string]))
 
+(def ELPA-requirements-prefix
+  (let [mode (slurp "../csound-mode.el")
+        mode (string/replace-first mode "csound-mode" "csound-opcodes")
+        find-commentary-tag (.indexOf mode "Commentary:")]
+    (str (subs mode 0 (+ 12 find-commentary-tag))
+         ";; Auto generated database of opcodes extraced from the manual\n"
+         ";;; Code:\n")))
+
+(def ELPA-requirements-postfix
+  ";;; csound-opcodes.el ends here")
 
 (def OPCODE-XML-DIR "/home/hlolli/csound/manual/opcodes/")
 
@@ -88,9 +103,11 @@
                out ""]
           (if (empty? docs)
             (str
+             ELPA-requirements-prefix "\n"
              "(setq csdoc-opcode-database (make-hash-table :test 'equal))\n"
              out missing-opcodes
-             "\n (provide 'csound-opcodes)")
+             "\n (provide 'csound-opcodes)\n" 
+             ELPA-requirements-postfix)
             (let [doc (first docs)
                   id (-> doc :attrs :id)
                   id (fix-csound-names id)

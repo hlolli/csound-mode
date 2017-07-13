@@ -1,7 +1,9 @@
-;;; csound-util.el
+;;; csound-util.el --- A major mode for interacting and coding Csound
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
+;; Version: 0.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -17,29 +19,29 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-;;; Commentary
-;;; Helper functions needed by various csound-mode files.
+;;; Commentary:
+;; Helper functions needed by various csound-mode files.
 
 ;;; Code:
 
 
-(defun csound-chomp (str)
+(defun csound-util-chomp (str)
   "Chomp leading and tailing whitespace from STR."
   (while (string-match "\\`\n+\\|^\\s-+\\|\\s-+$\\|\n+\\'"
 		       str)
     (setq str (replace-match "" t t str)))
   str)
 
-(defun csound-untab (str)
+(defun csound-util-untab (str)
   (while (string-match "\t" str)
     (setq str (replace-match " " t t str)))
   str)
 
-(defun csound-recursive-count (regex string start)
+(defun csound-util-recursive-count (regex string start)
   (if (string-match regex string start)
-      (+ 1 (csound-recursive-count regex string (match-end 0)))
+      (+ 1 (csound-util-recursive-count regex string (match-end 0)))
     0))
 
 (provide 'csound-util)
 
-;;; csound-mode.el ends here
+;;; csound-util.el ends here

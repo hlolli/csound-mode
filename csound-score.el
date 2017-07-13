@@ -1,8 +1,10 @@
-;;; csound-score.el
+;;; csound-score.el --- A major mode for interacting and coding Csound
 
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
+;; Version: 0.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -17,7 +19,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary
+;;; Commentary:
 
 ;; See README.md (https://github.com/hlolli/csound-mode/blob/master/README.md)
 
@@ -26,13 +28,10 @@
 (require 'csound-font-lock)
 (require 'csound-util)
 
-;; align-cols.el
+;; align-cols
 ;; Author: Matthias Helmling <matt@acid.rhein-neckar.de>
-;; Keywords: extensions
-;; Version: 0.2
-;; Time-stamp: "99/01/30 15:46:16 matt"
 
-(defun align-cols (start end max-cols)
+(defun csound-score-align-cols (start end max-cols)
   "Align text between point and mark as columns.
 Columns are separated by whitespace characters.
 Prefix arg means align that many columns. (default is all)"
@@ -140,7 +139,7 @@ parameter are of same space width."
 	     (line-end-position 1) t 1)
 	    (setq line-num-test (1+ line-num-test))
 	  (setq ending-of-block (line-end-position 0)))))
-    (align-cols beginning-of-block ending-of-block 100)))
+    (csound-score-align-cols beginning-of-block ending-of-block 100)))
 
 
 

@@ -1,8 +1,9 @@
-;;; csound-font-lock.el
-
-;; Copyright (C) 2017  Hlöðver Sigurðsson
+;;; csound-eldoc.el --- A major mode for interacting and coding Csound
+;;  Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
+;; Version: 0.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -17,9 +18,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary
+;;; Commentary:
 
-;; Eldoc functionality for csound-mode
+;;  Eldoc functionality for csound-mode
 
 ;;; Code:
 
@@ -56,7 +57,7 @@
 
 (defun csound-eldoc-statement-list (string-statement)
   (split-string
-   (csound-untab (csound-chomp string-statement))
+   (csound-util-untab (csound-util-chomp string-statement))
    "\\(,+\s*\\)+\\|\\(\s+,*\\)+"))
 
 

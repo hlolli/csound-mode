@@ -1,8 +1,8 @@
-;;; csound-mode.el
-;; Copyright (C) 2017  Hlöðver Sigurðsson
+;;; csound-mode.el --- A major mode for interacting and coding Csound
+;;  Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.1.0-alpha
+;; Version: 0.1
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary
-;;; See README.md (https://github.com/hlolli/csound-mode/blob/master/README.md)
+;;; Commentary:
+
+;;  This file stores mode-specific bindings to `csound-mode`,
+;;  "offline" csound-interactions and major-mode definition,
+;;  syntax table.
 
 ;;; Code:
 
@@ -44,12 +47,27 @@
 (require 'shut-up)
 
 
-(defvar csound-mode-hook nil)
-
 (defgroup csound-mode nil
   "Tiny functionality enhancements for evaluating sexps."
   :prefix "csound-mode-"
   :group 'csound-mode)
+
+(defvar csound-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?_ "w" st)
+    ;; (modify-syntax-entry ?+ "w" st)
+    ;; (modify-syntax-entry ?- "w" st)
+    (modify-syntax-entry ?. "w" st)
+    (modify-syntax-entry ?! "w" st)
+    (modify-syntax-entry ?% "-" st)
+    (modify-syntax-entry ?\" "\"\"" st)
+    ;; (modify-syntax-entry ?| "\"" st)
+    (modify-syntax-entry ?\\ "\\" st)
+    ;; Comment syntax
+    (modify-syntax-entry ?\/ ". 14" st)
+    (modify-syntax-entry ?* ". 23" st)
+    st)
+  "Syntax table for csound-mode")
 
 ;; https://stackoverflow.com/questions/11043004/emacs-compile-buffer-auto-close
 (defun csound-bury-compile-buffer-if-successful (buffer string)
@@ -98,7 +116,7 @@
             csdoc-opcode-database
             :exclusive 'no
             :company-docsig (lambda (cand)
-			      (csound-chomp (replace-regexp-in-string
+			      (csound-util-chomp (replace-regexp-in-string
 					     "\n\\|\s+" "\s"
 					     (nth 3 (gethash cand csdoc-opcode-database)))))
             :company-doc-buffer (lambda (cand)
@@ -142,58 +160,48 @@
       (csound-api-compile)))
   (csound-mode--repl-buffer-create))
 
-(defun csound-mode-keybindings ()
-  (local-set-key (kbd "C-c C-p") #'csound-play)
-  (local-set-key (kbd "C-c C-r") #'csound-render) 
-  ;; (local-set-key (kbd "C-c d") #'csound-thing-at-point-doc)
-  ;; REPL Keybindings
-  (local-set-key (kbd "C-c C-z") #'csound-repl-start)
-  (local-set-key (kbd "C-c C-s") #'csound-score-align-block)
-  (local-set-key (kbd "C-M-x") #'csound-evaluate-region)
-  (local-set-key (kbd "C-x C-e") #'csound-evaluate-line))
+(defvar csound-mode-map nil)
+
+(setq csound-mode-map
+      (let ((map (make-sparse-keymap)))
+	;; Offline keybindings
+	(define-key map (kbd "C-c C-p") 'csound-play)
+	(define-key map (kbd "C-c C-r") 'csound-render) 
+	;; REPL Keybindings
+	(define-key map (kbd "C-c C-z") 'csound-repl-start)
+	(define-key map (kbd "C-c C-s") 'csound-score-align-block)
+	(define-key map (kbd "C-M-x")   'csound-evaluate-region)
+	(define-key map (kbd "C-x C-e") 'csound-evaluate-line)
+	map))
+
+
 
 ;;;###autoload
-(defun csound-mode ()
-  "csound-mode major mode."
-  (interactive)
-  (kill-all-local-variables)
-  (set-syntax-table csound-mode-syntax-table)
-  
-  (setq ad-redefinition-action 'accept)
-  (setq major-mode 'csound-mode)
-  (setq mode-name "Csound")
+(define-derived-mode csound-mode
+  prog-mode "Csound Mode"
+  "A major mode for interacting and coding Csound"
+  :syntax-table csound-mode-syntax-table
 
-  (setq-local eldoc-documentation-function 'csound-eldoc-function)
-  (setq-local indent-line-function 'csound-indent-line)
   (setq-local comment-start ";; ")
   (setq-local comment-end "")
-  (setq compilation-scroll-output t)
+  (setq-local indent-line-function 'csound-indentation-line)
   
-  (add-hook 'csound-mode-hook #'eldoc-mode)
+  (setq-local compilation-scroll-output t)
+  (setq-local ad-redefinition-action 'accept)
   
-  (add-hook 'csound-mode-hook #'csound-mode-keybindings)
-  (add-hook 'completion-at-point-functions 'csound-opcode-completion-at-point nil 'local)
-  (add-hook 'compilation-finish-functions #'csound-bury-compile-buffer-if-successful nil 'local)
-  
-  (add-hook 'csound-mode-hook (lambda ()
-  				(font-lock-add-keywords nil csound-font-lock-list)
-  				(when csound-rainbow-score-parameters-p
-  				  (setq-local font-lock-fontify-region-function 'csound-fontify-region)
-  				  (setq-local jit-lock-contextually t))
-  				(shut-up
-				  (with-silent-modifications
-				    (csound-font-lock-param--flush-buffer)))
-  				(when csound-rainbow-score-parameters-p
-  				  (shut-up
-				    (with-silent-modifications
-				      (csound-font-lock-param--flush-score)
-				      (csound-font-lock--flush-block-comments))))))
-  (run-hooks 'csound-mode-hook))
+  (add-hook 'completion-at-point-functions #'csound-opcode-completion-at-point nil t)
+  (add-hook 'compilation-finish-functions #'csound-bury-compile-buffer-if-successful nil t)
+  (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t)
+  (font-lock-add-keywords nil csound-font-lock-list)
+  (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
+  (shut-up
+    (when csound-font-lock-rainbow-score-parameters-p
+      (setq-local jit-lock-contextually t))
+    (with-silent-modifications
+      (csound-font-lock-flush-buffer))))
 
-(eval-after-load 'csound-mode
-  '(progn
-     (define-auto-insert "\\.csd\\'" 'csound-new-csd)
-     (add-to-list 'auto-mode-alist '("\\.csd\\'\\|\\.orc\\'\\|\\.sco\\'\\|\\.udo\\'" . csound-mode))))
+
+(add-to-list 'auto-mode-alist `(,(concat "\\." (regexp-opt '("csd" "orc" "sco" "udo")) "'") . csound-mode))
 
 (provide 'csound-mode)
 

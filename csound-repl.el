@@ -131,7 +131,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
     (let ((id (generate-random-uuid))
 	  (buffer-read-only nil)
 	  (lb (- (line-beginning-position) 5))
-	  (split-input (-> input csound-chomp split-string)))
+	  (split-input (-> input csound-util-chomp split-string)))
       (read-csound-repl (intern (first split-input)) csound split-input)
       ;; (comint-output-filter proc (format "%s\n" return-val))
       (push (cons id input) csound-repl--input) 
@@ -252,8 +252,8 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   (setq flash-start start
 	flash-end end)
   (if errorp
-      (hlt-highlight-region flash-start flash-end 'csound-eval-flash-error)
-    (hlt-highlight-region flash-start flash-end 'csound-eval-flash))
+      (hlt-highlight-region flash-start flash-end 'csound-font-lock-eval-flash-error)
+    (hlt-highlight-region flash-start flash-end 'csound-font-lock-eval-flash))
   (run-with-idle-timer 0.15 nil
 		       (lambda ()
 			 (hlt-unhighlight-region flash-start flash-end))))

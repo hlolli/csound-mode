@@ -1,3 +1,27 @@
+;;; csound-opcodes.el --- A major mode for interacting and coding Csound
+;;  Copyright (C) 2017  Hlöðver Sigurðsson
+
+;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
+;; Version: 0.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+;; Auto generated database of opcodes extraced from the manual
+;;; Code:
+
 (setq csdoc-opcode-database (make-hash-table :test 'equal))
 (puthash "shiftin" '(:template "kout[] shiftin asig" :doc "Shifts the contents of an audio variable into a 1-dimensional array.") csdoc-opcode-database)
 (puthash "octpch" '(:template "octpch (pch) (init- or control-rate args only)" :doc "Converts a pitch-class value to octave-point-decimal.") csdoc-opcode-database)
@@ -1777,3 +1801,4 @@ kres xadsr iatt, idec, islev, irel [, idel]" :doc "Calculates the classical ADSR
 (puthash "printks2" '(:template "printks2 "string", kval" :doc "Prints a new value every time a control variable changes using a printf() style syntax.") csdoc-opcode-database)
 
  (provide 'csound-opcodes)
+;;; csound-opcodes.el ends here

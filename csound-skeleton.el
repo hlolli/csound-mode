@@ -1,8 +1,10 @@
-;;; csound-skeleton.el
+;;; csound-skeleton.el --- A major mode for interacting and coding Csound
 
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
+;; Version: 0.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -17,12 +19,10 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary
-;;; Skeleton for when creating new .csd file.
+;;; Commentary:
+;;  Skeleton for when creating new .csd file.
 
 ;; Initialize defaults values
-
-
 (defcustom csound-skeleton-default-sr 44100
   "Set the default sr value when creating new csound file."
   :type 'integer
@@ -33,9 +33,8 @@
   :type 'integer
   :group 'csound-mode)
 
-
-(define-skeleton csound-new-csd
-  "Throwaway C skeleton"
+(define-skeleton csound-skeleton-new-csd
+  "Skeleton for auto-insert in csound-mode."
   nil
   "<CsoundSynthesizer>\n"
   "<CsOptions>\n</CsOptions>\n"
@@ -46,10 +45,13 @@
   "0dbfs = 1.0\n"
   "\n\n\n"
   "</CsInstruments>\n"
-  "<CsScore>\n"
+  "<CsScore>\n\n\n"
   "</CsScore>\n"
   "</CsoundSynthesizer>\n")
 
+(eval-when-compile
+  (define-auto-insert "\\.csd\\'"
+    [csound-skeleton-new-csd (lambda () (goto-line 11))]))
 
 (provide 'csound-skeleton)
 

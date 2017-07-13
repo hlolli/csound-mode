@@ -1,8 +1,10 @@
-;;; csound-repl-interaction.el
+;;; csound-repl-interaction.el --- A major mode for interacting and coding Csound
 
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
+;; Version: 0.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -17,9 +19,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary
+;;; Commentary:
 
-;; See README.md (https://github.com/hlolli/csound-mode/blob/master/README.md)
+;; Here are all the functionalities that can be used
+;; when typing a command to the comint (csound-repl)
+;; prompt.
 
 ;;; Code:
 

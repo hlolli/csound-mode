@@ -1,8 +1,10 @@
-;;; csound-indentation.el
+;;; csound-indentation.el --- A major mode for interacting and coding Csound
 
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
+;; Version: 0.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -17,9 +19,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary
+;;; Commentary:
 
-;; Indentation rules for csound-mode
+;;  Indentation rules for csound-mode
 
 ;;; Code:
 
@@ -31,17 +33,17 @@
   :type 'integer
   :group 'csound-mode)
 
-(defun csound-indent-begin-of-expr-p ()
+(defun csound-indentation-begin-of-expr-p ()
   (save-excursion
     (beginning-of-line 1)
     (search-forward-regexp "\\b\\(instr\\)\\b\\|\\b\\(opcode\\)\\b" (line-end-position 1) t)))
 
-(defun csound-indent-end-of-expr-p ()
+(defun csound-indentation-end-of-expr-p ()
   (save-excursion
     (beginning-of-line 1)
     (search-forward-regexp "\\b\\(endin\\)\\b\\|\\b\\(endop\\)\\b" (line-end-position 1) t)))
 
-(defun csound-indent-inside-instr-p ()
+(defun csound-indentation-inside-instr-p ()
   (let* ((case-fold-search nil)
 	 (last-instr (save-excursion (search-backward-regexp "\\(instr\\)\\b" nil t)))
 	 (last-endin (save-excursion (search-backward-regexp "\\(endin\\)\\b" nil t))))
@@ -50,7 +52,7 @@
 	  ((< last-endin last-instr) t)
 	  (t nil))))
 
-(defun csound-indent-inside-opcode-p ()
+(defun csound-indentation-inside-opcode-p ()
   (let* ((case-fold-search nil)
 	 (last-opcode (save-excursion (search-backward-regexp "\\(opcode\\)\\b" nil t)))
 	 (last-endop (save-excursion (search-backward-regexp "\\(endop\\)\\b" nil t))))
@@ -59,7 +61,7 @@
 	  ((< last-endop last-opcode) t)
 	  (t nil))))
 
-(defun csound-indent-beginning-of-bool-p ()
+(defun csound-indentation-beginning-of-bool-p ()
   (save-excursion
     (beginning-of-line 1)
     (if (and (search-forward-regexp
@@ -73,7 +75,7 @@
 		 (not (search-forward-regexp "[a\\|k\\|i]?goto" (line-end-position 1) t))))
 	1 0)))
 
-(defun csound-indent-end-of-bool-p ()
+(defun csound-indentation-end-of-bool-p ()
   (save-excursion
     (beginning-of-line 1)
     (if (search-forward-regexp
@@ -81,17 +83,17 @@
 	 (line-end-position 1))
 	1 0)))
 
-(defun csound-indent-count-goto-if-mix (end-of-expr cnt)
+(defun csound-indentation-count-goto-if-mix (end-of-expr cnt)
   (if (<= end-of-expr (point))
       cnt
     (prog2
 	(beginning-of-line 2)
-	(csound-indent-count-goto-if-mix
+	(csound-indentation-count-goto-if-mix
 	 end-of-expr (if (and (search-forward-regexp "\\b\\(if\\)\\b" (line-end-position 1) t 1)
 			      (search-forward-regexp "goto" (line-end-position 1) t 1))
 			 (1+ cnt) cnt)))))
 
-(defun csound-indent-inside-expression-calc (expr-type)
+(defun csound-indentation-inside-expression-calc (expr-type)
   (let* ((beginning-of-expr (if (eq 'instr expr-type)
 				(save-excursion
 				  (search-backward-regexp "\\(instr\\)\\b" nil t))
@@ -99,22 +101,22 @@
 				(search-backward-regexp "\\(opcode\\)\\b" nil t))))
 	 (ending-of-current-line (line-end-position))
 	 (expression-to-point (buffer-substring beginning-of-expr (line-end-position 1)))
-	 (count-if-statements (csound-recursive-count  "\\b\\(if\\)\\b" expression-to-point 0))
+	 (count-if-statements (csound-util-recursive-count  "\\b\\(if\\)\\b" expression-to-point 0))
 	 (goto-if-mix (save-excursion
 			(prog2
 			    (goto-char beginning-of-expr)
-			    (csound-indent-count-goto-if-mix ending-of-current-line 0))))
+			    (csound-indentation-count-goto-if-mix ending-of-current-line 0))))
 	 ;; (count-elseif-statements (recursive-count "\\b\\(elseif\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
-	 (count-endif-statements (csound-recursive-count "\\b\\(endif\\)\\b" expression-to-point 0))
-	 (count-while-statements (csound-recursive-count "\\b\\(while\\)\\b" expression-to-point 0))
-	 (count-od-statements (csound-recursive-count "\\b\\(od\\)\\b" expression-to-point 0))
+	 (count-endif-statements (csound-util-recursive-count "\\b\\(endif\\)\\b" expression-to-point 0))
+	 (count-while-statements (csound-util-recursive-count "\\b\\(while\\)\\b" expression-to-point 0))
+	 (count-od-statements (csound-util-recursive-count "\\b\\(od\\)\\b" expression-to-point 0))
 	 (after-goto-statement (if (string-match-p "\\<\\w*:\\B" expression-to-point) 1 0))
 	 (line-at-goto-statement (if (save-excursion
 				       (beginning-of-line)
 				       (search-forward-regexp "\\<\\w*:" (line-end-position 1) t 1))
 				     1 0))
-	 ;; (end-of-bool-p (csound-indent-end-of-bool-p))
-	 (begin-of-bool-p (csound-indent-beginning-of-bool-p))
+	 ;; (end-of-bool-p (csound-indentation-end-of-bool-p))
+	 (begin-of-bool-p (csound-indentation-beginning-of-bool-p))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
 				     after-goto-statement
 				     ;; count-elseif-statements
@@ -132,16 +134,15 @@
     (indent-line-to (* csound-indentation-spaces tab-count))))
 
 
-(defun csound-indent-line ()
+(defun csound-indentation-line ()
   "Indent current line."
-  (let ((score-p (or (save-excursion (search-backward "<CsScore>" nil t))
-		     (string-equal "sco" (file-name-extension (buffer-file-name))))))
+  (let ((score-p (string-equal "sco" (file-name-extension (buffer-file-name)))))
     (cond
      (score-p (indent-line-to 0))
-     ((csound-indent-begin-of-expr-p) (indent-line-to 0))
-     ((csound-indent-end-of-expr-p) (indent-line-to 0))
-     ((csound-indent-inside-instr-p) (csound-indent-inside-expression-calc 'instr))
-     ((csound-indent-inside-opcode-p) (csound-indent-inside-expression-calc 'opcode))
+     ((csound-indentation-begin-of-expr-p) (indent-line-to 0))
+     ((csound-indentation-end-of-expr-p) (indent-line-to 0))
+     ((csound-indentation-inside-instr-p) (csound-indentation-inside-expression-calc 'instr))
+     ((csound-indentation-inside-opcode-p) (csound-indentation-inside-expression-calc 'opcode))
      (t (indent-line-to 0)))))
 
 (provide 'csound-indentation)

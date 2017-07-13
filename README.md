@@ -18,7 +18,10 @@ You can install `csound-mode` from `MELPA` using the following command:
 
 <kbd>M-x package-install [RET] csound-mode [RET]</kbd>
 
-To load, download the repository and add it to your emacs dotfile:
+Alternatively, download the repository and add it to your emacs dotfile,
+note that csound-mode requires `multi.el` and `shut-up.el`, 
+(multi and shut-up on MELPA respectively) so you would need
+to install those packages manually.
 
 ```el
 ;; Change directory path according to csound-mode dir location.
