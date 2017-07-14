@@ -152,13 +152,13 @@
 (defun csound-repl-start ()
   "Start the csound-repl."
   (interactive)
-  (if (fboundp 'csound-mode--repl-buffer-create)
-      (csound-mode--repl-buffer-create)
+  (if (fboundp 'csound-repl--buffer-create)
+      (csound-repl--buffer-create)
     (when (y-or-n-p (concat
 		     "csound-api module for emacs not found, "
 		     "do you want emacs to compile it for you?"))
       (csound-api-compile)))
-  (csound-mode--repl-buffer-create))
+  (csound-repl--buffer-create))
 
 (defvar csound-mode-map nil)
 
@@ -170,11 +170,9 @@
 	;; REPL Keybindings
 	(define-key map (kbd "C-c C-z") 'csound-repl-start)
 	(define-key map (kbd "C-c C-s") 'csound-score-align-block)
-	(define-key map (kbd "C-M-x")   'csound-evaluate-region)
-	(define-key map (kbd "C-x C-e") 'csound-evaluate-line)
+	(define-key map (kbd "C-M-x")   'csound-repl-evaluate-region)
+	(define-key map (kbd "C-x C-e") 'csound-repl-evaluate-line)
 	map))
-
-
 
 ;;;###autoload
 (define-derived-mode csound-mode

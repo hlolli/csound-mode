@@ -1,8 +1,11 @@
-;;; csound-repl.el
+;;; csound-repl.el --- A major mode for interacting and coding Csound
 
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
+;; Version: 0.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -17,9 +20,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Commentary
-
-;;; Repl functionality for csound-mode
+;;; Commentary:
+;; Repl functionality for csound-mode
 
 ;;; Code:
 
@@ -29,81 +31,91 @@
 (require 'csound-repl-interaction)
 (require 'csound-util)
 (require 'font-lock)
+(require 'shut-up)
 
-(setq-local csound-shared-library-loaded?
-	    (ignore-errors (module-load "emacscsnd.so")))
+(setq max-specpdl-size 5)  ; default is 1000, reduce the backtrace level
+(setq debug-on-error t)    ; now you should get a backtrace
 
-(defcustom csound-mode--repl-buffer-name "*Csound REPL*"
+"Make csound-instance a global variable"
+(setq csound-repl--csound-instance nil)
+
+(defvar csound-repl--process-tty-name
+  ""
+  "tty-name of the comnit process that
+  communicates with Csound instance.")
+
+(defcustom csound-repl-buffer-name "*Csound REPL*"
   "Buffer name given to the csound-mode repl."
   :group 'csound-mode-repl
   :type 'string)
 
-(defcustom csound-mode--repl-sr 44100
+(defcustom csound-repl-sr 44100
   "Sample rate of the csound repl"
   :group 'csound-mode-repl
   :type 'integer)
 
-(defcustom csound-mode--repl-ksmps 32
+(defcustom csound-repl-ksmps 32
   "ksmps value of the csound repl"
   :group 'csound-mode-repl
   :type 'integer)
 
-(defcustom csound-mode--repl-nchnls 2
+(defcustom csound-repl-nchnls 2
   "Number of out channels for the csound repl"
   :group 'csound-mode-repl
   :type 'integer)
 
-(defcustom csound-mode--repl-0dbfs 1
+(defcustom csound-repl-0dbfs 1
   "0dbfs value of the csound repl"
   :group 'csound-mode-repl
   :type 'integer)
 
-(defun csound-mode--get-repl-options ()
+(defun csound-repl-get-options ()
   (format "sr=%d\nksmps=%d\nnchnls=%d\n0dbfs=%d"
-	  csound-mode--repl-sr
-	  csound-mode--repl-ksmps
-	  csound-mode--repl-nchnls
-	  csound-mode--repl-0dbfs))
+	  csound-repl-sr
+	  csound-repl-ksmps
+	  csound-repl-nchnls
+	  csound-repl-0dbfs))
 
-(defun csound-mode--repl-buffer-already-exists? ()
-  (progn (setq indx 0
-	       exists? nil)
-	 (while (and (< indx (length (buffer-list)))
-		     (not exists?))
-	   (if (string-match
-		csound-mode--repl-buffer-name
-		(buffer-name (nth indx (buffer-list))))
-	       (setq exists? t)
-	     (setq indx (1+ indx))))
-	 exists?))
+(defun csound-repl-buffer-running-p ()
+  (let ((indx 0)
+	(exists? nil))
+    (while (and (< indx (length (buffer-list)))
+		(not exists?))
+      (if (string-match
+	   csound-repl-buffer-name
+	   (buffer-name (nth indx (buffer-list))))
+	  (setq exists? t)
+	(setq indx (1+ indx))))
+    exists?))
 
-(defun csound-mode--repl-buffer-create ()
-  (when (not (csound-mode--repl-buffer-already-exists?))
+(defun csound-repl--buffer-create ()
+  (when (not (csound-repl-buffer-running-p))
     (let ((prev-buffer (buffer-name)))
       (save-excursion
 	(generate-new-buffer
-	 csound-mode--repl-buffer-name)
+	 csound-repl-buffer-name)
 	(split-window-sensibly)
-	(switch-to-buffer-other-window csound-mode--repl-buffer-name)
+	(switch-to-buffer-other-window csound-repl-buffer-name)
 	(with-current-buffer (buffer-name) (funcall 'csound-interactive-mode))
 	(switch-to-buffer-other-window prev-buffer)))))
 
-(defun csound-mode--last-visited-csd ()
+(defun csound-repl-last-visited-csd ()
   "This decides which filename is given to repl buffer."
-  (let ((indx--last-visited 0)
-	(match-p nil)
-	(last-file "not-found")
-	(len (length (buffer-list))))
-    (while (and (< indx--last-visited len)
-		(not match-p))
-      (if (string-match-p ".csd$" (buffer-name (nth indx--last-visited (buffer-list))))
-	  (prog2
-	      (setq-local last-file (buffer-name (nth indx--last-visited (buffer-list))))
-	      (setq-local match-p t))
-	(setq-local indx--last-visited (1+ indx--last-visited))))
-    last-file))
+  (shut-up
+    (let ((indx--last-visited 0)
+	  (match-p nil)
+	  (last-file "not-found")
+	  (len (length (buffer-list))))
+      (while (and (< indx--last-visited len)
+		  (not match-p))
+	(if (string-match-p ".csd$" (buffer-name (nth indx--last-visited (buffer-list))))
+	    (prog2
+		(setq-local last-file (buffer-name (nth indx--last-visited (buffer-list))))
+		(setq-local match-p t))
+	  (setq-local indx--last-visited (1+ indx--last-visited))))
+      last-file)))
 
-(defun generate-random-uuid ()
+(defun csound-repl--generate-random-uuid ()
   "Insert a random UUID.
 Example of a UUID: 1df63142-a513-c850-31a3-535fc3520c3d
 WARNING: this is a simple implementation. 
@@ -128,20 +140,20 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 
 (defun csound-repl--input-sender (proc input)
   (unless (eq 0 (length input)) 
-    (let ((id (generate-random-uuid))
+    (let ((id (csound-repl--generate-random-uuid))
 	  (buffer-read-only nil)
 	  (lb (- (line-beginning-position) 5))
 	  (split-input (-> input csound-util-chomp split-string)))
-      (read-csound-repl (intern (first split-input)) csound split-input)
+      (read-csound-repl (intern (first split-input)) csound-repl--csound-instance split-input)
       ;; (comint-output-filter proc (format "%s\n" return-val))
       (push (cons id input) csound-repl--input) 
       ;; (message "%s" input)
       (puthash id (process-buffer proc) csound-repl--input-history)
-      ;; (save-excursion (set-buffer csound-mode--repl-buffer-name) (point-max))
+      ;; (save-excursion (set-buffer csound-repl-buffer-name) (point-max))
       ))
   (comint-output-filter proc csound-repl-prompt))
 
-(defun csound-mode--generate-repl-welcome-message (cur-file)
+(defun csound-repl--generate-welcome-message (cur-file)
   (let ((s (format (concat "\n"
 			   ";;  csound-mode 1.0.0\n"
 			   ";;  file: " cur-file "\n"
@@ -149,51 +161,48 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 			   ";;  ksmps: %d\n"
 			   ";;  nchnls: %d\n"
 			   ";;  0dbfs: %d\n\n\n")
-		   csound-mode--repl-sr
-		   csound-mode--repl-ksmps
-		   csound-mode--repl-nchnls
-		   csound-mode--repl-0dbfs)))
+		   csound-repl-sr
+		   csound-repl-ksmps
+		   csound-repl-nchnls
+		   csound-repl-0dbfs)))
     (put-text-property 0 (length s) 'face 'font-lock-doc-string-face s)
     s))
 
-(defvar csound-interactive-mode-hook nil)
+(defun csound-repl--restart ()
+  (when csound-repl--csound-instance
+    (progn
+      (setq csound-repl--csound-instance (csoundCreate))
+      (sleep-for 0.1)
+      (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
+				CSOUNDINIT_NO_SIGNAL_HANDLER))
+      (when (not (string-empty-p csound-repl--process-tty-name))
+      	(csoundMessageTty csound-repl--csound-instance csound-repl--process-tty-name))
+      (csoundSetOption csound-repl--csound-instance "-odac")
+      (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
+      (csoundInputMessage csound-repl--csound-instance "e 0 3600000")
+      ;; TODO make this customizeable or automatic
+      (csoundStart csound-repl--csound-instance)
+      (csoundAsyncPerform csound-repl--csound-instance))))
 
-(defun csound-repl--boot-instance (tty-name)
-  (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
-			    CSOUNDINIT_NO_SIGNAL_HANDLER))
-  (if (boundp 'csound)
-      (progn
-	(csoundStop csound)
-	(sleep-for 0.1)
-      	(csoundReset csound) 
-      	(csoundCleanup csound))
-    (setq csound (csoundCreate))) 
-  (when (boundp 'tty-name)
-    (csoundMessageTty csound tty-name))
-  (csoundSetOption csound "-odac") 
-  ;; TODO make this customizeable or automatic
-  (csoundCompileOrc csound (csound-mode--get-repl-options))
-  ;; (csoundReadScore csound "e 0 3600")
-  (csoundInputMessage csound "e 0 3600000")
-  (csoundStart csound)
-  (csoundAsyncPerform csound))
+(defun csound-repl--boot-instance ()
+  (if csound-repl--csound-instance
+      (csound-repl--restart)
+    (progn
+      (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
+				CSOUNDINIT_NO_SIGNAL_HANDLER))
+      (setq csound-repl--csound-instance (csoundCreate))
+      (sleep-for 0.1)
+      (when (not (string-blank-p csound-repl--process-tty-name))
+	(csoundMessageTty csound-repl--csound-instance csound-repl--process-tty-name))
+      (csoundSetOption csound-repl--csound-instance "-odac") 
+      ;; TODO make this customizeable or automatic
+      (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
+      ;; (csoundReadScore csound-repl--csound-instance "e 0 3600")
+      (csoundInputMessage csound-repl--csound-instance "e 0 3600000")
+      (csoundStart csound-repl--csound-instance)
+      (csoundAsyncPerform csound-repl--csound-instance))))
 
-(defmacro csound-repl--restart (tty-name)
-  `(if (boundp 'csound)
-       (progn
-	 (csoundStop csound)
-	 (sleep-for 0.1)
-	 (csoundReset csound) 
-	 (csoundCleanup csound) 
-	 (csoundMessageTty csound tty-name)
-	 (csoundSetOption csound "-odac")
-	 (csoundReadScore csound "e 0 360000")
-	 ;; TODO make this customizeable or automatic
-	 (csoundCompileOrc csound (csound-mode--get-repl-options))
-	 (csoundStart csound)
-	 (csoundAsyncPerform csound))))
-
-(defun csound--expression ()
+(defun csound-repl--expression-at-point ()
   (save-excursion 
     (end-of-line)
     (let* ((fallback (list (line-beginning-position) (line-end-position)))
@@ -225,7 +234,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 
 (defun csound-repl--insert-message (msg)
   (save-current-buffer
-    (set-buffer csound-mode--repl-buffer-name)
+    (set-buffer csound-repl-buffer-name)
     (goto-char (buffer-size))
     ;; (comint-next-prompt 1)
     ;; (switch-to-prev-buffer)
@@ -243,7 +252,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 
 (defun csound-repl--errorp (pre-eval-size)
   (save-current-buffer
-    (set-buffer csound-mode--repl-buffer-name)
+    (set-buffer csound-repl-buffer-name)
     (goto-char pre-eval-size)
     (if (search-forward-regexp "error: " nil t 1)
 	t nil)))
@@ -261,9 +270,9 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 (defun csound-repl-evaluate-orchestra-region (start end)
   (setq expression-string (buffer-substring start end)
 	message-buffer-size (buffer-size
-			     (get-buffer csound-mode--repl-buffer-name))
+			     (get-buffer csound-repl-buffer-name))
 	reg-start start reg-end end)
-  (csoundCompileOrc csound expression-string)
+  (csoundCompileOrc csound-repl--csound-instance expression-string)
   (run-with-idle-timer
    0.02 nil
    (lambda ()
@@ -278,23 +287,24 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 						(line-end-position))))))))))
 
 (defun csound-repl-evaluate-score-region (start end)
-  (setq expression-string (buffer-substring start end)
-	message-buffer-size (buffer-size
-			     (get-buffer csound-mode--repl-buffer-name))
-	reg-start start reg-end end)
-  (csoundInputMessage csound expression-string)
-  (run-with-idle-timer
-   0.02 nil
-   (lambda ()
-     (if (csound-repl--errorp message-buffer-size)
-	 (csound-repl--flash-region reg-start reg-end t)
-       (csound-repl--flash-region reg-start reg-end nil)))))
+  (let ((expression-string (buffer-substring start end))
+	(message-buffer-size (buffer-size
+			      (get-buffer csound-repl-buffer-name)))
+	(reg-start start)
+	(reg-end end))
+    (csoundInputMessage csound-repl--csound-instance expression-string)
+    (run-with-idle-timer
+     0.02 nil
+     (lambda ()
+       (if (csound-repl--errorp message-buffer-size)
+	   (csound-repl--flash-region reg-start reg-end t)
+	 (csound-repl--flash-region reg-start reg-end nil))))))
 
-(defun csound-evaluate-region ()
+(defun csound-repl-evaluate-region ()
   "Evaluate any csound code in region."
   (interactive)
-  (if (not (csound-mode--repl-buffer-already-exists?))
-      (message "csound-repl instance was not found")
+  (if (not (csound-repl-buffer-running-p))
+      (message "csound-repl is not started")
     (if (save-excursion
 	  (search-backward-regexp "<CsScore" nil t 1))
 	(if (region-active-p)
@@ -317,35 +327,34 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	       (region-beginning)
 	       (region-end))
 	      (deactivate-mark))
-	(apply 'csound-repl-evaluate-orchestra-region (csound--expression))))))
+	(apply 'csound-repl-evaluate-orchestra-region (csound-repl--expression-at-point))))))
 
-(defun csound-evaluate-line ()
+(defun csound-repl-evaluate-line ()
   "Evaluate csound expression on current line."
   (interactive)
-  (if (not (csound-mode--repl-buffer-already-exists?))
+  (if (not (csound-repl-buffer-running-p))
       (message "csound-repl instance was not found")
     (if (save-excursion
 	  (search-backward-regexp "<CsScore" nil t 1))
 	(csound-repl-evaluate-score-region
 	 (line-beginning-position)
 	 (line-end-position))	
-	(csound-repl-evaluate-orchestra-region
-	 (line-beginning-position)
-	 (line-end-position)))))
+      (csound-repl-evaluate-orchestra-region
+       (line-beginning-position)
+       (line-end-position)))))
 
 
 (define-derived-mode
   csound-interactive-mode comint-mode "CsoundInteractive"
   "Csound Interactive Message Buffer and REPL."
-  :syntax-table csound-mode-syntax-table
+  ;; :syntax-table csound-mode-syntax-table
   ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt)))
   (setq-local comint-input-sender 'csound-repl--input-sender)  
   (unless (comint-check-proc (current-buffer))
     ;; Was cat, but on non-Unix platforms that might not exist, so
     ;; use hexl instead, which is part of the Emacs distribution.
     (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl")))
-      (setq csound-repl--process-tty-name
-	    (process-tty-name csnd-proc))
+      (setq csound-repl--process-tty-name (process-tty-name csnd-proc))
       (set-process-query-on-exit-flag csnd-proc nil)
       (set-process-filter csnd-proc (lambda (_ stdin)
 				      (csound-repl--insert-message stdin)))
@@ -354,16 +363,20 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       (setq-local comint-scroll-to-bottom-on-input t)
       (setq-local comint-scroll-to-bottom-on-output t)
       (setq-local comint-move-point-for-output t)
-      (insert csound-mode--repl-buffer-name
-	      (csound-mode--generate-repl-welcome-message (csound-mode--last-visited-csd))) 
+      (insert csound-repl-buffer-name
+	      (csound-repl--generate-welcome-message (csound-repl-last-visited-csd))) 
       (set-marker
        (process-mark csnd-proc) (point))
       (comint-output-filter csnd-proc csound-repl-prompt)
-      (csound-mode--repl-buffer-create)
-      (csound-repl--boot-instance
-       csound-repl--process-tty-name)))
-  ;;(add-hook 'csound-interactive-mode-hook)
-  )
+      ;; (csound-repl--buffer-create)
+      (csound-repl--boot-instance)
+      (add-hook 'kill-buffer-hook (lambda ()
+				    (csoundStop csound-repl--csound-instance)
+				    (csoundDestroy csound-repl--csound-instance)
+				    (sleep-for 0.1)))
+      (add-hook 'kill-emacs-hook (lambda ()
+				   (csoundStop csound-repl--csound-instance)
+				   (csoundDestroy csound-repl--csound-instance))))))
 
 (provide 'csound-repl)
 
