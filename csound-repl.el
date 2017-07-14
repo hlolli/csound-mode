@@ -33,11 +33,15 @@
 (require 'font-lock)
 (require 'shut-up)
 
-(setq max-specpdl-size 5)  ; default is 1000, reduce the backtrace level
-(setq debug-on-error t)    ; now you should get a backtrace
 
-"Make csound-instance a global variable"
+;; Make csound-instance a global variable
 (setq csound-repl--csound-instance nil)
+
+;; For flash effects, expression variables,
+;; need to live longer than the funcall
+(setq-local csound-repl--expression-start 0)
+(setq-local csound-repl--expression-end 0)
+(setq-local csound-repl--expression-tmp-buffer-size 0)
 
 (defvar csound-repl--process-tty-name
   ""
@@ -179,7 +183,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       	(csoundMessageTty csound-repl--csound-instance csound-repl--process-tty-name))
       (csoundSetOption csound-repl--csound-instance "-odac")
       (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
-      (csoundInputMessage csound-repl--csound-instance "e 0 3600000")
+      (csoundInputMessage csound-repl--csound-instance "e 0 360000")
       ;; TODO make this customizeable or automatic
       (csoundStart csound-repl--csound-instance)
       (csoundAsyncPerform csound-repl--csound-instance))))
@@ -198,17 +202,17 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       ;; TODO make this customizeable or automatic
       (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
       ;; (csoundReadScore csound-repl--csound-instance "e 0 3600")
-      (csoundInputMessage csound-repl--csound-instance "e 0 3600000")
+      (csoundInputMessage csound-repl--csound-instance "e 0 360000")
       (csoundStart csound-repl--csound-instance)
       (csoundAsyncPerform csound-repl--csound-instance))))
 
 (defun csound-repl--expression-at-point ()
   (save-excursion 
     (end-of-line)
-    (let* ((fallback (list (line-beginning-position) (line-end-position)))
-	   (beg (search-backward-regexp "^\\s-*\\<instr\\>\\|^\\s-*\\<opcode\\>" nil t))
-	   (end (search-forward-regexp "^\\s-*\\<endin\\>\\|^\\s-*\\<endop\\>" nil t)))
-      (if (and beg end (< beg (first fallback) end))
+    (let ((fallback (list (line-beginning-position) (line-end-position)))
+	  (beg (search-backward-regexp "^\\s-*\\<instr\\>\\|^\\s-*\\<opcode\\>" nil t))
+	  (end (search-forward-regexp "^\\s-*\\<endin\\>\\|^\\s-*\\<endop\\>" nil t)))
+      (if (and beg end (<= beg (first fallback) end))
 	  (list beg end)
 	fallback
 	;; (throw 'no-expression "No instrument or opcode expression was found.")
@@ -257,48 +261,59 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
     (if (search-forward-regexp "error: " nil t 1)
 	t nil)))
 
-(defun csound-repl--flash-region (start end errorp)
-  (setq flash-start start
-	flash-end end)
+(defun csound-repl--flash-region (errorp)
+  ;; (message "flash-start: %s flash-end: %s" flash-start flash-end )
   (if errorp
-      (hlt-highlight-region flash-start flash-end 'csound-font-lock-eval-flash-error)
-    (hlt-highlight-region flash-start flash-end 'csound-font-lock-eval-flash))
+      (hlt-highlight-region
+       csound-repl--expression-start
+       flash-end 'csound-font-lock-eval-flash-error)
+    (hlt-highlight-region
+     csound-repl--expression-start
+     csound-repl--expression-end
+     'csound-font-lock-eval-flash))
   (run-with-idle-timer 0.15 nil
 		       (lambda ()
-			 (hlt-unhighlight-region flash-start flash-end))))
+			 (hlt-unhighlight-region
+			  csound-repl--expression-start
+			  csound-repl--expression-end))))
 
 (defun csound-repl-evaluate-orchestra-region (start end)
-  (setq expression-string (buffer-substring start end)
-	message-buffer-size (buffer-size
-			     (get-buffer csound-repl-buffer-name))
-	reg-start start reg-end end)
-  (csoundCompileOrc csound-repl--csound-instance expression-string)
-  (run-with-idle-timer
-   0.02 nil
-   (lambda ()
-     (if (csound-repl--errorp message-buffer-size)
-	 (csound-repl--flash-region reg-start reg-end t) 
-       (progn
-	 (csound-repl--flash-region reg-start reg-end nil)
-	 (csound-repl--insert-message
-	  (concat ";; Evaluated: "
-		  (buffer-substring reg-start (save-excursion
-						(goto-char reg-start)
-						(line-end-position))))))))))
+  (let ((expression-string (buffer-substring start end)))
+    (setq-local csound-repl--expression-start start)
+    (setq-local csound-repl--expression-end end)
+    (setq-local csound-repl--expression-tmp-buffer-size
+		(buffer-size (get-buffer csound-repl-buffer-name)))
+    (csoundCompileOrc csound-repl--csound-instance expression-string)
+    (run-with-idle-timer
+     0.02 nil
+     (lambda ()
+       (if (csound-repl--errorp csound-repl--expression-tmp-buffer-size)
+	   (csound-repl--flash-region t) 
+	 (progn
+	   (csound-repl--flash-region nil)
+	   (csound-repl--insert-message
+	    (concat ";; Evaluated: "
+		    (buffer-substring csound-repl--expression-start
+				      (save-excursion
+					(goto-char csound-repl--expression-start)
+					(line-end-position)))))))))))
 
 (defun csound-repl-evaluate-score-region (start end)
   (let ((expression-string (buffer-substring start end))
 	(message-buffer-size (buffer-size
-			      (get-buffer csound-repl-buffer-name)))
-	(reg-start start)
-	(reg-end end))
+			      (get-buffer csound-repl-buffer-name))))
+    (setq-local csound-repl--expression-start start)
+    (setq-local csound-repl--expression-end end)
+    (setq-local csound-repl--expression-tmp-buffer-size
+		(buffer-size (get-buffer csound-repl-buffer-name)))
     (csoundInputMessage csound-repl--csound-instance expression-string)
     (run-with-idle-timer
      0.02 nil
      (lambda ()
-       (if (csound-repl--errorp message-buffer-size)
-	   (csound-repl--flash-region reg-start reg-end t)
-	 (csound-repl--flash-region reg-start reg-end nil))))))
+       (if (csound-repl--errorp csound-repl--expression-tmp-buffer-size)
+	   (prog2 (csound-repl--flash-region t)
+	       (csound-repl--insert-message (concat ";; Score: error in code")))
+	 (csound-repl--flash-region nil))))))
 
 (defun csound-repl-evaluate-region ()
   "Evaluate any csound code in region."
@@ -306,7 +321,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   (if (not (csound-repl-buffer-running-p))
       (message "csound-repl is not started")
     (if (save-excursion
-	  (search-backward-regexp "<CsScore" nil t 1))
+	  (search-backward "<CsScore" nil t 1))
 	(if (region-active-p)
 	    (prog2
 		(csound-repl-evaluate-score-region
@@ -371,12 +386,17 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       ;; (csound-repl--buffer-create)
       (csound-repl--boot-instance)
       (add-hook 'kill-buffer-hook (lambda ()
-				    (csoundStop csound-repl--csound-instance)
-				    (csoundDestroy csound-repl--csound-instance)
-				    (sleep-for 0.1)))
+				    (when (string-equal (buffer-name)   csound-repl-buffer-name)
+				      (csoundStop csound-repl--csound-instance)
+				      ;; Note to self, csoundCleanup causes crashes
+				      (csoundDestroy csound-repl--csound-instance)
+				      (sleep-for 0.1))))
       (add-hook 'kill-emacs-hook (lambda ()
-				   (csoundStop csound-repl--csound-instance)
-				   (csoundDestroy csound-repl--csound-instance))))))
+				   (when csound-repl--csound-instance
+				     (when (not (eq 0 (csoundGetCurrentTimeSamples csound-repl--csound-instance)))
+				       (csoundStop csound-repl--csound-instance))
+				     (csoundDestroy csound-repl--csound-instance)
+				     (sleep-for 0.05)))))))
 
 (provide 'csound-repl)
 
