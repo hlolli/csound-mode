@@ -158,19 +158,24 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   (comint-output-filter proc csound-repl-prompt))
 
 (defun csound-repl--generate-welcome-message (cur-file)
-  (let ((s (format (concat "\n"
-			   ";;  csound-mode 1.0.0\n"
-			   ";;  file: " cur-file "\n"
-			   ";;  sr: %d\n"
-			   ";;  ksmps: %d\n"
-			   ";;  nchnls: %d\n"
-			   ";;  0dbfs: %d\n\n\n")
-		   csound-repl-sr
-		   csound-repl-ksmps
-		   csound-repl-nchnls
-		   csound-repl-0dbfs)))
-    (put-text-property 0 (length s) 'face 'font-lock-doc-string-face s)
-    s))
+  (let* ((csound-repl---welcome-title
+	  (concat "  __   __   __             __             __   __   __ \n"
+		  " /    /    /  | /  | /| ||/  |      /|/| /  ||/  | /   \n"
+		  "(    (___ (   |(   |( | ||   | ___ ( / |(   ||   |(___ \n"
+		  "|   )    )|   )|   )| | )|   )     |   )|   )|   )|    \n"
+		  "|__/  __/ |__/ |__/ | |/ |__/      |  / |__/ |__/ |__  \n"))
+	 (s (format (concat "\n"
+			    ";;  csound-mode 0.1\n"
+			    ";;  file: " cur-file "\n"
+			    ";;  sr: %d\n"
+			    ";;  ksmps: %d\n"
+			    ";;  nchnls: %d\n"
+			    ";;  0dbfs: %d\n\n\n")
+		    csound-repl-sr
+		    csound-repl-ksmps
+		    csound-repl-nchnls
+		    csound-repl-0dbfs)))
+    (concat csound-repl---welcome-title s)))
 
 (defun csound-repl--restart ()
   (when csound-repl--csound-instance
@@ -240,33 +245,32 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   (save-current-buffer
     (set-buffer csound-repl-buffer-name)
     (goto-char (buffer-size))
-    ;; (comint-next-prompt 1)
-    ;; (switch-to-prev-buffer)
-    (if (prog2 (beginning-of-line)
-	    (search-forward csound-repl-prompt nil t 1))
+    (let ((msg (replace-regexp-in-string " " "" msg)))
+      (if (prog2 (beginning-of-line)
+	      (search-forward csound-repl-prompt nil t 1))
+	  (progn 
+	    (beginning-of-line)
+	    (end-of-line 0)
+	    (insert (concat msg "\n")))
 	(progn 
-	  (beginning-of-line)
-	  (end-of-line 0)
-	  (insert (concat msg "\n")))
-      (progn 
-	(goto-char (buffer-size))
-	(end-of-line 1)
-	(insert (concat msg "\n"))))
+	  (goto-char (buffer-size))
+	  (end-of-line 1)
+	  (insert (concat msg "\n")))))
     (goto-char (1+ (buffer-size)))))
 
 (defun csound-repl--errorp (pre-eval-size)
   (save-current-buffer
     (set-buffer csound-repl-buffer-name)
     (goto-char pre-eval-size)
+    (beginning-of-line 0)
     (if (search-forward-regexp "error: " nil t 1)
 	t nil)))
 
 (defun csound-repl--flash-region (errorp)
-  ;; (message "flash-start: %s flash-end: %s" flash-start flash-end )
   (if errorp
       (hlt-highlight-region
        csound-repl--expression-start
-       flash-end 'csound-font-lock-eval-flash-error)
+       csound-repl--expression-end 'csound-font-lock-eval-flash-error)
     (hlt-highlight-region
      csound-repl--expression-start
      csound-repl--expression-end
@@ -358,11 +362,19 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
        (line-beginning-position)
        (line-end-position)))))
 
+(defvar csound-repl--font-lock-list
+  '((";+.*" . font-lock-comment-face)
+    ("SECTION [0-9]+:" . font-lock-string-face)
+    ("new alloc.*" . font-lock-comment-face)
+    ("error:" . font-lock-warning-face)
+    ("\\<T[^_]\\|\\<TT\\|M:" . csound-font-lock-i-rate)
+    (">>>.*<<<" . csound-font-lock-s-variables)
+    ("\\<\\w*[^0-9]:\\B" . csound-font-lock-a-rate)))
 
 (define-derived-mode
   csound-interactive-mode comint-mode "CsoundInteractive"
   "Csound Interactive Message Buffer and REPL."
-  ;; :syntax-table csound-mode-syntax-table
+  :syntax-table csound-mode-syntax-table
   ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt)))
   (setq-local comint-input-sender 'csound-repl--input-sender)  
   (unless (comint-check-proc (current-buffer))
@@ -373,13 +385,12 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       (set-process-query-on-exit-flag csnd-proc nil)
       (set-process-filter csnd-proc (lambda (_ stdin)
 				      (csound-repl--insert-message stdin)))
-      (setq-local font-lock-defaults '(csound-font-lock-list))
+      (setq-local font-lock-defaults '(csound-repl--font-lock-list))
       (setq-local comint-prompt-read-only t)
       (setq-local comint-scroll-to-bottom-on-input t)
       (setq-local comint-scroll-to-bottom-on-output t)
       (setq-local comint-move-point-for-output t)
-      (insert csound-repl-buffer-name
-	      (csound-repl--generate-welcome-message (csound-repl-last-visited-csd))) 
+      (insert (csound-repl--generate-welcome-message (csound-repl-last-visited-csd))) 
       (set-marker
        (process-mark csnd-proc) (point))
       (comint-output-filter csnd-proc csound-repl-prompt)

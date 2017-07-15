@@ -195,7 +195,7 @@
     (push '("\\<\\w*:\\B" . csound-font-lock-goto) csound-font-lock-list)
 
     ;; Regex for p-fields
-    (push '("\\bp[[:digit:]]+" . 'csound-font-lock-p) csound-font-lock-list)
+    (push '("\\bp[[:digit:]]+" . csound-font-lock-p) csound-font-lock-list)
 
     ;; Regex for `e` statement
     (push '("\\<[e]\\>" . csound-font-lock-e) csound-font-lock-list)
