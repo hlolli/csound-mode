@@ -1,4 +1,6 @@
 [![License GPL 3][badge-license]][copying]
+[![Melpa Status](http://melpa.milkbox.net/packages/csound-mode-badge.svg)](http://melpa.milkbox.net/#/csound-mode)
+
 
 # csound-mode
 This package provides both a basic major mode for editing Csound files,
@@ -18,10 +20,8 @@ You can install `csound-mode` from `MELPA` using the following command:
 
 <kbd>M-x package-install [RET] csound-mode [RET]</kbd>
 
-Alternatively, download the repository and add it to your emacs dotfile,
-note that csound-mode requires `multi.el` and `shut-up.el`, 
-(multi and shut-up on MELPA respectively) so you would need
-to install those packages manually.
+Alternatively, download latest release: https://github.com/hlolli/csound-mode/releases/download/v0.1/csound-mode-0.1.zip
+and add it manually to load-path like shown here:
 
 ```el
 ;; Change directory path according to csound-mode dir location.
