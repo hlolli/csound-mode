@@ -142,3 +142,5 @@
 ;; ((:content ((:content ((:content parsed-docs) 0)) 5)) 1)
 
 
+;; DANGEROUS version bump function
+;; find ./ -type f -exec sed -i -e 's/;; Version: 0\.1/;; Version: 0.1.1/g' {} \;

@@ -2,7 +2,7 @@
 ;;  Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.1
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,7 @@
   (let ((result nil)
 	(opdoce nil)
 	(last-open-paren (save-excursion (search-backward "(" (line-beginning-position) t 1)))
-	(last-close-paren (save-excursion (search-backward ")" (line-beginning-position) t 1))))
+	(last-close-paren (save-excursion (search-backward ")" (line-beginning-position) t 1)))) 
     ;; Functional syntax lookup
     (when (and last-open-paren
 	       (> last-open-paren

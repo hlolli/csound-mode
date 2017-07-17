@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.1
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 
