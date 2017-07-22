@@ -35,9 +35,9 @@
   (csound-util-chomp
    (shell-command-to-string "pwd")))
 
-(setq csound-shared-library-loaded-p
-      (or (ignore-errors (module-load "emacscsnd.so"))
-	  (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))))
+(defvar csound-shared-library-loaded-p
+  (or (ignore-errors (module-load "emacscsnd.so"))
+      (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))))
 
 (require 'font-lock)
 (require 'csound-opcodes)
@@ -132,17 +132,15 @@
 (defun csound-api-compile ()
   (case system-type
     ((or gnu/linux darwin cygwin)
-     (progn (compile (format "make -C %s/csoundAPI_emacsLisp"
-			     csound-mode--dir-path))
-	    (setq csound-compilation-success-p
+     (progn (compile (format "make -C %s" csound-mode--dir-path))
+	    (setq csound-shared-library-loaded-p
 		  (or (ignore-errors (module-load "emacscsnd.so"))
-		      (ignore-errors (module-load "./csoundAPI_emacsLisp/emacscsnd.so"))
-		      (ignore-errors (module-load "./emacscsnd.so"))))
-	    (if csound-compilation-success-p
+		      (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))))
+	    (if csound-shared-library-loaded-p
 		(prog2 (require 'csound-repl)
 		    (message (concat "csound-api module was successfully compiled, "
 				     "you can now start the csound REPL with keybinding c-c c-z, "
-				     "or M-x csound-start-repl")))
+				     "or M-x csound-repl-start")))
 	      (error (concat "csound-api module compilation failed, "
 			     "please go to "
 			     "https://github.com/hlolli/csoundAPI_emacsLisp "
