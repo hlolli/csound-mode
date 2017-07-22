@@ -35,7 +35,7 @@
 
 
 ;; Make csound-instance a global variable
-(setq csound-repl--csound-instance nil)
+(defvar csound-repl--csound-instance nil)
 
 ;; For flash effects, expression variables,
 ;; need to live longer than the funcall

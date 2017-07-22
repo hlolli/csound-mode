@@ -29,10 +29,15 @@
 (when (version< emacs-version "25.1")
   (error "csound-mode requires at least GNU Emacs 25.1"))
 
+(defvar csound-shared-library-loaded-p nil)
+
+(defvar csound-mode--dir-path
+  (csound-util-chomp
+   (shell-command-to-string "pwd")))
+
 (setq csound-shared-library-loaded-p
       (or (ignore-errors (module-load "emacscsnd.so"))
-	  (ignore-errors (module-load "./csoundAPI_emacsLisp/emacscsnd.so"))
-	  (ignore-errors (module-load "./emacscsnd.so"))))
+	  (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))))
 
 (require 'font-lock)
 (require 'csound-opcodes)
@@ -127,7 +132,8 @@
 (defun csound-api-compile ()
   (case system-type
     ((or gnu/linux darwin cygwin)
-     (progn (compile "make -C ./csoundAPI_emacsLisp")
+     (progn (compile (format "make -C %s/csoundAPI_emacsLisp"
+			     csound-mode--dir-path))
 	    (setq csound-compilation-success-p
 		  (or (ignore-errors (module-load "emacscsnd.so"))
 		      (ignore-errors (module-load "./csoundAPI_emacsLisp/emacscsnd.so"))
@@ -153,12 +159,12 @@
   "Start the csound-repl."
   (interactive)
   (if (fboundp 'csound-repl--buffer-create)
-      (csound-repl--buffer-create)
+      (ignore-errors
+	(csound-repl--buffer-create))
     (when (y-or-n-p (concat
 		     "csound-api module for emacs not found, "
 		     "do you want emacs to compile it for you?"))
-      (csound-api-compile)))
-  (csound-repl--buffer-create))
+      (csound-api-compile))))
 
 (defvar csound-mode-map nil)
 

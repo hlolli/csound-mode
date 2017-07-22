@@ -160,73 +160,74 @@
 (defvar csound-font-lock-list '())
 
 (defconst csound-font-lock-keywords
-  (eval-when-compile
-    ;; Regex for i-rates
-    (push '("\\<i+\\w*" . csound-font-lock-i-rate) csound-font-lock-list)
-    
-    ;; Regex for global i-rates
-    (push '("\\<\\(gi\\)+\\w*" . csound-font-lock-global-i-rate) csound-font-lock-list)
+  (ignore-errors
+    (eval-when-compile
+      ;; Regex for i-rates
+      (push '("\\<i+\\w*" . csound-font-lock-i-rate) csound-font-lock-list)
+      
+      ;; Regex for global i-rates
+      (push '("\\<\\(gi\\)+\\w*" . csound-font-lock-global-i-rate) csound-font-lock-list)
 
-    ;; Regex for k-rates
-    (push `("\\<k+\\w*" . csound-font-lock-k-rate) csound-font-lock-list)
+      ;; Regex for k-rates
+      (push `("\\<k+\\w*" . csound-font-lock-k-rate) csound-font-lock-list)
 
-    ;; Regex for global k-rates
-    (push '("\\<\\(gk\\)+\\w*" . csound-font-lock-k-rate-global-face) csound-font-lock-list)
+      ;; Regex for global k-rates
+      (push '("\\<\\(gk\\)+\\w*" . csound-font-lock-k-rate-global-face) csound-font-lock-list)
 
-    ;; Regex for f-rate variables
-    (push '("\\<f+\\w*" . csound-font-lock-f-rate) csound-font-lock-list)
+      ;; Regex for f-rate variables
+      (push '("\\<f+\\w*" . csound-font-lock-f-rate) csound-font-lock-list)
 
-    ;; Regex for global f-rate variables
-    (push '("\\<\\(gf\\)+\\w*" . csound-font-lock-global-f-rate) csound-font-lock-list)
+      ;; Regex for global f-rate variables
+      (push '("\\<\\(gf\\)+\\w*" . csound-font-lock-global-f-rate) csound-font-lock-list)
 
-    ;; Regex for a-rates
-    (push '("\\<a+\\w*" . csound-font-lock-a-rate) csound-font-lock-list)
+      ;; Regex for a-rates
+      (push '("\\<a+\\w*" . csound-font-lock-a-rate) csound-font-lock-list)
 
-    ;; Regex for global a-rates
-    (push '("\\<\\(ga\\)+\\w*" . csound-font-lock-global-a-rate) csound-font-lock-list)
+      ;; Regex for global a-rates
+      (push '("\\<\\(ga\\)+\\w*" . csound-font-lock-global-a-rate) csound-font-lock-list)
 
-    ;; Regex for S variables
-    (push '("\\<S+\\w*" . csound-font-lock-s-variables) csound-font-lock-list)
+      ;; Regex for S variables
+      (push '("\\<S+\\w*" . csound-font-lock-s-variables) csound-font-lock-list)
 
-    ;; Regex for global S variables
-    (push '("\\<\\(gS\\)+\\w*" . csound-font-lock-global-s-variables) csound-font-lock-list)
+      ;; Regex for global S variables
+      (push '("\\<\\(gS\\)+\\w*" . csound-font-lock-global-s-variables) csound-font-lock-list)
 
-    ;; Regex for goto symbols ending with colon
-    (push '("\\<\\w*:\\B" . csound-font-lock-goto) csound-font-lock-list)
+      ;; Regex for goto symbols ending with colon
+      (push '("\\<\\w*:\\B" . csound-font-lock-goto) csound-font-lock-list)
 
-    ;; Regex for p-fields
-    (push '("\\bp[[:digit:]]+" . csound-font-lock-p) csound-font-lock-list)
+      ;; Regex for p-fields
+      (push '("\\bp[[:digit:]]+" . csound-font-lock-p) csound-font-lock-list)
 
-    ;; Regex for `e` statement
-    (push '("\\<[e]\\>" . csound-font-lock-e) csound-font-lock-list)
+      ;; Regex for `e` statement
+      (push '("\\<[e]\\>" . csound-font-lock-e) csound-font-lock-list)
 
-    ;; Regex for csound macros types
-    (push '("\\#\\w*\\|\\$\\w*" . csound-font-lock-macros) csound-font-lock-list)
+      ;; Regex for csound macros types
+      (push '("\\#\\w*\\|\\$\\w*" . csound-font-lock-macros) csound-font-lock-list)
 
-    ;; Regex for csound string types
-    (push '("\\s\"\\(.*?\\)[^\\]\\s\"" . csound-font-lock-strings) csound-font-lock-list)
+      ;; Regex for csound string types
+      (push '("\\s\"\\(.*?\\)[^\\]\\s\"" . csound-font-lock-strings) csound-font-lock-list)
 
-    ;; Regex for core csound xml tags
-    (push '("</?CsoundSynthesizer>\\|</?CsOptions>\\|</?CsInstruments>\\|</?CsScore[=\\\"0-9a-zA-z]?>" . csound-font-lock-xml-tags) csound-font-lock-list)
+      ;; Regex for core csound xml tags
+      (push '("</?CsoundSynthesizer>\\|</?CsOptions>\\|</?CsInstruments>\\|</?CsScore[=\\\"0-9a-zA-z]?>" . csound-font-lock-xml-tags) csound-font-lock-list)
 
-    ;; Some opcodes got missing but dont need docstrings
-    (setq-local missing-faces
-		(apply 'concat (mapcar (lambda (s) (concat "\\|\\<" s "\\>"))
-				       '("then" "do" "od" "else" "elseif" "endif"))))
+      ;; Some opcodes got missing but dont need docstrings
+      (setq-local missing-faces
+		  (apply 'concat (mapcar (lambda (s) (concat "\\|\\<" s "\\>"))
+					 '("then" "do" "od" "else" "elseif" "endif"))))
 
-    ;; Add opcodes to font-lock table csdoc-opdocde-database hash-table
-    (let* ((mutz "")
-	   (or-regex-opcodes (maphash (lambda (k v)
-					(when (stringp k)
-					  (setq-local mutz (concat mutz  "\\|\\<" k "\\>"))))
-				      csdoc-opcode-database))
-	   (mutz (concat "" (substring mutz 3 (length mutz)) missing-faces)))
-      (push `(,mutz . font-lock-builtin-face) csound-font-lock-list))
+      ;; Add opcodes to font-lock table csdoc-opdocde-database hash-table
+      (let* ((mutz "")
+	     (or-regex-opcodes (maphash (lambda (k v)
+					  (when (stringp k)
+					    (setq-local mutz (concat mutz  "\\|\\<" k "\\>"))))
+					csdoc-opcode-database))
+	     (mutz (concat "" (substring mutz 3 (length mutz)) missing-faces)))
+	(push `(,mutz . font-lock-builtin-face) csound-font-lock-list))
 
-    ;; Regex for `i` events in score
-    (push '("\\<i\\'" . csound-font-lock-i) csound-font-lock-list)
-    ;; Single line comments
-    (push '(";+.*" . font-lock-comment-face)  csound-font-lock-list)))
+      ;; Regex for `i` events in score
+      (push '("\\<i\\'" . csound-font-lock-i) csound-font-lock-list)
+      ;; Single line comments
+      (push '(";+.*" . font-lock-comment-face)  csound-font-lock-list))))
 
 
 ;; Borrowed from rainbow-delimiters.el
