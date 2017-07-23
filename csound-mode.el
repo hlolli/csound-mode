@@ -26,6 +26,9 @@
 
 ;;; Code:
 
+
+(require 'csound-util)
+
 (when (version< emacs-version "25.1")
   (error "csound-mode requires at least GNU Emacs 25.1"))
 
@@ -48,7 +51,6 @@
 (require 'csound-indentation)
 (require 'csound-score)
 (require 'csound-skeleton)
-(require 'csound-util)
 (require 'shut-up)
 
 
