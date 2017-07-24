@@ -38,9 +38,10 @@
   (csound-util-chomp
    (shell-command-to-string "pwd")))
 
-(defvar csound-shared-library-loaded-p
-  (or (ignore-errors (module-load "emacscsnd.so"))
-      (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))))
+(setq csound-shared-library-loaded-p
+      (or (ignore-errors (module-load "emacscsnd.so"))
+	  (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))
+	  (ignore-errors (module-load (concat csound-mode--dir-path "/csoundAPI_emacsLisp/emacscsnd.so")))))
 
 (require 'font-lock)
 (require 'csound-opcodes)
@@ -137,7 +138,8 @@
      (progn (compile (format "make -C %s" csound-mode--dir-path))
 	    (setq csound-shared-library-loaded-p
 		  (or (ignore-errors (module-load "emacscsnd.so"))
-		      (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))))
+		      (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))
+		      (ignore-errors (module-load (concat csound-mode--dir-path "/csoundAPI_emacsLisp/emacscsnd.so")))))
 	    (if csound-shared-library-loaded-p
 		(prog2 (require 'csound-repl)
 		    (message (concat "csound-api module was successfully compiled, "
@@ -199,8 +201,8 @@
   (font-lock-add-keywords nil csound-font-lock-list)
   (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
   (shut-up
-    (when csound-font-lock-rainbow-score-parameters-p
-      (setq-local jit-lock-contextually t))
+    ;; (when csound-font-lock-rainbow-score-parameters-p
+    ;;   (setq-local jit-lock-contextually t))
     (with-silent-modifications
       (csound-font-lock-flush-buffer))))
 
