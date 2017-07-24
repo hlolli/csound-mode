@@ -201,8 +201,8 @@
   (font-lock-add-keywords nil csound-font-lock-list)
   (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
   (shut-up
-    ;; (when csound-font-lock-rainbow-score-parameters-p
-    ;;   (setq-local jit-lock-contextually t))
+    (when csound-font-lock-rainbow-score-parameters-p
+      (setq-local jit-lock-contextually t))
     (with-silent-modifications
       (csound-font-lock-flush-buffer))))
 
