@@ -49,7 +49,6 @@ If the compilation fails in any way, please write a ticket or if you know what y
 
 ## Known bugs
 * Only one REPL instance can run at each moment
-* The current working directory of the REPL is always the home directory, to load resources with relative paths, use of the global variable $INCDIR is advised as a workaround.
 * Unexpected crashing of csound within the repl can sometimes lead to Emacs crashing, if Csound crashes (example when the audio server crashes), save your work and restart Emacs.
 
 

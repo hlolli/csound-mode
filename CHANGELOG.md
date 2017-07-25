@@ -7,6 +7,7 @@
 - Syntax-table: multiline and single-line not conflicting
 - Repl: csoundAPI Installation script now finds the makefile
 - Repl: add instance specific environment variable options
+- Score: all score events start immediately based on the lowest p2 value in block
 - Eldoc: functional syntax with specific rate, colon seperated, implemented
 
 ## [0.1.1]

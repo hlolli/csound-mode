@@ -28,6 +28,7 @@
 ;;; Code:
 
 
+(require 'csound-score)
 (require 'multi)
 
 (module-load "emacscsnd.so")
@@ -36,10 +37,11 @@
   op)
 
 (defmulti-method read-csound-repl 'i (_ csound args)
-  (csoundInputMessage csound  (string-join args " ")))
+  (csoundInputMessage csound (csound-score-trim-time
+			      (string-join args " "))))
 
 (defmulti-method read-csound-repl 'f (_ csound args)
-  (csoundInputMessage csound  (string-join args " ")))
+  (csoundInputMessage csound (string-join args " ")))
 
 (provide 'csound-repl-interaction)
 

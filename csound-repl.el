@@ -148,6 +148,8 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 
 (defvar csound-repl--input-history (make-hash-table :test 'equal))
 
+
+
 (defun csound-repl--input-sender (proc input)
   (unless (eq 0 (length input)) 
     (let ((id (csound-repl--generate-random-uuid))
@@ -258,7 +260,6 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 		     (line-end-position 0))))
     (list beg-block end-block)))
 
-
 (defun csound-repl--insert-message (msg)
   (save-current-buffer
     (set-buffer csound-repl-buffer-name)
@@ -273,7 +274,11 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	(progn 
 	  (goto-char (buffer-size))
 	  (end-of-line 1)
-	  (insert (concat msg "\n")))))
+	  (insert (concat msg "\n"))))
+      (when (or (string-match-p  "rtjack\\: error" msg)
+		(string-match-p "rtjack\\: could not connect" msg))
+	(csoundDestroy csound-repl--csound-instance)
+	(insert "REPL ERROR: Something went wrong, please restart the repl to continue.\n")))
     (goto-char (1+ (buffer-size)))))
 
 (defun csound-repl--errorp (pre-eval-size)
@@ -322,6 +327,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 					(goto-char csound-repl--expression-start)
 					(line-end-position)))))))))))
 
+
 (defun csound-repl-evaluate-score-region (start end)
   (let ((expression-string (buffer-substring start end))
 	(message-buffer-size (buffer-size
@@ -330,7 +336,9 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
     (setq-local csound-repl--expression-end end)
     (setq-local csound-repl--expression-tmp-buffer-size
 		(buffer-size (get-buffer csound-repl-buffer-name)))
-    (csoundInputMessage csound-repl--csound-instance expression-string)
+    (csoundInputMessage csound-repl--csound-instance
+			(csound-score-trim-time
+			 expression-string))
     (run-with-idle-timer
      0.02 nil
      (lambda ()
@@ -403,7 +411,6 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
     (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl"))
 	  ;; (file-location )
 	  (buffer-name (first (csound-repl-last-visited-csd))))
-      (setenv "INCDIR" (nth 1 (csound-repl-last-visited-csd)))
       (setq csound-repl--process-tty-name (process-tty-name csnd-proc))
       (set-process-query-on-exit-flag csnd-proc nil)
       (set-process-filter csnd-proc (lambda (_ stdin)
@@ -420,7 +427,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       ;; (csound-repl--buffer-create)
       (csound-repl--boot-instance)
       (add-hook 'kill-buffer-hook (lambda ()
-				    (when (string-equal (buffer-name)   csound-repl-buffer-name)
+				    (when (string-equal (buffer-name) csound-repl-buffer-name)
 				      (csoundStop csound-repl--csound-instance)
 				      ;; Note to self, csoundCleanup causes crashes
 				      (csoundDestroy csound-repl--csound-instance)

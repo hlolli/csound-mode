@@ -25,6 +25,7 @@
 
 ;;; Code:
 
+(require 'cl)
 (require 'csound-font-lock)
 (require 'csound-util)
 
@@ -141,7 +142,40 @@ parameter are of same space width."
 	  (setq ending-of-block (line-end-position 0)))))
     (csound-score-align-cols beginning-of-block ending-of-block 100)))
 
-
+(defun csound-score-trim-time (score-string) 
+  (let ((trimmed-string (split-string (substring-no-properties
+				       score-string) "\n"))
+	(min-p2 0)
+	(p2-list '())
+	(closure-list '())
+	(final-str ""))
+    (dolist (event trimmed-string)
+      (lexical-let ((lexical-p-list (split-string
+				     (replace-regexp-in-string
+				      "\\s-+" " " (csound-util-chomp event))
+				     " ")))
+	(setq p2-list (cons (string-to-number
+			     (if (< 2 (length lexical-p-list))
+				 (nth 2 lexical-p-list) 0))
+			    p2-list)
+	      closure-list (cons
+			    (lambda (min-time)
+			      (setf (nth 2 lexical-p-list)
+				    (number-to-string
+				     (- (string-to-number
+					 (nth 2 lexical-p-list))
+					min-time)))
+			      (string-join lexical-p-list " "))
+			    closure-list))))
+    (setq min-p2 (apply #'min p2-list)
+	  closure-list (reverse closure-list))
+    (dolist (event-fn closure-list)
+      (setq final-str (concat final-str (funcall event-fn min-p2) "\n")))
+    final-str
+    ;; (message "%s" closure-list)
+    ;; trimmed-string
+    ;; score-string
+    ))
 
 (provide 'csound-score)
 ;;; csound-score.el ends here
