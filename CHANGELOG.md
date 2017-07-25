@@ -1,5 +1,5 @@
 # Changelog
-## Master
+## [0.1.2]
 - Font-lock: Single line comments within score repaired
 - Font-lock: p-field variables in light color mode are darker
 - Font-lock: multiline comment in score implemented

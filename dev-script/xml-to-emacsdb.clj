@@ -143,4 +143,4 @@
 
 
 ;; DANGEROUS version bump function
-;; find ./ -type f -exec sed -i -e 's/;; Version: 0\.1/;; Version: 0.1.1/g' {} \;
+;; find ./ -type f -exec sed -i -e 's/;; Version: 0\.1\.1/;; Version: 0.1.2/g' {} \;
