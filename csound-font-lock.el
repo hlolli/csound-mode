@@ -28,6 +28,8 @@
 (require 'font-lock)
 (require 'shut-up)
 
+(defvar csound-font-lock--missing-faces '())
+
 (defcustom csound-font-lock-rainbow-score-parameters-p t
   "Color each parameter field for
    not events within CsScore/.sco"
@@ -127,7 +129,7 @@
   :group 'csound-mode-font-lock)
 
 (defface csound-font-lock-strings
-  '((((class color)) (:inherit font-lock-string-face)))
+  '((((class color)) (:inherit font-lock-string-face :bold nil)))
   "Face for strings themselves seperated by double quotation marks."
   :group 'csound-mode-font-lock)
 
@@ -205,8 +207,8 @@
       ;; Regex for csound macros types
       (push '("\\#\\w*\\|\\$\\w*" . csound-font-lock-macros) csound-font-lock-list)
 
-      ;; Regex for csound string types
-      (push '("\\s\"\\(.*?\\)[^\\]\\s\"" . csound-font-lock-strings) csound-font-lock-list)
+      ;; Regex for csound string types  (use syntactic fontification?) 
+      ;; (push '("\\s\"\\(.*?\\)[^\\]\\s\"" . csound-font-lock-strings) csound-font-lock-list)
 
       ;; Regex for core csound xml tags
       ;; "</?CsoundSynthesizer>\\|</?CsOptions>\\|</?CsInstruments>\\|</?CsScore[=\\\"0-9a-zA-z]?>\\|</?CsLicense>"
@@ -218,25 +220,22 @@
 		       "\\|</?CsScore[=\\\"0-9a-zA-z]?>")
 	      . csound-font-lock-xml-tags)
 	    csound-font-lock-list)
-
       ;; Some opcodes got missing but dont need docstrings
-      (setq-local missing-faces
-		  (apply 'concat (mapcar (lambda (s) (concat "\\|\\<" s "\\>"))
-					 '("then" "do" "od" "else" "elseif" "endif"))))
-
+      (setq csound-font-lock--missing-faces '("then" "do" "od" "else" "elseif" "endif"))
       ;; Add opcodes to font-lock table csdoc-opdocde-database hash-table
-      (let* ((mutz "")
-	     (or-regex-opcodes (maphash (lambda (k v)
-					  (when (stringp k)
-					    (setq-local mutz (concat mutz  "\\|\\<" k "\\>"))))
-					csdoc-opcode-database))
-	     (mutz (concat "" (substring mutz 3 (length mutz)) missing-faces)))
+      (let ((mutz '()))
+	(maphash (lambda (k v)
+		   (when (stringp k)
+		     (setq-local mutz (cons k mutz))))
+		 csdoc-opcode-database)
+	(setq-local mutz (append mutz csound-font-lock--missing-faces))
+	(setq-local mutz (regexp-opt mutz 'words))
 	(push `(,mutz . font-lock-builtin-face) csound-font-lock-list))
-
       ;; Regex for `i` events in score
       (push '("\\<i\\'" . csound-font-lock-i) csound-font-lock-list)
-      ;; Single line comments
-      (push '(";+.*" . font-lock-comment-face)  csound-font-lock-list))))
+      ;; Single line comments (use syntactic fontification?)
+      ;; (push '(";+.*" . font-lock-comment-face)  csound-font-lock-list)
+      )))
 
 
 ;; Borrowed from rainbow-delimiters.el

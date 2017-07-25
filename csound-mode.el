@@ -27,7 +27,7 @@
 ;;; Code:
 
 
-(require 'csound-util)
+
 
 (when (version< emacs-version "25.1")
   (error "csound-mode requires at least GNU Emacs 25.1"))
@@ -35,8 +35,8 @@
 (defvar csound-shared-library-loaded-p nil)
 
 (defvar csound-mode--dir-path
-  (csound-util-chomp
-   (shell-command-to-string "pwd")))
+  (let ((cur-work-dir (pwd)))
+    (substring cur-work-dir 10 (length cur-work-dir))))
 
 (setq csound-shared-library-loaded-p
       (or (ignore-errors (module-load "emacscsnd.so"))
@@ -52,6 +52,7 @@
 (require 'csound-indentation)
 (require 'csound-score)
 (require 'csound-skeleton)
+(require 'csound-util)
 (require 'shut-up)
 
 
@@ -67,13 +68,18 @@
     ;; (modify-syntax-entry ?- "w" st)
     (modify-syntax-entry ?. "w" st)
     (modify-syntax-entry ?! "w" st)
-    (modify-syntax-entry ?% "-" st)
+    (modify-syntax-entry ?% "-" st)    
     (modify-syntax-entry ?\" "\"\"" st)
-    ;; (modify-syntax-entry ?| "\"" st)
+    ;; (modify-syntax-entry ?| "\"" st) 
     (modify-syntax-entry ?\\ "\\" st)
     ;; Comment syntax
-    (modify-syntax-entry ?\/ ". 14" st)
-    (modify-syntax-entry ?* ". 23" st)
+    ;; good read: https://www.lunaryorn.com/posts/syntactic-fontification-in-emacs.html
+    (modify-syntax-entry ?\/ ". 124b" st)
+    (modify-syntax-entry ?* ". 23b" st)
+    (modify-syntax-entry ?\; "<" st
+    			 )
+    (modify-syntax-entry ?\n ">" st
+    			 )
     st)
   "Syntax table for csound-mode")
 
@@ -189,7 +195,7 @@
   :syntax-table csound-mode-syntax-table
   (setq-local eldoc-documentation-function 'csound-eldoc-function)
   (setq-local comment-start ";; ")
-  (setq-local comment-end "")
+  ;; (setq-local comment-end "")
   (setq-local indent-line-function 'csound-indentation-line)
   
   (setq-local compilation-scroll-output t)
@@ -197,12 +203,12 @@
   
   (add-hook 'completion-at-point-functions #'csound-opcode-completion-at-point nil t)
   (add-hook 'compilation-finish-functions #'csound-bury-compile-buffer-if-successful nil t)
-  (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t)
+  ;; (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t) 
   (font-lock-add-keywords nil csound-font-lock-list)
   (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
+  (setq-local jit-lock-mode t)
+  (setq-local jit-lock-contextually t)
   (shut-up
-    (when csound-font-lock-rainbow-score-parameters-p
-      (setq-local jit-lock-contextually t))
     (with-silent-modifications
       (csound-font-lock-flush-buffer))))
 

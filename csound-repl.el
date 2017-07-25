@@ -104,7 +104,8 @@
 	(switch-to-buffer-other-window prev-buffer)))))
 
 (defun csound-repl-last-visited-csd ()
-  "This decides which filename is given to repl buffer."
+  "This decides which filename is given to repl buffer.
+   Returns a list of (buffer-name absolute-path)"
   (shut-up
     (let ((indx--last-visited 0)
 	  (match-p nil)
@@ -114,7 +115,12 @@
 		  (not match-p))
 	(if (string-match-p ".csd$" (buffer-name (nth indx--last-visited (buffer-list))))
 	    (prog2
-		(setq-local last-file (buffer-name (nth indx--last-visited (buffer-list))))
+		(setq-local last-file (list
+				       (buffer-name
+					(nth indx--last-visited (buffer-list)))
+				       (file-name-directory
+					(buffer-file-name
+					 (nth indx--last-visited (buffer-list)))))) 
 		(setq-local match-p t))
 	  (setq-local indx--last-visited (1+ indx--last-visited))))
       last-file)))
@@ -177,6 +183,16 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 		    csound-repl-0dbfs)))
     (concat csound-repl---welcome-title s)))
 
+(defun csound-repl--set-default-dir-options ()
+  (let ((filedir (nth 1 (csound-repl-last-visited-csd))))
+    (mapc (lambda (opt)
+	    (csoundSetOption csound-repl--csound-instance
+			     (format "--env:%s+=;%s"
+				     opt filedir)))
+	  '("INCDIR" "SFDIR"
+	    "SSDIR" "SADIR"
+	    "MFDIR"))))
+
 (defun csound-repl--restart ()
   (when csound-repl--csound-instance
     (progn
@@ -186,6 +202,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 				CSOUNDINIT_NO_SIGNAL_HANDLER))
       (when (not (string-empty-p csound-repl--process-tty-name))
       	(csoundMessageTty csound-repl--csound-instance csound-repl--process-tty-name))
+      (csound-repl--set-default-dir-options)
       (csoundSetOption csound-repl--csound-instance "-odac")
       (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
       (csoundInputMessage csound-repl--csound-instance "e 0 360000")
@@ -203,7 +220,8 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       (sleep-for 0.1)
       (when (not (string-blank-p csound-repl--process-tty-name))
 	(csoundMessageTty csound-repl--csound-instance csound-repl--process-tty-name))
-      (csoundSetOption csound-repl--csound-instance "-odac") 
+      (csound-repl--set-default-dir-options)
+      (csoundSetOption csound-repl--csound-instance "-odac")
       ;; TODO make this customizeable or automatic
       (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
       ;; (csoundReadScore csound-repl--csound-instance "e 0 3600")
@@ -264,7 +282,8 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
     (goto-char pre-eval-size)
     (beginning-of-line 0)
     (if (or (search-forward-regexp "error: " nil t 1)
-	    (search-forward-regexp "Can't open" nil t 1))
+	    (search-forward-regexp "Can't open" nil t 1)
+	    (search-forward-regexp "Can't find" nil t 1))
 	t nil)))
 
 (defun csound-repl--flash-region (errorp)
@@ -376,12 +395,15 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   csound-interactive-mode comint-mode "CsoundInteractive"
   "Csound Interactive Message Buffer and REPL."
   :syntax-table csound-mode-syntax-table
-  ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt)))
+  ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt))) 
   (setq-local comint-input-sender 'csound-repl--input-sender)  
   (unless (comint-check-proc (current-buffer))
     ;; Was cat, but on non-Unix platforms that might not exist, so
     ;; use hexl instead, which is part of the Emacs distribution.
-    (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl")))
+    (let ((csnd-proc (start-process "csnd" (current-buffer) "hexl"))
+	  ;; (file-location )
+	  (buffer-name (first (csound-repl-last-visited-csd))))
+      (setenv "INCDIR" (nth 1 (csound-repl-last-visited-csd)))
       (setq csound-repl--process-tty-name (process-tty-name csnd-proc))
       (set-process-query-on-exit-flag csnd-proc nil)
       (set-process-filter csnd-proc (lambda (_ stdin)
@@ -391,7 +413,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       (setq-local comint-scroll-to-bottom-on-input t)
       (setq-local comint-scroll-to-bottom-on-output t)
       (setq-local comint-move-point-for-output t)
-      (insert (csound-repl--generate-welcome-message (csound-repl-last-visited-csd))) 
+      (insert (csound-repl--generate-welcome-message buffer-name))
       (set-marker
        (process-mark csnd-proc) (point))
       (comint-output-filter csnd-proc csound-repl-prompt)
