@@ -47,6 +47,10 @@ If the compilation fails in any way, please write a ticket or if you know what y
 
 `csound-mode` comes with major-mode-hooks, meaning that every time a csound file(.csd/.orc/.sco) is opened in emacs, `csoun-mode` will be automatically loaded as major mode. While making it easier to install, this could potentially overwrite other major-mode you have set for csound files.
 
+## Known bugs
+* Only one REPL instance can run at each moment
+* The current working directory of the REPL is always the home directory, to load resources with relative paths, use of the global variable $INCDIR is advised as a workaround.
+* Unexpected crashing of csound within the repl can sometimes lead to Emacs crashing, if Csound crashes (example when the audio server crashes), save your work and restart Emacs.
 
 
 [badge-license]: https://img.shields.io/badge/license-GPL_3-green.svg

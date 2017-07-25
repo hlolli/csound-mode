@@ -68,21 +68,27 @@
 	(last-close-paren (save-excursion (search-backward ")" (line-beginning-position) t 1)))
 	(cand nil)
 	(opcode nil)
-	(rate-match nil))
+	(rate-match nil)
+	(rate-cand nil)
+	(functional-syntax-p nil))
     ;; Functional syntax lookup
     (when (and last-open-paren
 	       (> last-open-paren
 		  (or last-close-paren
 		      (line-beginning-position))))
       (save-excursion (progn (setq cand (thing-at-point 'symbol (search-backward-regexp "(" (line-beginning-position) t 1)))
-			     (while (and (not cand)
-					 (not (eq (point) (line-beginning-position))))
+			     (when (= 1 (length cand))
+			       (setq rate-cand cand))
+			     (while (or (and (not cand) 
+					     (not (eq (point) (line-beginning-position))))
+					(= 1 (length cand)))
 			       (setq cand (thing-at-point 'symbol))
-			       (backward-char))
+			       (backward-char)) 
 			     (when (gethash cand csdoc-opcode-database)
 			       (setq result (csound-eldoc-get-template
 					     (gethash cand csdoc-opcode-database))
-				     opcode cand)))))
+				     opcode cand
+				     functional-syntax-p t)))))
     ;; Normal statement lookup
     (when (not result)
       (dolist (statement statement-list)
@@ -93,15 +99,14 @@
     (when result
       (let ((rate-list (split-string (replace-regexp-in-string "\n\s" "\n" result) "\n")))
 	(if (= (length rate-list) 1)
-	    (list opcode (first rate-list))
-	  (let ((rate-candidate (substring (first statement-list) 0 1)))
-	    (setq rate-match nil)
+	    (list opcode (first rate-list) functional-syntax-p)
+	  (let ((rate-candidate (or rate-cand (substring (first statement-list) 0 1))))
 	    (dolist (xrate rate-list)
 	      (when (string= rate-candidate (substring xrate 0 1))
 		(setq rate-match xrate)))
 	    (if rate-match
-		(list opcode rate-match)
-	      (list opcode (first rate-list)))))))))
+		(list opcode rate-match functional-syntax-p)
+	      (list opcode (first rate-list) functional-syntax-p))))))))
 
 
 (defun csound-eldoc-argument-index (opcode-match opcode-index point-on-opcode?)
@@ -126,7 +131,6 @@
 		(setq indx (1+ indx))
 	      (setq indx (1- indx)))))
 	indx))))
-
 
 (defun csound-eldoc-opcode-index (opcode-match template-list)
   (let ((indx 0)
@@ -157,6 +161,9 @@
 	     (template-list (csound-eldoc-statement-list csound-template)) 
 	     (template-list-length (1- (length template-list)))
 	     (opcode-index (csound-eldoc-opcode-index opcode-match template-list))
+	     (template-list (if (nth 2 template-lookup)
+				(subseq template-list opcode-index)
+			      template-list))
 	     (argument-index (csound-eldoc-argument-index opcode-match opcode-index point-on-opcode?))
 	     (infinite-args? (string= "[...]" (car (last template-list))))
 	     (indx -1)

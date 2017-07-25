@@ -263,7 +263,8 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
     (set-buffer csound-repl-buffer-name)
     (goto-char pre-eval-size)
     (beginning-of-line 0)
-    (if (search-forward-regexp "error: " nil t 1)
+    (if (or (search-forward-regexp "error: " nil t 1)
+	    (search-forward-regexp "Can't open" nil t 1))
 	t nil)))
 
 (defun csound-repl--flash-region (errorp)
