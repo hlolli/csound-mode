@@ -21,7 +21,8 @@
 
 ;;; Commentary:
 
-;; See README.md (https://github.com/hlolli/csound-mode/blob/master/README.md)
+;; This fine includes all helpers and handling of csound-score events
+;; for interactive composition
 
 ;;; Code:
 
@@ -29,79 +30,87 @@
 (require 'csound-font-lock)
 (require 'csound-util)
 
-;; align-cols
-;; Author: Matthias Helmling <matt@acid.rhein-neckar.de>
-
-(defun csound-score-align-cols (start end max-cols)
-  "Align text between point and mark as columns.
-Columns are separated by whitespace characters.
-Prefix arg means align that many columns. (default is all)"
-  (interactive "r\nP")
+(defun csound-score--align-cols (start end)
   (save-excursion
-    (let ((p start)
-	  pos
-	  end-of-line
-	  word
-	  count
-	  (max-cols (if (numberp max-cols) (max 0 (1- max-cols)) nil))
-	  (pos-list nil)
-	  (ref-list nil))
-      ;; find the positions
+    (let ((line-end (line-number-at-pos end))
+	  (max-matrix '()))
+      ;; Move all lines to beginning of line
       (goto-char start)
-      (while (< p end)
-	(beginning-of-line)
-	(setq count 0)
-	(setq end-of-line (save-excursion (end-of-line) (point)))
-	(re-search-forward "^\\s-*" end-of-line t)
-	(setq pos (current-column))	;start of first word
-	(if (null (car ref-list))
-	    (setq pos-list (list pos))
-	  (setq pos-list (list (max pos (car ref-list))))
-	  (setq ref-list (cdr ref-list)))
-	(while (and (if max-cols (< count max-cols) t)
-		    (re-search-forward "\\s-+" end-of-line t))
-	  (setq count (1+ count))
-	  (setq word (- (current-column) pos))
-	  ;; length of next word including following whitespaces
-	  (setq pos (current-column))
-	  (if (null (car ref-list))
-	      (setq pos-list (cons word pos-list))
-	    (setq pos-list (cons (max word (car ref-list)) pos-list))
-	    (setq ref-list (cdr ref-list))))
-	(while ref-list
-	  (setq pos-list (cons (car ref-list) pos-list))
-	  (setq ref-list (cdr ref-list)))
-	(setq ref-list (nreverse pos-list))
-	(forward-line)
-	(setq p (point)))
-      ;; aling the cols starting with last row
-      (setq pos-list (copy-sequence ref-list))
-      (setq start 
-	    (save-excursion (goto-char start) (beginning-of-line) (point)))
-      (goto-char end)
       (beginning-of-line)
-      (while (>= p start)
+      (while (< (line-number-at-pos (point))
+		line-end)
+	(indent-line-to 0)
+	(next-line))
+      (let ((statements (-> (buffer-substring start (line-end-position))
+			    (substring-no-properties)
+			    (split-string "\n"))))
+	;; Create matrix of max lengths
+	(dolist (stm statements)
+	  ;; Remove comments and extra whitespaces
+	  (let* ((stm* (->> (replace-regexp-in-string ";.*" "" stm)
+			    csound-util-chomp
+			    (replace-regexp-in-string "\\s-+" " ")))
+		 (param-list (split-string stm* " "))
+		 (param-num (length param-list))
+		 (max-matrix-len (length max-matrix))
+		 (index 0))
+	    ;; (print stm*)
+	    (dolist (param param-list)
+	      (if (<= max-matrix-len index)
+		  (setq max-matrix (append max-matrix (list (length param)))
+			index (1+ index))
+		(prog2
+		    (setf (nth index max-matrix)
+			  (max (length param)
+			       (nth index max-matrix)))
+		    (setq index (1+ index))))))))
+      (goto-char start)
+      (while (<= (line-number-at-pos (point))
+		 line-end)
 	(beginning-of-line)
-	(setq count 0)
-	(setq end-of-line (save-excursion (end-of-line) (point)))
-	(re-search-forward "^\\s-*" end-of-line t)
-	(goto-char (match-end 0))
-	(setq pos (nth count pos-list))
-	(while (< (current-column) pos)
-	  (insert-char ?\040 1))
-	(setq end-of-line (save-excursion (end-of-line) (point)))
-	(while (and (if max-cols (< count max-cols) t)
-		    (re-search-forward "\\s-+" end-of-line t))
-	  (setq count (1+ count))
-	  (setq pos   (+  pos (nth count pos-list)))
-	  (goto-char (match-end 0))
-	  (while (< (current-column) pos)
-	    (insert-char ?\040 1))
-	  (setq end-of-line (save-excursion (end-of-line) (point))))
-	(forward-line -1)
-	(if (= p (point-min)) (setq p (1- p))
-	  (setq p (point)))))))
-;; end of align-cols
+	(forward-word)
+	(let ((index 0)
+	      (line-num (line-number-at-pos (point))))
+	  (while (= (line-number-at-pos (point)) line-num)
+	    ;; (print (length (thing-at-point 'symbol))) 
+	    (let ((space-beg-point (point))
+		  (param-length (length (thing-at-point 'symbol))))
+	      (when (re-search-forward "\\w\\|\\+" (line-end-position) t 1)
+		(backward-char)
+		(let ((spaces-to-add (- (1+ (nth index max-matrix))
+					(+ param-length
+					   (- (point) space-beg-point))))
+		      (possibly-after-comment
+		       (save-excursion
+			 (search-backward-regexp "\\;\\|\\/" (line-beginning-position) t 1))))
+		  (if possibly-after-comment
+		      (let* ((subvec (subseq max-matrix index))
+			     (before-comment-spaces (- (+ (apply #'+ subvec)
+							  (1+ (length subvec)))
+						       (+ (- possibly-after-comment
+							     space-beg-point)
+							  param-length))))
+			(goto-char possibly-after-comment)
+			;; Align comments nicely at the end
+			(if (<= 0 before-comment-spaces)
+			    (insert (make-string before-comment-spaces  ?\040))
+			  (delete-char before-comment-spaces))
+			(next-line))
+		    (prog2 (goto-char space-beg-point)
+			(if (<= 0 spaces-to-add)
+			    (insert
+			     (make-string spaces-to-add ?\040))
+			  (delete-char (abs spaces-to-add)))))))
+	      (let ((possible-overseen-plus
+		     (save-excursion
+		       (search-forward "+" (line-end-position) t 1))))
+		(forward-word)
+		(when possible-overseen-plus
+		  (when (and (< possible-overseen-plus (point))
+			     (= (line-number-at-pos (point)) line-num))
+		    (goto-char possible-overseen-plus))))) 
+	    (setq index (1+ index))))))))
+
 
 (defun csound-score-align-block ()
   "Align score block so that all
@@ -112,7 +121,7 @@ parameter are of same space width."
 	  (prog2
 	      (beginning-of-line 1)
 	      (search-forward-regexp
-	       "\\(^\\s-*\\|^\\t-*\\)i+[0-9\\\".*]*\\b"
+	       "\\(^\\s-*\\|^\\t-*\\)[if]"
 	       (line-end-position 1) t 1)))
     ;; Search for beginning of block
     (setq beginning-of-block nil
@@ -125,7 +134,7 @@ parameter are of same space width."
 	(goto-char ending-of-line-at-point)
 	(end-of-line line-num-test)
 	(if (search-backward-regexp
-	     "\\(^\\s-*\\|^\\t-*\\)i+[0-9\\\".*]*\\b"
+	     "\\(^\\s-*\\|^\\t-*\\)[if]"
 	     (line-beginning-position 1) t 1)
 	    (setq line-num-test (1- line-num-test))
 	  (setq beginning-of-block (line-beginning-position 2)))))
@@ -136,46 +145,62 @@ parameter are of same space width."
 	(goto-char beginning-of-line-at-point)
 	(beginning-of-line line-num-test)
 	(if (search-forward-regexp
-	     "\\(^\\s-*\\|^\\t-*\\)i+[0-9\\\".*]*\\b"
+	     "\\(^\\s-*\\|^\\t-*\\)[if]"
 	     (line-end-position 1) t 1)
 	    (setq line-num-test (1+ line-num-test))
 	  (setq ending-of-block (line-end-position 0)))))
-    (csound-score-align-cols beginning-of-block ending-of-block 100)))
+    (csound-score--align-cols beginning-of-block ending-of-block)))
 
-(defun csound-score-trim-time (score-string) 
+(defun csound-score-trim-time (score-string)
   (let ((trimmed-string (split-string (substring-no-properties
 				       score-string) "\n"))
-	(min-p2 0)
-	(p2-list '())
+	(min-p2 0) 
 	(closure-list '())
-	(final-str ""))
+	(final-str "")
+	(lex-p2-list '())
+	(p2-list '())
+	(last-p3 0))
     (dolist (event trimmed-string)
-      (lexical-let ((lexical-p-list (split-string
-				     (replace-regexp-in-string
-				      "\\s-+" " " (csound-util-chomp event))
-				     " ")))
-	(setq p2-list (cons (string-to-number
-			     (if (< 2 (length lexical-p-list))
-				 (nth 2 lexical-p-list) 0))
-			    p2-list)
+      (lexical-let* ((lexical-p-list (split-string
+				      (replace-regexp-in-string
+				       "\\s-+" " " (csound-util-chomp event))
+				      " "))
+		     (lex-last-p3 last-p3)
+		     (lex-p2-list (cons (if (< 2 (length lexical-p-list))
+					    (if (string-equal "+" (nth 2 lexical-p-list))
+						(if (first p2-list)
+						    (+ (first p2-list) lex-last-p3)
+						  last-p3)
+					      (if (string-equal "." (nth 2 lexical-p-list))
+						  (if (first p2-list)
+						      (first p2-list)
+						    0)
+						(string-to-number
+						 (nth 2 lexical-p-list))))
+					  0)
+					p2-list)))
+	(setq p2-list lex-p2-list
 	      closure-list (cons
 			    (lambda (min-time)
 			      (setf (nth 2 lexical-p-list)
 				    (number-to-string
-				     (- (string-to-number
-					 (nth 2 lexical-p-list))
+				     (- (first lex-p2-list)
+					;;(nth 2 lexical-p-list) 
 					min-time)))
+			      ;; (message "%s lastp3: %s" lex-p2-list lex-last-p3)
 			      (string-join lexical-p-list " "))
-			    closure-list))))
+			    closure-list)
+	      last-p3 (if (string-equal "." (nth 3 lexical-p-list))
+			  last-p3
+			(string-to-number
+			 (nth 3 lexical-p-list))))))
+    ;; (message "p2-list: %s" p2-list)
     (setq min-p2 (apply #'min p2-list)
 	  closure-list (reverse closure-list))
     (dolist (event-fn closure-list)
       (setq final-str (concat final-str (funcall event-fn min-p2) "\n")))
-    final-str
-    ;; (message "%s" closure-list)
-    ;; trimmed-string
-    ;; score-string
-    ))
+    ;; (message "%s" final-str)
+    final-str))
 
 (provide 'csound-score)
 ;;; csound-score.el ends here
