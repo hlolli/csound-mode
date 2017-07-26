@@ -27,10 +27,19 @@
 
 
 (require 'csound-util)
+(require 'csound-score)
 
 (defcustom csound-indentation-spaces 2
   "Set how many spaces are in indentation."
   :type 'integer
+  :group 'csound-mode)
+
+(defcustom csound-indentation-aggressive-score nil
+  "If true, then align blocks will be called for every indent
+   calls in a score file or within CsScore tags. Works well
+   when used in combination with aggressive-indent mode.
+   (defaults to nil(false))"
+  :type 'boolean
   :group 'csound-mode)
 
 (defun csound-indentation-begin-of-expr-p ()
@@ -133,12 +142,19 @@
     ;; (when (and (eq 't end-of-bool-p) (not (eq 't begin-of-bool-p))) (indent-line-to (* csound-indentation-spaces (1- tab-count))))
     (indent-line-to (* csound-indentation-spaces tab-count))))
 
+(defun csound-indentation--for-each-line (start end fn)
+  (while (< (point) end)
+    (funcall fn)
+    (next-line)))
 
 (defun csound-indentation-line ()
   "Indent current line."
-  (let ((score-p (string-equal "sco" (file-name-extension (buffer-file-name)))))
+  (let ((score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
+		     (string-match-p ".sco$" (buffer-name (current-buffer))))))
     (cond
-     (score-p (indent-line-to 0))
+     (score-p (if csound-indentation-aggressive-score
+		  (csound-score-align-block)
+		(indent-line-to 0)))
      ((csound-indentation-begin-of-expr-p) (indent-line-to 0))
      ((csound-indentation-end-of-expr-p) (indent-line-to 0))
      ((csound-indentation-inside-instr-p) (csound-indentation-inside-expression-calc 'instr))

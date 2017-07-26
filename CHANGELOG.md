@@ -3,6 +3,7 @@
 - Repl: +/. in p2 score snippets supported
 - Repl: + in p3 score snippet supported
 - Score: `csound-score--align-cols` improved to decrease col width as well
+- Indentation: `csound-indentation-aggressive-score` customizeable variable added
 
 
 ## [0.1.2]

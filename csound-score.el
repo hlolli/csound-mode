@@ -31,6 +31,7 @@
 (require 'csound-util)
 
 (defun csound-score--align-cols (start end)
+  (message "start: %s end: %s" start end)
   (save-excursion
     (let ((line-end (line-number-at-pos end))
 	  (max-matrix '()))
@@ -65,8 +66,8 @@
 			       (nth index max-matrix)))
 		    (setq index (1+ index))))))))
       (goto-char start)
-      (while (<= (line-number-at-pos (point))
-		 line-end)
+      (while (< (line-number-at-pos (point))
+		(1+ line-end))
 	(beginning-of-line)
 	(forward-word)
 	(let ((index 0)
