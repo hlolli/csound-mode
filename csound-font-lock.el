@@ -277,7 +277,7 @@
 	  (depth 2)
 	  (comment-begin (save-excursion
 			   (beginning-of-line)
-			   (search-forward-regexp ";\\|\\/\\*" (line-end-position) t 1)))
+			   (search-forward-regexp "\\;\\|\\/\\*" (line-end-position) t 1)))
 	  (comment-end (save-excursion
 			 (beginning-of-line)
 			 (search-forward "*/" (line-end-position) t 1))) 
@@ -294,7 +294,8 @@
 	(beginning-of-line 1)
 	(while (< (point) end-line) 
 	  (if (and comment-begin
-		   (>= (point) (1- comment-begin)))
+		   (>= (save-excursion (forward-word) (point))
+		       (1- comment-begin)))
 	      (prog2 (font-lock-prepend-text-property (1- comment-begin) (line-end-position) 'face "font-lock-comment-face")
 		  (goto-char end-line))
 	    (if within-block-comment-p
@@ -307,10 +308,10 @@
 		    (progn (if start-of-i
 			       (goto-char start-of-i)
 			     (search-forward-regexp "i\\|f\\|a\\|t" (line-end-position) t 1))
-			   (if (or (string-equal "i" (thing-at-point 'word t))
-				   (string-equal "f" (thing-at-point 'word t)))
-			       (prog2 (setq passed-i-p t)
-				   (font-lock-prepend-text-property (1- (point)) (point) 'face "csound-font-lock-i")))
+			   (when (or (string-equal "i" (thing-at-point 'word t))
+				     (string-equal "f" (thing-at-point 'word t)))
+			     (prog2 (setq passed-i-p t)
+				 (font-lock-prepend-text-property (1- (point)) (point) 'face "csound-font-lock-i")))
 			   (progn 
 			     (setq beg-word (point)
 				   end-word (search-forward-regexp "\\s-\\|$" (line-end-position))
