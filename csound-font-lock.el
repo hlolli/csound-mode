@@ -69,12 +69,13 @@
   :group 'csound-mode-font-lock)
 
 (defface csound-font-lock-f-rate
-  '((((class color)) (:inherit font-lock-negation-char-face)))
+  '((((class color) (background light)) (:foreground "#999601"))
+    (((class color) (background dark)) (:foreground "#85C4B5")))
   "Face for f-rates (f)"
   :group 'csound-mode-font-lock)
 
 (defface csound-font-lock-global-f-rate
-  '((((class color)) (:inherit font-lock-negation-char-face :bold t)))
+  '((((class color)) (:inherit csound-font-lock-f-rate :bold t)))
   "Face for global f-rates (gf)"
   :group 'csound-mode-font-lock)
 
@@ -175,7 +176,7 @@
       (push `("\\<k+\\w*" . csound-font-lock-k-rate) csound-font-lock-list)
 
       ;; Regex for global k-rates
-      (push '("\\<\\(gk\\)+\\w*" . csound-font-lock-k-rate-global-face) csound-font-lock-list)
+      (push '("\\<\\(gk\\)+\\w*" . csound-font-lock-global-k-rate) csound-font-lock-list)
 
       ;; Regex for f-rate variables
       (push '("\\<f+\\w*" . csound-font-lock-f-rate) csound-font-lock-list)
