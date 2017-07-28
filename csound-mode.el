@@ -27,8 +27,6 @@
 ;;; Code:
 
 
-
-
 (when (version< emacs-version "25.1")
   (error "csound-mode requires at least GNU Emacs 25.1"))
 
@@ -183,9 +181,11 @@
 	(define-key map (kbd "C-c C-r") 'csound-render) 
 	;; REPL Keybindings
 	(define-key map (kbd "C-c C-z") 'csound-repl-start)
-	(define-key map (kbd "C-c C-s") 'csound-score-align-block)
 	(define-key map (kbd "C-M-x")   'csound-repl-evaluate-region)
 	(define-key map (kbd "C-x C-e") 'csound-repl-evaluate-line)
+	;; Utilities
+	(define-key map (kbd "C-c C-s") 'csound-score-align-block)
+	(define-key map (kbd "M-.")     'csound-score-find-instr-def)
 	map))
 
 ;;;###autoload

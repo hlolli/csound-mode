@@ -29,9 +29,9 @@
 (require 'cl)
 (require 'csound-font-lock)
 (require 'csound-util)
+(require 'font-lock)
 
 (defun csound-score--align-cols (start end)
-  (message "start: %s end: %s" start end)
   (save-excursion
     (let ((line-end (line-number-at-pos end))
 	  (max-matrix '()))
@@ -203,5 +203,45 @@ parameter are of same space width."
     ;; (message "%s" final-str)
     final-str))
 
+(defvar csound-score--last-start)
+
+(defvar csound-score--last-end)
+
+(defun csound-score--flash ()
+  (hlt-highlight-region
+   csound-score--last-start
+   csound-score--last-end
+   'font-lock-string-face)
+  (run-with-idle-timer
+   0.15
+   nil
+   (lambda ()
+     (hlt-unhighlight-region csound-score--last-start csound-score--last-end))))
+
+(defun csound-score-find-instr-def ()
+  "For a score statement,
+   jump the cursor to where
+   its defined in the orchestra.
+   Sets a mark."
+  (interactive)
+  (let* ((instr-on-line (save-excursion
+			  (beginning-of-line)
+			  (search-forward-regexp "\\<i\\s-?\\(\\\".*\\\"\\|[0-9]+\\)"
+						 (line-end-position) t 1)
+			  (match-string-no-properties 1)))
+	 (instr-on-line (replace-regexp-in-string "\\\"" "" instr-on-line))
+	 (search-attempt (save-excursion
+			   (goto-char 0)
+			   (search-forward-regexp (format "\\<instr\\s-+%s" instr-on-line) nil t 1))))
+    (if search-attempt
+	(progn (goto-char search-attempt)
+	       (setq csound-score--last-start (- (point) (length (thing-at-point 'symbol)))
+		     csound-score--last-end (1- (point)))
+	       (csound-score--flash)
+	       (recenter-top-bottom))
+      (message "instrument: %s not found in buffer" instr-on-line))))
+
+
 (provide 'csound-score)
+
 ;;; csound-score.el ends here

@@ -1,9 +1,3 @@
-  (when csound-font-lock-rainbow-score-parameters-p
-    (shut-up
-      (with-silent-modifications
-	(csound-font-lock-param--flush-score)
-	(csound-font-lock--flush-block-comments))))
-
 ;; Clojure script to generate csound-opcodes.el
 ;; Some manual changes may be needed,
 ;; Zerodbfs needs to be changed to 0dbfs
