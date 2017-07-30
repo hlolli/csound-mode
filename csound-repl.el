@@ -389,15 +389,26 @@
 	 (line-str (csound-util-chomp line-str))
 	 (f-statement-p (if (eq 0 (length line-str))
 			    nil
-			  (string-equal "f" (substring line-str 0 1)))))
-    (when f-statement-p
-      (csound-repl-evaluate-score-region (line-beginning-position)
-					 (line-end-position))
+			  (string-equal "f" (substring line-str 0 1))))
+	 (ftgen-orc-p (string-match-p "\\<ftgen\\>" line-str)))
+    (when (or f-statement-p
+	      ftgen-orc-p)
+      (if f-statement-p
+	  (csound-repl-evaluate-score-region (line-beginning-position)
+					     (line-end-position))
+	(csound-repl-evaluate-orchestra-region (line-beginning-position)
+					       (line-end-position)))
       (sleep-for 0 50)
-      (let ((table-num (-> (substring line-str 1)
-			   (csound-util-chomp)
-			   (split-string " ")
-			   first)))
+      (let ((table-num (if f-statement-p
+			   (-> (substring line-str 1)
+			       (csound-util-chomp)
+			       (split-string " ")
+			       first)
+			 (save-current-buffer
+			   (set-buffer csound-repl-buffer-name)
+			   (goto-char (buffer-size))
+			   (search-backward-regexp "ftable \\([0-9]+\\)\\:")
+			   (match-string-no-properties 1)))))
 	(csound-repl-interaction--plot (string-to-number table-num))))))
 
 

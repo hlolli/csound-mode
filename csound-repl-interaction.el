@@ -63,16 +63,19 @@
 	     (concat"gnuplot -e \"set term png size 480,320;"
 		    (format "set title 'tbl: %s';" table-num)
 		    "set tics font ', 10';"
-		    "set lmargin at screen 0.1;"
+		    "set lmargin at screen 0.15;"
 		    "set output '%s';"
 		    (format "set xrange [0:%s];" tab-size)
 		    "plot '-' notitle with line;"
 		    "\"")
 	     tmp-filename)))
 	  (csound-repl--insert-message (format "\nfile://%s" tmp-filename))
-	  (switch-to-buffer-other-window csound-repl-buffer-name)
-	  (with-current-buffer (buffer-name) (funcall 'iimage-mode))
-	  (switch-to-buffer-other-window prev-buffer))))))
+	  (if (string-equal prev-buffer csound-repl-buffer-name)
+	      (funcall 'iimage-mode)
+	    (progn
+	      (switch-to-buffer-other-window csound-repl-buffer-name)
+	      (with-current-buffer (buffer-name) (funcall 'iimage-mode))
+	      (switch-to-buffer-other-window prev-buffer))))))))
 
 (defmulti read-csound-repl (op csound &rest _)
   op)
@@ -85,7 +88,8 @@
   (csoundInputMessage csound (string-join args " ")))
 
 (defmulti-method read-csound-repl 'table (_ csound args)
-  (csound-repl--plot (first args)))
+  (csound-repl-interaction--plot
+   (string-to-number (nth 1 args))))
 
 (provide 'csound-repl-interaction)
 

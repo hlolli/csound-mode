@@ -4,6 +4,8 @@
 - Repl: + in p3 score snippet supported
 - Score: `csound-score--align-cols` improved to decrease col width as well
 - Indentation: `csound-indentation-aggressive-score` customizeable variable added
+### New Feature
+- Plotter: gnuplotter added to plot tables into the REPL via the repl or kbd <C-c C-f>.
 
 
 ## [0.1.2]
