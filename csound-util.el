@@ -42,6 +42,20 @@
       (+ 1 (csound-util-recursive-count regex string (match-end 0)))
     0))
 
+(defun csound-util--generate-random-uuid ()
+  "Insert a random UUID.
+Example of a UUID: 1df63142-a513-c850-31a3-535fc3520c3d
+WARNING: this is a simple implementation. 
+The chance of generating the same UUID is much higher than a robust algorithm.."
+  (format "%04x%04x-%04x-%04x-%04x-%06x%06x"
+	  (random (expt 16 4))
+	  (random (expt 16 4))
+	  (random (expt 16 4))
+	  (random (expt 16 4))
+	  (random (expt 16 4))
+	  (random (expt 16 6))
+	  (random (expt 16 6))))
+
 (provide 'csound-util)
 
 ;;; csound-util.el ends here

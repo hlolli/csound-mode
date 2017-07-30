@@ -406,7 +406,7 @@ cos(k/i[]) (k- or i-arrays )" :doc "Performs a cosine function.") csdoc-opcode-d
 (puthash "pvs2tab" '(:template "kframe pvs2tab tvar|kvar[], fsig
 kframe pvs2tab kmags[], kfreqs[], fsig" :doc "Copies spectral data to k-rate arrays (or t-variables). Also known as pvs2array.") csdoc-opcode-database)
 (puthash "delay" '(:template "ares delay asig, idlt [, iskip]" :doc "Delays an input signal by some time interval.") csdoc-opcode-database)
-(puthash "opcodeslinkisenabled" '(:template "k_is_enabled link_is_enabled i_peer" :doc "Returns whether or not this peer is synchronized with the global network Ableton Link session.") csdoc-opcode-database)
+(puthash "link_is_enabled" '(:template "k_is_enabled link_is_enabled i_peer" :doc "Returns whether or not this peer is synchronized with the global network Ableton Link session.") csdoc-opcode-database)
 (puthash "vbapmove" '(:template "ar1[, ar2...] vbapmove asig, idur, ispread, ifldnum, ifld1 [, ifld2] [...]
 aarray[] vbapmove asig, idur, ispread, ifldnum, ifld1 [, ifld2] [...]" :doc "Distributes an audio signal among many channels with moving virtual sources.") csdoc-opcode-database)
 (puthash "vstprogset" '(:template "vstprogset instance, kprogram" :doc "Loads parameter banks to a VST plugin.") csdoc-opcode-database)
@@ -418,12 +418,12 @@ aarray[] vbapmove asig, idur, ispread, ifldnum, ifld1 [, ifld2] [...]" :doc "Dis
 (puthash "line" '(:template "ares line ia, idur, ib
 kres line ia, idur, ib" :doc "Trace a straight line between specified points.") csdoc-opcode-database)
 (puthash "ftmorf" '(:template "ftmorf kftndx, iftfn, iresfn" :doc "Morphs between multiple ftables as specified in a list.") csdoc-opcode-database)
-(puthash "opcodeslinkbeatrequest" '(:template "link_beat_request i_peer, k_beat [, k_at_time_seconds [, k_quantum ]]" :doc "Requests the global network Ableton Link session to adopt a specific beat number and time.") csdoc-opcode-database)
+(puthash "link_beat_request" '(:template "link_beat_request i_peer, k_beat [, k_at_time_seconds [, k_quantum ]]" :doc "Requests the global network Ableton Link session to adopt a specific beat number and time.") csdoc-opcode-database)
 (puthash "partials" '(:template "ftrks partials ffr, fphs, kthresh, kminpts, kmaxgap, imaxtracks" :doc "Partial track spectral analysis.") csdoc-opcode-database)
 (puthash "mvclpf4" '(:template "asig1,asig2,asig3,asig4 mvclpf4 ain, xcf, xres[, istor]" :doc "Moog voltage-controlled lowpass filter emulation.") csdoc-opcode-database)
 (puthash "chani" '(:template "kval chani kchan
 aval chani kchan" :doc "Reads data from the software bus") csdoc-opcode-database)
-(puthash "opcodeslinkbeatforce" '(:template "link_beat_force i_peer, k_beat [, k_at_time_seconds [, k_quantum ]]" :doc "Forces the global network Ableton Link session to adopt a specific beat number and time.") csdoc-opcode-database)
+(puthash "link_beat_force" '(:template "link_beat_force i_peer, k_beat [, k_at_time_seconds [, k_quantum ]]" :doc "Forces the global network Ableton Link session to adopt a specific beat number and time.") csdoc-opcode-database)
 (puthash "zkw" '(:template "zkw ksig, kndx" :doc "Writes to a zk variable at k-rate without mixing.") csdoc-opcode-database)
 (puthash "strtolk" '(:template "kr strtolk Sstr
 kr strtolk kndx" :doc "Converts a string to a signed integer (k-rate).") csdoc-opcode-database)
@@ -447,7 +447,7 @@ cosh(k/i[]) (k- or i-arrays )" :doc "Performs a hyperbolic cosine function.") cs
 (puthash "jspline" '(:template "ares jspline xamp, kcpsMin, kcpsMax
 kres jspline kamp, kcpsMin, kcpsMax" :doc "A jitter-spline generator.") csdoc-opcode-database)
 (puthash "pvslock" '(:template "fsig pvslock fsigin, klock" :doc "Frequency lock an input fsig") csdoc-opcode-database)
-(puthash "opcodeslinkenable" '(:template "ableton_link_enable i_peer [, k_enable]" :doc "Enable or disable synchronization with the Ableton Link session.") csdoc-opcode-database)
+(puthash "link_enable" '(:template "ableton_link_enable i_peer [, k_enable]" :doc "Enable or disable synchronization with the Ableton Link session.") csdoc-opcode-database)
 (puthash "strtod" '(:template "ir strtod Sstr
 ir strtod indx" :doc "Converts a string to a float (i-rate).") csdoc-opcode-database)
 (puthash "svfilter" '(:template "alow, ahigh, aband svfilter asig, kcf, kq [, iscl] [, iskip]" :doc "A resonant second order filter, with simultaneous lowpass, highpass and bandpass outputs.") csdoc-opcode-database)
@@ -563,7 +563,7 @@ ao1, ao2, ao3, ao4, ao5 bformdec isetup, aw, ax, ay, az [, ar, as, at, au, av [,
 ao1, ao2, ao3, ao4, ao5, ao6, ao7, ao8 bformdec isetup, aw, ax, ay, az [, ar, as, at, au, av [, abk, al, am, an, ao, ap, aq]]]" :doc "Deprecated. Decodes an ambisonic B format signal.") csdoc-opcode-database)
 (puthash "partikkelset" '(:template "partikkelset kparameterindex, kmaskindex, iopcode_id" :doc "Set mask index for a specific mask parameter of a running") csdoc-opcode-database)
 (puthash "aresonk" '(:template "kres aresonk ksig, kcf, kbw [, iscl] [, iskip]" :doc "A notch filter whose transfer functions are the complements of the reson opcode.") csdoc-opcode-database)
-(puthash "opcodeslinkpeers" '(:template "k_count link_peers i_peer" :doc "Returns the number of peers in the session.") csdoc-opcode-database)
+(puthash "link_peers" '(:template "k_count link_peers i_peer" :doc "Returns the number of peers in the session.") csdoc-opcode-database)
 (puthash "veloc" '(:template "ival veloc [ilow] [, ihigh]" :doc "Get the velocity from a MIDI event.") csdoc-opcode-database)
 (puthash "tableng" '(:template "ires tableng ifn
 kres tableng kfn" :doc "Interrogates a function table for length.") csdoc-opcode-database)
@@ -665,7 +665,7 @@ table [ kval] += karg" :doc "Performs add and assignment.") csdoc-opcode-databas
 (puthash "linsegr" '(:template "ares linsegr ia, idur1, ib [, idur2] [, ic] [...], irel, iz
 kres linsegr ia, idur1, ib [, idur2] [, ic] [...], irel, iz" :doc "Trace a series of line segments between specified points including a release segment.") csdoc-opcode-database)
 (puthash "setcol" '(:template "kout[] setcolkin[],kcol" :doc "Stets a given column of a 2-dimensional array from a vector.") csdoc-opcode-database)
-(puthash "opcodeslinkbeatget" '(:template "k_beat_number, k_phase, k_current_time_seconds link_beat_get i_peer [, k_quantum]" :doc "Returns the beat, phase with respect to the local quantum, and current time for the session.") csdoc-opcode-database)
+(puthash "link_beat_get" '(:template "k_beat_number, k_phase, k_current_time_seconds link_beat_get i_peer [, k_quantum]" :doc "Returns the beat, phase with respect to the local quantum, and current time for the session.") csdoc-opcode-database)
 (puthash "pvspitch" '(:template "kfr, kamp pvspitch fsig, kthresh" :doc "Track the pitch and amplitude of a PVS signal.") csdoc-opcode-database)
 (puthash "round" '(:template "round(x) (init-, control-, or audio-rate arg allowed)
 round(k/i[]) (k- or i-arrays )" :doc "Returns the integer value nearest to") csdoc-opcode-database)
@@ -899,7 +899,7 @@ kres dust kamp, kdensity" :doc "Random impulses.") csdoc-opcode-database)
 (puthash "pvsdiskin" '(:template "fsig pvsdiskin SFname,ktscal,kgain[,ioffset, ichan]" :doc "Read a selected channel from a PVOC-EX analysis file.") csdoc-opcode-database)
 (puthash "vadd_i" '(:template "vadd_i ifn, ival, ielements [, idstoffset]" :doc "Adds a scalar value to a vector in a table.") csdoc-opcode-database)
 (puthash "vlowres" '(:template "ares vlowres asig, kfco, kres, iord, ksep" :doc "A bank of filters in which the cutoff frequency can be separated under user control.") csdoc-opcode-database)
-(puthash "opcodeslinktempoget" '(:template "k_bpm link_tempo_get i_peer" :doc "Returns the current tempo of the global network Ableton Link session.") csdoc-opcode-database)
+(puthash "link_tempo_get" '(:template "k_bpm link_tempo_get i_peer" :doc "Returns the current tempo of the global network Ableton Link session.") csdoc-opcode-database)
 (puthash "vdelayxwq" '(:template "aout1, aout2, aout3, aout4 vdelayxwq ain1, ain2, ain3, ain4, adl, imd, iws [, ist]" :doc "Variable delay opcodes with high quality interpolation.") csdoc-opcode-database)
 (puthash "xscanmap" '(:template "kpos, kvel xscanmap iscan, kamp, kvamp [, iwhich]" :doc "Allows the position and velocity of a node in a scanned process to be read.") csdoc-opcode-database)
 (puthash "planet" '(:template "ax, ay, az planet kmass1, kmass2, ksep, ix, iy, iz, ivx, ivy, ivz, idelta [, ifriction] [, iskip]" :doc "Simulates a planet orbiting in a binary star system.") csdoc-opcode-database)
@@ -1227,7 +1227,7 @@ lua_ikopcall_off Sname, ...
 lua_iaopcall_off Sname, ..." :doc "Calls a Lua opcode at i-rate only. Any number of output and/or 
             input arguments may be passed. All arguments must be passed on 
             the right-hand side. Outputs are returned in the argument.") csdoc-opcode-database)
-(puthash "opcodeslinktemposet" '(:template "link_tempo_set i_peer, k_bpm [, k_at_time_seconds]" :doc "Sets the tempo.") csdoc-opcode-database)
+(puthash "link_tempo_set" '(:template "link_tempo_set i_peer, k_bpm [, k_at_time_seconds]" :doc "Sets the tempo.") csdoc-opcode-database)
 (puthash "doppler" '(:template "ashifted doppler asource, ksourceposition, kmicposition [, isoundspeed, ifiltercutoff]" :doc "A fast and robust method for approximating sound propagation, achieving convincing Doppler shifts without having to solve equations.") csdoc-opcode-database)
 (puthash "vdelayxws" '(:template "aout1, aout2 vdelayxws ain1, ain2, adl, imd, iws [, ist]" :doc "Variable delay opcodes with high quality interpolation.") csdoc-opcode-database)
 (puthash "dumpk2" '(:template "dumpk2 ksig1, ksig2, ifilname, iformat, iprd" :doc "Periodically writes two orchestra control-signal values to an external file.") csdoc-opcode-database)
@@ -1252,7 +1252,7 @@ abs(k/i[]) (k- or i-arrays )" :doc "Returns an absolute value.") csdoc-opcode-da
 kres oscilikt kamp, kcps, kfn [, iphs] [, istor]" :doc "A linearly interpolated oscillator that allows changing the table number at k-rate.") csdoc-opcode-database)
 (puthash "locsig" '(:template "a1, a2 locsig asig, kdegree, kdistance, kreverbsend
 a1, a2, a3, a4 locsig asig, kdegree, kdistance, kreverbsend" :doc "Takes an input signal and distributes between 2 or 4 channels.") csdoc-opcode-database)
-(puthash "opcodeslinkcreate" '(:template "i_peer link_create [i_bpm]" :doc "Creates a peer in an Ableton Link network session.") csdoc-opcode-database)
+(puthash "link_create" '(:template "i_peer link_create [i_bpm]" :doc "Creates a peer in an Ableton Link network session.") csdoc-opcode-database)
 (puthash "pvsbandr" '(:template "fsig pvsbandr fsigin, xlowcut, xlowfull, xhighfull, xhighcut[, ktype]" :doc "A band reject filter working in the spectral domain.") csdoc-opcode-database)
 (puthash "outkat" '(:template "outkat kchn, kvalue, kmin, kmax" :doc "Sends MIDI aftertouch messages at k-rate.") csdoc-opcode-database)
 (puthash "mandol" '(:template "ares mandol kamp, kfreq, kpluck, kdetune, kgain, ksize [, ifn] [, iminfreq]" :doc "An emulation of a mandolin.") csdoc-opcode-database)
@@ -1260,7 +1260,7 @@ a1, a2, a3, a4 locsig asig, kdegree, kdistance, kreverbsend" :doc "Takes an inpu
 (puthash "ATSsinnoi" '(:template "ar ATSsinnoi ktimepnt, ksinlev, knzlev, kfmod, iatsfile, ipartials [, ipartialoffset, ipartialincr]" :doc "uses the data from an ATS analysis file to perform resynthesis.") csdoc-opcode-database)
 (puthash "scantable" '(:template "aout scantable kamp, kpch, ipos, imass, istiff, idamp, ivel" :doc "A simpler scanned synthesis implementation.") csdoc-opcode-database)
 (puthash "sandpaper" '(:template "ares sandpaper iamp, idettack [, inum] [, idamp] [, imaxshake]" :doc "Semi-physical model of a sandpaper sound.") csdoc-opcode-database)
-(puthash "opcodeslinkmetro" '(:template "k_trigger, k_beat, k_phase, k_current_time_seconds link_metro i_peer [, k_quantum]" :doc "Returns a trigger that is 1 on the beat and 0 otherwise along with beat, phase, and time for this session of Ableton Link.") csdoc-opcode-database)
+(puthash "link_metro" '(:template "k_trigger, k_beat, k_phase, k_current_time_seconds link_metro i_peer [, k_quantum]" :doc "Returns a trigger that is 1 on the beat and 0 otherwise along with beat, phase, and time for this session of Ableton Link.") csdoc-opcode-database)
 (puthash "trandom" '(:template "kout trandom ktrig, kmin, kmax" :doc "Generates a controlled pseudo-random number series between min and max values according to a trigger.") csdoc-opcode-database)
 (puthash "return" '(:template "return ival" :doc "Returns a value from an instrument.") csdoc-opcode-database)
 (puthash "getcfg" '(:template "Svalue getcfg iopt" :doc "Return Csound settings.") csdoc-opcode-database)

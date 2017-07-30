@@ -32,9 +32,9 @@
 (require 'csound-util)
 (require 'font-lock)
 (require 'shut-up)
+(require 'gnuplot)
 
 
-;; Make csound-instance a global variable
 (defvar csound-repl--csound-instance nil)
 
 ;; For flash effects, expression variables,
@@ -125,19 +125,6 @@
 	  (setq-local indx--last-visited (1+ indx--last-visited))))
       last-file)))
 
-(defun csound-repl--generate-random-uuid ()
-  "Insert a random UUID.
-Example of a UUID: 1df63142-a513-c850-31a3-535fc3520c3d
-WARNING: this is a simple implementation. 
-The chance of generating the same UUID is much higher than a robust algorithm.."
-  (format "%04x%04x-%04x-%04x-%04x-%06x%06x"
-	  (random (expt 16 4))
-	  (random (expt 16 4))
-	  (random (expt 16 4))
-	  (random (expt 16 4))
-	  (random (expt 16 4))
-	  (random (expt 16 6))
-	  (random (expt 16 6))))
 
 (defconst csound-repl-prompt
   (let ((prompt "csnd> ")) 
@@ -149,10 +136,9 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 (defvar csound-repl--input-history (make-hash-table :test 'equal))
 
 
-
 (defun csound-repl--input-sender (proc input)
   (unless (eq 0 (length input)) 
-    (let ((id (csound-repl--generate-random-uuid))
+    (let ((id (csound-util--generate-random-uuid))
 	  (buffer-read-only nil)
 	  (lb (- (line-beginning-position) 5))
 	  (split-input (-> input csound-util-chomp split-string)))
@@ -206,6 +192,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
       	(csoundMessageTty csound-repl--csound-instance csound-repl--process-tty-name))
       (csound-repl--set-default-dir-options)
       (csoundSetOption csound-repl--csound-instance "-odac")
+      (csoundSetOption csound-repl--csound-instance "-d")
       (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
       (csoundInputMessage csound-repl--csound-instance "e 0 360000")
       ;; TODO make this customizeable or automatic
@@ -224,6 +211,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	(csoundMessageTty csound-repl--csound-instance csound-repl--process-tty-name))
       (csound-repl--set-default-dir-options)
       (csoundSetOption csound-repl--csound-instance "-odac")
+      (csoundSetOption csound-repl--csound-instance "-d")
       ;; TODO make this customizeable or automatic
       (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
       ;; (csoundReadScore csound-repl--csound-instance "e 0 3600")
@@ -390,6 +378,29 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
        (line-beginning-position)
        (line-end-position)))))
 
+(defun csound-repl-plot-ftgen ()
+  "Plots the f statement on the cursor's current line.
+   This operation evaluates the f statement and reads
+   table from Csound, sends it to gnuplot which sends
+   the png into the REPL."
+  (interactive)
+  (let* ((line-str (buffer-substring-no-properties (line-beginning-position)
+						   (line-end-position)))
+	 (line-str (csound-util-chomp line-str))
+	 (f-statement-p (if (eq 0 (length line-str))
+			    nil
+			  (string-equal "f" (substring line-str 0 1)))))
+    (when f-statement-p
+      (csound-repl-evaluate-score-region (line-beginning-position)
+					 (line-end-position))
+      (sleep-for 0 50)
+      (let ((table-num (-> (substring line-str 1)
+			   (csound-util-chomp)
+			   (split-string " ")
+			   first)))
+	(csound-repl-interaction--plot (string-to-number table-num))))))
+
+
 (defvar csound-repl--font-lock-list
   '((";+.*" . font-lock-comment-face)
     ("SECTION [0-9]+:" . font-lock-string-face)
@@ -404,7 +415,8 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
   "Csound Interactive Message Buffer and REPL."
   :syntax-table csound-mode-syntax-table
   ;;(setq comint-prompt-regexp (concat "^" (regexp-quote elnode-ijs-prompt))) 
-  (setq-local comint-input-sender 'csound-repl--input-sender)  
+  (setq-local comint-input-sender 'csound-repl--input-sender)
+  (iimage-mode t)
   (unless (comint-check-proc (current-buffer))
     ;; Was cat, but on non-Unix platforms that might not exist, so
     ;; use hexl instead, which is part of the Emacs distribution.

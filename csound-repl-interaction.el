@@ -30,8 +30,49 @@
 
 (require 'csound-score)
 (require 'multi)
+(require 'shut-up)
 
 (module-load "emacscsnd.so")
+
+(defun csound-repl-interaction--plot (table-num)
+  (if (not (eq 0 (shut-up
+		   (shell-command "gnuplot --version"))))
+      (error "gnuplot was not found")
+    (let ((prev-buffer (buffer-name))
+	  (tmp-filename (concat "/tmp/" (csound-util--generate-random-uuid) ".png"))
+	  (table-str "")
+	  (tab-size (csoundTableLength csound-repl--csound-instance table-num))
+	  (index 0))
+      (if (eq -1 tab-size)
+	  (error  "Table %d doesn't exist" table-num)
+	(progn
+	  (while (< index tab-size)
+	    (setq table-str (concat table-str
+				    (number-to-string index) " "
+				    (number-to-string
+				     (csoundTableGet
+				      csound-repl--csound-instance
+				      table-num index)) "\n")
+		  index (1+ index)))
+	  ;; (setq table-list (string-join table-list " "))
+	  ;; (print table-list)
+	  (shell-command
+	   (concat
+	    (format "echo '%s' |" table-str)
+	    (format 
+	     (concat"gnuplot -e \"set term png size 480,320;"
+		    (format "set title 'tbl: %s';" table-num)
+		    "set tics font ', 10';"
+		    "set lmargin at screen 0.1;"
+		    "set output '%s';"
+		    (format "set xrange [0:%s];" tab-size)
+		    "plot '-' notitle with line;"
+		    "\"")
+	     tmp-filename)))
+	  (csound-repl--insert-message (format "\nfile://%s" tmp-filename))
+	  (switch-to-buffer-other-window csound-repl-buffer-name)
+	  (with-current-buffer (buffer-name) (funcall 'iimage-mode))
+	  (switch-to-buffer-other-window prev-buffer))))))
 
 (defmulti read-csound-repl (op csound &rest _)
   op)
@@ -42,6 +83,9 @@
 
 (defmulti-method read-csound-repl 'f (_ csound args)
   (csoundInputMessage csound (string-join args " ")))
+
+(defmulti-method read-csound-repl 'table (_ csound args)
+  (csound-repl--plot (first args)))
 
 (provide 'csound-repl-interaction)
 

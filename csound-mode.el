@@ -186,6 +186,7 @@
 	;; Utilities
 	(define-key map (kbd "C-c C-s") 'csound-score-align-block)
 	(define-key map (kbd "M-.")     'csound-score-find-instr-def)
+	(define-key map (kbd "C-c C-s") 'csound-repl-plot-ftgen)
 	map))
 
 ;;;###autoload

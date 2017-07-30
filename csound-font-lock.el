@@ -227,10 +227,10 @@
       (let ((mutz '()))
 	(maphash (lambda (k v)
 		   (when (stringp k)
-		     (setq-local mutz (cons k mutz))))
+		     (setq mutz (cons k mutz))))
 		 csdoc-opcode-database)
-	(setq-local mutz (append mutz csound-font-lock--missing-faces))
-	(setq-local mutz (regexp-opt mutz 'words))
+	(setq mutz (append mutz csound-font-lock--missing-faces))
+	(setq mutz (regexp-opt mutz 'words))
 	(push `(,mutz . font-lock-builtin-face) csound-font-lock-list))
       ;; Regex for `i` events in score
       (push '("\\<i\\'" . csound-font-lock-i) csound-font-lock-list)
