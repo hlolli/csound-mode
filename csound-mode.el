@@ -33,13 +33,19 @@
 (defvar csound-shared-library-loaded-p nil)
 
 (defvar csound-mode--dir-path
-  (let ((cur-work-dir (pwd)))
-    (substring cur-work-dir 10 (length cur-work-dir))))
+  (first (reduce (lambda (i p)
+		   (if (string-match "csound\\-mode" p)
+		       (cons p i)
+		     i))
+		 load-path)))
 
-(setq csound-shared-library-loaded-p
-      (or (ignore-errors (module-load "emacscsnd.so"))
-	  (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))
-	  (ignore-errors (module-load (concat csound-mode--dir-path "/csoundAPI_emacsLisp/emacscsnd.so")))))
+(defun csound-mode--load-module ()
+  (setq csound-shared-library-loaded-p
+	(or (ignore-errors (module-load "emacscsnd.so"))
+	    (ignore-errors (module-load (concat csound-mode--dir-path "emacscsnd.so")))
+	    (ignore-errors (module-load (concat csound-mode--dir-path "csoundAPI_emacsLisp/emacscsnd.so"))))))
+
+(csound-mode--load-module)
 
 (require 'font-lock)
 (require 'csound-opcodes)
@@ -72,7 +78,7 @@
     (modify-syntax-entry ?\\ "\\" st)
     ;; Comment syntax
     ;; good read: https://www.lunaryorn.com/posts/syntactic-fontification-in-emacs.html
-    (modify-syntax-entry ?\/ ". 124b" st)
+    (modify-syntax-entry ?\/ ". 123b" st)
     (modify-syntax-entry ?* ". 23b" st)
     (modify-syntax-entry ?\; "<" st
     			 )
@@ -129,31 +135,35 @@
             :exclusive 'no
             :company-docsig (lambda (cand)
 			      (csound-util-chomp (replace-regexp-in-string
-					     "\n\\|\s+" "\s"
-					     (nth 3 (gethash cand csdoc-opcode-database)))))
+						  "\n\\|\s+" "\s"
+						  (nth 3 (gethash cand csdoc-opcode-database)))))
             :company-doc-buffer (lambda (cand)
 				  (prin1-to-string (nth 11 (gethash cand csdoc-opcode-database))))
 	    ;;:company-location (lambda (cand) (nth 11 (gethash cand csdoc-opcode-database)))
 	    ))))
 
+
 (defun csound-api-compile ()
   (case system-type
     ((or gnu/linux darwin cygwin)
-     (progn (compile (format "make -C %s" csound-mode--dir-path))
-	    (setq csound-shared-library-loaded-p
-		  (or (ignore-errors (module-load "emacscsnd.so"))
-		      (ignore-errors (module-load (concat csound-mode--dir-path "/emacscsnd.so")))
-		      (ignore-errors (module-load (concat csound-mode--dir-path "/csoundAPI_emacsLisp/emacscsnd.so")))))
-	    (if csound-shared-library-loaded-p
-		(prog2 (require 'csound-repl)
-		    (message (concat "csound-api module was successfully compiled, "
-				     "you can now start the csound REPL with keybinding c-c c-z, "
-				     "or M-x csound-repl-start")))
-	      (error (concat "csound-api module compilation failed, "
-			     "please go to "
-			     "https://github.com/hlolli/csoundAPI_emacsLisp "
-			     "and create a ticket, or if you know what you're doing, "
-			     "compile the csoundAPI yourself.")))))
+     (progn (add-hook 'compilation-finish-functions (lambda (_ _)
+						      (csound-mode--load-module)
+						      (sleep-for 1)
+						      (if csound-shared-library-loaded-p
+							  (prog2 (require 'csound-repl)
+							      (message (concat "csound-api module was successfully compiled, "
+									       "you can now start the csound REPL with keybinding c-c c-z, "
+									       "or M-x csound-repl-start")))
+							(error (concat "csound-api module compilation failed, "
+								       "please go to "
+								       "https://github.com/hlolli/csoundAPI_emacsLisp "
+								       "and create a ticket, or if you know what you're doing, "
+								       "compile the csoundAPI yourself."))) 
+						      (remove-hook 'compilation-finish-functions
+								   (first compilation-finish-functions))))
+	    (compile (format "make -C %s" (if (member "csoundAPI_emacsLisp" (directory-files csound-mode--dir-path nil))
+					      (concat csound-mode--dir-path "csoundAPI_emacsLisp/")
+					    csound-mode--dir-path)))))
     ;; Else
     (t (error (concat "Your operating system is not supported for compiling "
 		      "the csoundAPI, please go to "
@@ -214,7 +224,7 @@
       (csound-font-lock-flush-buffer))))
 
 
-(add-to-list 'auto-mode-alist `(,(concat "\\." (regexp-opt '("csd" "orc" "sco" "udo")) "'") . csound-mode))
+(add-to-list 'auto-mode-alist `(,(concat "\\." (regexp-opt '("csd" "orc" "sco" "udo")) "\\'") . csound-mode))
 
 (provide 'csound-mode)
 

@@ -32,8 +32,6 @@
 (require 'multi)
 (require 'shut-up)
 
-(module-load "emacscsnd.so")
-
 (defun csound-repl-interaction--plot (table-num)
   (if (not (eq 0 (shut-up
 		   (shell-command "gnuplot --version"))))
