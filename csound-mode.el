@@ -78,7 +78,7 @@
     (modify-syntax-entry ?\\ "\\" st)
     ;; Comment syntax
     ;; good read: https://www.lunaryorn.com/posts/syntactic-fontification-in-emacs.html
-    (modify-syntax-entry ?\/ ". 123b" st)
+    (modify-syntax-entry ?\/ ". 124b" st)
     (modify-syntax-entry ?* ". 23b" st)
     (modify-syntax-entry ?\; "<" st
     			 )
