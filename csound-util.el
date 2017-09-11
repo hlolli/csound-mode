@@ -56,6 +56,10 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 	  (random (expt 16 6))
 	  (random (expt 16 6))))
 
+(defun csound-util-strip-text-properties (txt)
+  (set-text-properties 0 (length txt) nil txt)
+  txt)
+
 (provide 'csound-util)
 
 ;;; csound-util.el ends here

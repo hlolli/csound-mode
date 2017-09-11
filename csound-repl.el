@@ -34,7 +34,6 @@
 (require 'shut-up)
 (require 'gnuplot)
 
-
 (defvar csound-repl--csound-instance nil)
 
 ;; For flash effects, expression variables,
@@ -144,7 +143,7 @@
 	  (split-input (-> input csound-util-chomp split-string)))
       (read-csound-repl (intern (first split-input)) csound-repl--csound-instance split-input)
       ;; (comint-output-filter proc (format "%s\n" return-val))
-      (push (cons id input) csound-repl--input) 
+      (push (cons id input) csound-repl--input)
       ;; (message "%s" input)
       (puthash id (process-buffer proc) csound-repl--input-history)
       ;; (save-excursion (set-buffer csound-repl-buffer-name) (point-max))
@@ -159,7 +158,7 @@
 		  "|   )    )|   )|   )| | )|   )     |   )|   )|   )|    \n"
 		  "|__/  __/ |__/ |__/ | |/ |__/      |  / |__/ |__/ |__  \n"))
 	 (s (format (concat "\n"
-			    ";;  csound-mode 0.1\n"
+			    ";;  csound-mode 0.1.2\n"
 			    ";;  file: " cur-file "\n"
 			    ";;  sr: %d\n"
 			    ";;  ksmps: %d\n"
@@ -324,9 +323,9 @@
     (setq-local csound-repl--expression-end end)
     (setq-local csound-repl--expression-tmp-buffer-size
 		(buffer-size (get-buffer csound-repl-buffer-name)))
-    (csoundInputMessage csound-repl--csound-instance
-			(csound-score-trim-time
-			 expression-string))
+    (csound-input-message csound-repl--csound-instance
+			  (csound-score-trim-time
+			   expression-string))
     (run-with-idle-timer
      0.02 nil
      (lambda ()
@@ -377,6 +376,13 @@
       (csound-repl-evaluate-orchestra-region
        (line-beginning-position)
        (line-end-position)))))
+
+
+
+;; (let ((last-call "i 1 0 10 200"))
+;;   (read-csound-repl
+;;    (intern (first (split-string (csound-util-chomp last-call) " ")))
+;;    (get-process "csnd") (list last-call)))
 
 (defun csound-repl-plot-ftgen ()
   "Plots the f statement on the cursor's current line.

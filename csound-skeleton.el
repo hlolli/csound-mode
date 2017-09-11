@@ -51,7 +51,10 @@
 
 (eval-when-compile
   (define-auto-insert "\\.csd\\'"
-    [csound-skeleton-new-csd (lambda () (goto-line 11))]))
+    [csound-skeleton-new-csd (lambda ()
+			       (goto-line 11)
+			       (run-with-idle-timer 0.15 nil
+						    (lambda () (csound-font-lock-flush-buffer))))]))
 
 (provide 'csound-skeleton)
 

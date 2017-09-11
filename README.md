@@ -43,6 +43,26 @@ The requirements are:
 If emacs didn't find the emacs module(`emacscsnd.so`) on your system, then you will be prompted for compilation.
 If the compilation fails in any way, please write a ticket or if you know what you're doing, compile the `csoundAPI_emacsLisp` yourself from `https://github.com/hlolli/csoundAPI_emacsLisp`.
 
+If your OS package manager (yum/dnf/apt-get/brew/scons etc..) does not distribute its prebuilt Emacs with modules,
+then you will need to compile Emacs yourself!
+1. [Download the latest Emacs release](http://alpha.gnu.org/gnu/emacs/pretest/) (eg. emacs-25.2-rc2.tar.xz) or if you are on [windows](http://alpha.gnu.org/gnu/emacs/pretest/windows/)
+
+2. Unzip/Untar the file, go into the file and run `./configure --with-modules`
+
+3. Then do `make` and `sudo make install`
+
+If you want to be bold and get the newest (possibly unstable) Emacs from git.
+
+1. `git clone https://git.savannah.gnu.org/git/emacs.git`
+
+2. `cd emacs`
+
+3. `./autogen.sh`
+
+4. `./configure --with-modules`
+
+5. `make` and `sudo make install`
+
 ## Usage
 
 `csound-mode` comes with major-mode-hooks, meaning that every time a csound file(.csd/.orc/.sco) is opened in emacs, `csoun-mode` will be automatically loaded as major mode. While making it easier to install, this could potentially overwrite other major-mode you have set for csound files.
