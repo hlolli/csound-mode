@@ -65,7 +65,29 @@ If you want to be bold and get the newest (possibly unstable) Emacs from git.
 
 ## Usage
 
-`csound-mode` comes with major-mode-hooks, meaning that every time a csound file(.csd/.orc/.sco) is opened in emacs, `csoun-mode` will be automatically loaded as major mode. While making it easier to install, this could potentially overwrite other major-mode you have set for csound files.
+`csound-mode` comes with major-mode-hooks, meaning that every time a csound file(.csd/.orc/.sco) is opened in emacs, `csound-mode` will be automatically loaded as major mode. While making it easier to install, this could potentially overwrite other major-mode you have set for csound files.
+
+If you're using `csound-mode` directly from the git repo, and you happen to use the `use-package` macro. Then this could be used in your init.el file.
+
+```Clojure
+(use-package csound-mode
+  :mode (("\\.csd\\'" . csound-mode)
+  	 ("\\.orc\\'" . csound-mode)
+  	 ("\\.sco\\'" . csound-mode)
+  	 ("\\.udo\\'" . csound-mode))
+  :load-path "packages/csound-mode/")
+```
+
+## Keybindings
+<kbd>C-c C-p</kbd> `csound-play` Same as doing `csound filename -odac`.
+<kbd>C-c C-r</kbd> `csound-render` Same as doing `csound filename -o filename.wav`
+<kbd>C-c C-z</kbd> `csound-repl-start`
+<kbd>C-M-x</kbd> `csound-evaluate-region`
+<kbd>C-x C-e</kbd> `csound-evaluate-line`
+<kbd>C-c C-l</kbd> `csound-repl-interaction-evaluate-last-expression`
+<kbd>C-c C-s</kbd> `csound-score-align-block` cursor needs to be within a score block
+<kbd>M-.</kbd> `csound-score-find-instr-def` cursor needs to be within a score block
+<kbd>C-c C-f</kbd> `csound-repl-plot-ftgen` requires `gnuplot` to be installed
 
 ## Known bugs
 * Only one REPL instance can run at each moment
