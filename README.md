@@ -79,14 +79,22 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
 ```
 
 ## Keybindings
-<kbd>C-c C-p</kbd> `csound-play` Same as doing `csound filename -odac`.
+<kbd>C-c C-p</kbd> `csound-play` Same as doing `csound filename -odac`
+
 <kbd>C-c C-r</kbd> `csound-render` Same as doing `csound filename -o filename.wav`
+
 <kbd>C-c C-z</kbd> `csound-repl-start`
+
 <kbd>C-M-x</kbd> `csound-evaluate-region`
+
 <kbd>C-x C-e</kbd> `csound-evaluate-line`
+
 <kbd>C-c C-l</kbd> `csound-repl-interaction-evaluate-last-expression`
+
 <kbd>C-c C-s</kbd> `csound-score-align-block` cursor needs to be within a score block
+
 <kbd>M-.</kbd> `csound-score-find-instr-def` cursor needs to be within a score block
+
 <kbd>C-c C-f</kbd> `csound-repl-plot-ftgen` requires `gnuplot` to be installed
 
 ## Known bugs
