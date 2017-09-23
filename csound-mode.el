@@ -27,17 +27,19 @@
 ;;; Code:
 
 
+(require 'cl)
+
 (when (version< emacs-version "25.1")
   (error "csound-mode requires at least GNU Emacs 25.1"))
 
 (defvar csound-shared-library-loaded-p nil)
 
 (defvar csound-mode--dir-path
-  (first (reduce (lambda (i p)
-		   (if (string-match "csound\\-mode" p)
-		       (cons p i)
-		     i))
-		 load-path)))
+  (first (cl-reduce (lambda (i p)
+		      (if (string-match "csound\\-mode" p)
+			  (cons p i)
+			i))
+		    load-path)))
 
 (defun csound-mode--load-module ()
   (setq csound-shared-library-loaded-p
