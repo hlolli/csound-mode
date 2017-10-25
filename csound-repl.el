@@ -32,7 +32,7 @@
 (require 'csound-util)
 (require 'font-lock)
 (require 'shut-up)
-(require 'gnuplot)
+
 
 (defvar csound-repl--csound-instance nil)
 
