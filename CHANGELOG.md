@@ -1,11 +1,12 @@
 # Changelog
 ## [master]
+### Major Change
+- Csound API Removed in favour of UDP
+### Other Changes
 - Repl: +/. in p2 score snippets supported
 - Repl: + in p3 score snippet supported
 - Score: `csound-score--align-cols` improved to decrease col width as well
-- Indentation: `csound-indentation-aggressive-score` customizeable variable added
-### New Feature
-- Plotter: gnuplotter added to plot tables into the REPL via the repl or kbd <C-c C-f>.
+- Indentation: `csound-indentation-aggressive-score` customizeable variable added 
 
 
 ## [0.1.2]

@@ -29,39 +29,10 @@ and add it manually to load-path like shown here:
 (require 'csound-mode)
 ```
 
-### API Installation
+## Requirements
 
-`csound-mode` works out of the box for editing Csound files.
-For live-evaluation and REPL functionalities an emacs module needs to be compiled. 
-The requirements are:
-* linux/mac operating system (Windows support will come later)
-* Emacs **25.1+** installation with source files (this can be troublesome when using NixOs).
-* Csound 6.00 or later.
-
-`csound-mode` will try to do this automatically for you when you run the following command:
-<kbd>M-x csound-repl-start [RET]</kbd>
-If emacs didn't find the emacs module(`emacscsnd.so`) on your system, then you will be prompted for compilation.
-If the compilation fails in any way, please write a ticket or if you know what you're doing, compile the `csoundAPI_emacsLisp` yourself from `https://github.com/hlolli/csoundAPI_emacsLisp`.
-
-If your OS package manager (yum/dnf/apt-get/brew/scons etc..) does not distribute its prebuilt Emacs with modules,
-then you will need to compile Emacs yourself!
-1. [Download the latest Emacs release](http://alpha.gnu.org/gnu/emacs/pretest/) (eg. emacs-25.2-rc2.tar.xz) or if you are on [windows](http://alpha.gnu.org/gnu/emacs/pretest/windows/)
-
-2. Unzip/Untar the file, go into the file and run `./configure --with-modules`
-
-3. Then do `make` and `sudo make install`
-
-If you want to be bold and get the newest (possibly unstable) Emacs from git.
-
-1. `git clone https://git.savannah.gnu.org/git/emacs.git`
-
-2. `cd emacs`
-
-3. `./autogen.sh`
-
-4. `./configure --with-modules`
-
-5. `make` and `sudo make install`
+- Emacs 25+
+- Csound 6.10+ (any release/compilation after 1. December 2017)
 
 ## Usage
 
@@ -95,7 +66,6 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
 
 <kbd>M-.</kbd> `csound-score-find-instr-def` cursor needs to be within a score block
 
-<kbd>C-c C-f</kbd> `csound-repl-plot-ftgen` requires `gnuplot` to be installed
 
 ## Known bugs
 * Only one REPL instance can run at each moment

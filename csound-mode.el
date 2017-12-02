@@ -2,7 +2,7 @@
 ;;  Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.1.2
+;; Version: 0.2.0
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -27,34 +27,12 @@
 ;;; Code:
 
 
-(require 'cl)
-
-(when (version< emacs-version "25.1")
-  (error "csound-mode requires at least GNU Emacs 25.1"))
-
-(defvar csound-shared-library-loaded-p nil)
-
-(defvar csound-mode--dir-path
-  (first (cl-reduce (lambda (i p)
-		      (if (string-match "csound\\-mode" p)
-			  (cons p i)
-			i))
-		    load-path)))
-
-(defun csound-mode--load-module ()
-  (setq csound-shared-library-loaded-p
-	(or (ignore-errors (module-load "emacscsnd.so"))
-	    (ignore-errors (module-load (concat csound-mode--dir-path "emacscsnd.so")))
-	    (ignore-errors (module-load (concat csound-mode--dir-path "csoundAPI_emacsLisp/emacscsnd.so"))))))
-
-(csound-mode--load-module)
-
 (require 'font-lock)
+(require 'cl)
 (require 'csound-opcodes)
 (require 'csound-eldoc)
 (require 'csound-font-lock)
-(when csound-shared-library-loaded-p
-  (require 'csound-repl))
+(require 'csound-repl)
 (require 'csound-indentation)
 (require 'csound-score)
 (require 'csound-skeleton)
@@ -88,19 +66,6 @@
     			 )
     st)
   "Syntax table for csound-mode")
-
-;; https://stackoverflow.com/questions/11043004/emacs-compile-buffer-auto-close
-(defun csound-bury-compile-buffer-if-successful (buffer string)
-  "Bury a compilation buffer if succeeded without error"
-  (when (and
-         (buffer-live-p buffer)
-         (string-match "compilation" (buffer-name buffer))
-         (string-match "finished" string)
-         (not
-          (with-current-buffer buffer
-            (goto-char (point-min))
-            (search-forward-regexp "error[^s]" nil t))))
-    (bury-buffer buffer)))
 
 (defun csound-play ()
   "Play the csound file in current buffer."
@@ -145,44 +110,12 @@
 	    ))))
 
 
-(defun csound-api-compile ()
-  (case system-type
-    ((or gnu/linux darwin cygwin)
-     (progn (add-hook 'compilation-finish-functions (lambda (_ _)
-						      (csound-mode--load-module)
-						      (sleep-for 1)
-						      (if csound-shared-library-loaded-p
-							  (prog2 (require 'csound-repl)
-							      (message (concat "csound-api module was successfully compiled, "
-									       "you can now start the csound REPL with keybinding c-c c-z, "
-									       "or M-x csound-repl-start")))
-							(error (concat "csound-api module compilation failed, "
-								       "please go to "
-								       "https://github.com/hlolli/csoundAPI_emacsLisp "
-								       "and create a ticket, or if you know what you're doing, "
-								       "compile the csoundAPI yourself."))) 
-						      (remove-hook 'compilation-finish-functions
-								   (first compilation-finish-functions))))
-	    (compile (format "make -C %s" (if (member "csoundAPI_emacsLisp" (directory-files csound-mode--dir-path nil))
-					      (concat csound-mode--dir-path "csoundAPI_emacsLisp/")
-					    csound-mode--dir-path)))))
-    ;; Else
-    (t (error (concat "Your operating system is not supported for compiling "
-		      "the csoundAPI, please go to "
-		      "https://github.com/hlolli/csoundAPI_emacsLisp "
-		      "and create a ticket, or if you know what you're doing, "
-		      "compile the csoundAPI yourself.")))))
-
 (defun csound-repl-start ()
   "Start the csound-repl."
   (interactive)
-  (if (fboundp 'csound-repl--buffer-create)
-      (ignore-errors
-	(csound-repl--buffer-create))
-    (when (y-or-n-p (concat
-		     "csound-api module for emacs not found, "
-		     "do you want emacs to compile it for you?"))
-      (csound-api-compile))))
+  (if (executable-find "csound")
+      (csound-repl--buffer-create)
+    (error "Csound is not installed on your computer")))
 
 (defvar csound-mode-map nil)
 
@@ -199,7 +132,7 @@
 	;; Utilities
 	(define-key map (kbd "C-c C-s") 'csound-score-align-block)
 	(define-key map (kbd "M-.")     'csound-score-find-instr-def)
-	(define-key map (kbd "C-c C-f") 'csound-repl-plot-ftgen)
+	;; (define-key map (kbd "C-c C-f") 'csound-repl-plot-ftgen)
 	map))
 
 ;;;###autoload
@@ -216,7 +149,6 @@
   (setq-local ad-redefinition-action 'accept)
   
   (add-hook 'completion-at-point-functions #'csound-opcode-completion-at-point nil t)
-  (add-hook 'compilation-finish-functions #'csound-bury-compile-buffer-if-successful nil t)
   ;; (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t) 
   (font-lock-add-keywords nil csound-font-lock-list)
   (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
