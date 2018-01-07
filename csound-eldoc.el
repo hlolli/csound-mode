@@ -52,7 +52,7 @@
     (let ((countback (csound-eldoc-line-escape-count)))
       (buffer-substring
        (line-beginning-position countback)
-       (line-end-position)))))
+       (csound-util-line-boundry)))))
 
 
 (defun csound-eldoc-statement-list (string-statement)

@@ -37,10 +37,23 @@
     (setq str (replace-match " " t t str)))
   str)
 
-(defun csound-util-recursive-count (regex string start)
+(defun csound-util-line-boundry ()
+  (save-excursion
+    (or (search-forward ";" (line-end-position 1) t 1) (line-end-position 1))))
+
+(defun csound-util-remove-comment-in-string (string)
+  (->> string
+       (replace-regexp-in-string ";.*" "")
+       (replace-regexp-in-string "/\\*\\(.\\|\n\\)*\\*/" "")))
+
+(defun csound-util-recursive-count* (regex string start)
   (if (string-match regex string start)
-      (+ 1 (csound-util-recursive-count regex string (match-end 0)))
+      (+ 1 (csound-util-recursive-count* regex string (match-end 0)))
     0))
+
+(defun csound-util-recursive-count (regex string start)
+  (csound-util-recursive-count* regex (csound-util-remove-comment-in-string string) start))
+
 
 (defun csound-util--generate-random-uuid ()
   "Insert a random UUID.
@@ -59,6 +72,7 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 (defun csound-util-strip-text-properties (txt)
   (set-text-properties 0 (length txt) nil txt)
   txt)
+
 
 (provide 'csound-util)
 

@@ -152,6 +152,7 @@
   ;; (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t) 
   (font-lock-add-keywords nil csound-font-lock-list)
   (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
+  (setq-local font-lock-fontify-buffer-function 'csound-font-lock-flush-buffer)
   (setq-local jit-lock-mode t)
   (setq-local jit-lock-contextually t)
   (shut-up

@@ -270,92 +270,96 @@
   (let ((backward-search-limit (if (string-match-p ".sco$" (buffer-name (current-buffer)))
 				   0
 				 (save-excursion
-				   (search-backward "<CsScore" nil t 1)))))
-    (let ((beg-word nil)
-	  (end-word nil)
-	  (end-line (line-end-position 1))
-	  (passed-i-p nil)
-	  (depth 2)
-	  (comment-begin (save-excursion
-			   (beginning-of-line)
-			   (search-forward-regexp "\\;\\|\\/\\*" (line-end-position) t 1)))
-	  (comment-end (save-excursion
-			 (beginning-of-line)
-			 (search-forward "*/" (line-end-position) t 1))) 
-	  (within-block-comment-p (save-excursion
-				    (end-of-line 1)
-				    (let ((last-open (save-excursion (search-backward "/*" backward-search-limit  t 1)))
-					  (last-close (save-excursion (search-backward "*/" backward-search-limit t 1))))
-				      (if (or (and last-open last-close (< last-close (line-beginning-position 1) last-open))
-					      (and last-open (not last-close)))
-					  t nil))))
-	  (start-of-i (save-excursion
-			(search-forward-regexp "\\bi\\|\\bf" (line-end-position) t 1))))
-      (save-excursion
-	(beginning-of-line 1)
-	(while (< (point) end-line) 
-	  (if (and comment-begin
-		   (>= (save-excursion (forward-word) (point))
-		       (1- comment-begin)))
-	      (prog2 (font-lock-prepend-text-property (1- comment-begin) (line-end-position) 'face "font-lock-comment-face")
-		  (goto-char end-line))
-	    (if within-block-comment-p
-		(prog2 (font-lock-prepend-text-property (line-beginning-position) (line-end-position) 'face "font-lock-comment-face")
+				   (or (search-backward "<CsScore" nil t 1) 0))))
+	(score-end-line-num (or (search-forward "</CsScore" nil t 1) (line-number-at-pos (point-max)))))
+    (save-excursion
+      (goto-char backward-search-limit)
+      (while (< (line-number-at-pos) score-end-line-num)
+	(let ((beg-word nil)
+	      (end-word nil)
+	      (end-line (line-end-position 1))
+	      (passed-i-p nil)
+	      (depth 2)
+	      (comment-begin (save-excursion
+			       (beginning-of-line)
+			       (search-forward-regexp "\\;\\|\\/\\*" (line-end-position) t 1)))
+	      (comment-end (save-excursion
+			     (beginning-of-line)
+			     (search-forward "*/" (line-end-position) t 1))) 
+	      (within-block-comment-p (save-excursion
+					(end-of-line 1)
+					(let ((last-open (save-excursion (search-backward "/*" backward-search-limit  t 1)))
+					      (last-close (save-excursion (search-backward "*/" backward-search-limit t 1))))
+					  (if (or (and last-open last-close (< last-close (line-beginning-position 1) last-open))
+						  (and last-open (not last-close)))
+					      t nil))))
+	      (start-of-i (save-excursion
+			    (search-forward-regexp "\\bi\\|\\bf" (line-end-position) t 1))))
+	  (beginning-of-line 1)
+	  (while (< (point) end-line) 
+	    (if (and comment-begin
+		     (>= (save-excursion (forward-word) (point))
+			 (1- comment-begin)))
+		(prog2 (font-lock-prepend-text-property (1- comment-begin) (line-end-position) 'face "font-lock-comment-face")
 		    (goto-char end-line))
-	      (if comment-end
-		  (prog2 (font-lock-prepend-text-property (line-beginning-position) comment-end 'face "font-lock-comment-face")
+	      (if within-block-comment-p
+		  (prog2 (font-lock-prepend-text-property (line-beginning-position) (line-end-position) 'face "font-lock-comment-face")
 		      (goto-char end-line))
-		(if (not passed-i-p)
-		    (progn (if start-of-i
-			       (goto-char start-of-i)
-			     (search-forward-regexp "i\\|f\\|a\\|t" (line-end-position) t 1))
-			   (when (or (string-equal "i" (thing-at-point 'word t))
-				     (string-equal "f" (thing-at-point 'word t)))
-			     (prog2 (setq passed-i-p t)
-				 (font-lock-prepend-text-property (1- (point)) (point) 'face "csound-font-lock-i")))
-			   (progn 
-			     (setq beg-word (point)
-				   end-word (search-forward-regexp "\\s-\\|$" (line-end-position))
-				   passed-i-p t)
-			     ;; Recolor i to overwrite i-rate behaviour
-			     (font-lock-prepend-text-property (1- beg-word) beg-word 'face "csound-font-lock-i")
-			     ;; Color P1 values
-			     (font-lock-prepend-text-property beg-word end-word 'face
-							      (funcall #'csound-font-lock-param-delimiters-default-pick-face depth))
-			     (setq depth (1+ depth))))
-		  ;; If passed i marker
-		  (progn
-		    ;; (message "line: %d" (line-number-at-pos))
-		    (setq beg-word (min (1- (or (save-excursion (search-forward-regexp "[0-9a-zA-Z\\[\\.\\+\\<\\>\"]" (line-end-position) t 1)) 
-						(line-end-position))))
-			  end-word (save-excursion
-				     (goto-char beg-word)
-				     (let ((e (search-forward-regexp "\\s-\\|$" (line-end-position))))
-				       (if (< e end-line)
-					   e end-line))))
-		    ;; (message "beg: %d end: %d" beg-word end-word)
-		    (goto-char end-word)
-		    ;; (add-text-properties beg-word end-word `(face ,(funcall #'csound-font-lock-param-delimiters-default-pick-face depth)))
-		    (font-lock-prepend-text-property beg-word end-word 'face (funcall #'csound-font-lock-param-delimiters-default-pick-face depth))
-		    (setq depth (1+ depth))))))))))))
+		(if comment-end
+		    (prog2 (font-lock-prepend-text-property (line-beginning-position) comment-end 'face "font-lock-comment-face")
+			(goto-char end-line))
+		  (if (not passed-i-p)
+		      (progn (if start-of-i
+				 (goto-char start-of-i)
+			       (search-forward-regexp "i\\|f\\|a\\|t" (line-end-position) t 1))
+			     (when (or (string-equal "i" (thing-at-point 'word t))
+				       (string-equal "f" (thing-at-point 'word t)))
+			       (prog2 (setq passed-i-p t)
+				   (font-lock-prepend-text-property (1- (point)) (point) 'face "csound-font-lock-i")))
+			     (progn 
+			       (setq beg-word (point)
+				     end-word (search-forward-regexp "\\s-\\|$" (line-end-position))
+				     passed-i-p t)
+			       ;; Recolor i to overwrite i-rate behaviour
+			       (font-lock-prepend-text-property (1- beg-word) beg-word 'face "csound-font-lock-i")
+			       ;; Color P1 values
+			       (font-lock-prepend-text-property beg-word end-word 'face
+								(funcall #'csound-font-lock-param-delimiters-default-pick-face depth))
+			       (setq depth (1+ depth))))
+		    ;; If passed i marker
+		    (progn
+		      ;; (message "line: %d" (line-number-at-pos))
+		      (setq beg-word (min (1- (or (save-excursion (search-forward-regexp "[-?0-9a-zA-Z\\[\\.\\+\\<\\>\"]" (line-end-position) t 1)) 
+						  (line-end-position))))
+			    end-word (save-excursion
+				       (goto-char beg-word)
+				       (let ((e (search-forward-regexp "\\s-\\|$" (line-end-position))))
+					 (if (< e end-line)
+					     e end-line))))
+		      ;; (message "beg: %d end: %d" beg-word end-word)
+		      (goto-char end-word)
+		      ;; (add-text-properties beg-word end-word `(face ,(funcall #'csound-font-lock-param-delimiters-default-pick-face depth)))
+		      (font-lock-prepend-text-property beg-word end-word 'face (funcall #'csound-font-lock-param-delimiters-default-pick-face depth))
+		      (setq depth (1+ depth))))))))
+	  (next-line))))))
 
 (defun csound-font-lock-fontify-region (beg end &optional loud)
-  (shut-up
-    (save-excursion
-      (let ((score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
-			 (string-match-p ".sco$" (buffer-name (current-buffer))))))
-	(if (and score-p csound-font-lock-rainbow-score-parameters-p)
-	    (csound-font-lock--fontify-score)
-	  ;; All normal font-lock calls
-	  (let ((last-line (save-excursion (goto-char end) (line-number-at-pos))))
-	    (goto-char beg)
-	    (when (or (not (save-excursion
-			     (beginning-of-buffer)
-			     (search-forward-regexp "</CsInstruments>" end t 1)))
-		      (not csound-font-lock-rainbow-score-parameters-p))
-	      (while (< (line-number-at-pos) last-line)
-		(font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil)
-		(beginning-of-line 2)))))))))
+  ;;shut-up
+  (save-excursion
+    (let ((score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
+		       (string-match-p ".sco$" (buffer-name (current-buffer))))))
+      (if (and score-p csound-font-lock-rainbow-score-parameters-p)
+	  (csound-font-lock--fontify-score)
+	;; All normal font-lock calls
+	(let ((last-line (save-excursion (goto-char end) (line-number-at-pos))))
+	  (goto-char beg)
+	  (when (or (not (save-excursion
+			   (beginning-of-buffer)
+			   (search-forward-regexp "</CsInstruments>" end t 1)))
+		    (not csound-font-lock-rainbow-score-parameters-p))
+	    (while (< (line-number-at-pos) last-line)
+	      (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil)
+	      (beginning-of-line 2))))))))
 
 (defun csound-font-lock-param--flush-buffer ()
   (save-excursion
