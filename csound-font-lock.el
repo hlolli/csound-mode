@@ -266,15 +266,17 @@
 	      (1+ (mod depth 9))))
 	   "-face")))
 
-(defun csound-font-lock--fontify-score ()
+(defun csound-font-lock--fontify-score (beg end)
   (let ((backward-search-limit (if (string-match-p ".sco$" (buffer-name (current-buffer)))
 				   0
 				 (save-excursion
 				   (or (search-backward "<CsScore" nil t 1) 0))))
-	(score-end-line-num (or (search-forward "</CsScore" nil t 1) (line-number-at-pos (point-max)))))
+	;; (score-end-line-num (or (search-forward "</CsScore" nil t 1) (line-number-at-pos (point-max))))
+	(beg-line-num (line-number-at-pos beg))
+	(end-line-num (line-number-at-pos end)))
     (save-excursion
-      (goto-char backward-search-limit)
-      (while (< (line-number-at-pos) score-end-line-num)
+      (goto-line beg-line-num)
+      (while (< (line-number-at-pos) end-line-num)
 	(let ((beg-word nil)
 	      (end-word nil)
 	      (end-line (line-end-position 1))
@@ -340,26 +342,27 @@
 		      (goto-char end-word)
 		      ;; (add-text-properties beg-word end-word `(face ,(funcall #'csound-font-lock-param-delimiters-default-pick-face depth)))
 		      (font-lock-prepend-text-property beg-word end-word 'face (funcall #'csound-font-lock-param-delimiters-default-pick-face depth))
-		      (setq depth (1+ depth))))))))
-	  (next-line))))))
+		      (setq depth (1+ depth)))))))))
+	(next-line)))))
 
 (defun csound-font-lock-fontify-region (beg end &optional loud)
-  ;;shut-up
-  (save-excursion
-    (let ((score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
-		       (string-match-p ".sco$" (buffer-name (current-buffer))))))
-      (if (and score-p csound-font-lock-rainbow-score-parameters-p)
-	  (csound-font-lock--fontify-score)
-	;; All normal font-lock calls
-	(let ((last-line (save-excursion (goto-char end) (line-number-at-pos))))
-	  (goto-char beg)
-	  (when (or (not (save-excursion
-			   (beginning-of-buffer)
-			   (search-forward-regexp "</CsInstruments>" end t 1)))
-		    (not csound-font-lock-rainbow-score-parameters-p))
+  (shut-up
+    (save-excursion
+      (let ((score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
+			 (string-match-p ".sco$" (buffer-name (current-buffer))))))
+	(if (and score-p csound-font-lock-rainbow-score-parameters-p)
+	    (csound-font-lock--fontify-score beg end)
+	  ;; All normal font-lock calls
+	  (let ((last-line (line-number-at-pos end)))
+	    (goto-char beg)
+	    (beginning-of-line)
 	    (while (< (line-number-at-pos) last-line)
 	      (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil)
-	      (beginning-of-line 2))))))))
+	      (next-line))
+	    ;; (when (or (not (save-excursion
+	    ;; 		     (beginning-of-buffer)
+	    ;; 		     (search-forward-regexp "</CsInstruments>" end t 1)))))
+	    ))))))
 
 (defun csound-font-lock-param--flush-buffer ()
   (save-excursion
