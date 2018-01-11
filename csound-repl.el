@@ -190,8 +190,9 @@
     (let ((id (csound-util--generate-random-uuid))
 	  (buffer-read-only nil)
 	  (lb (- (line-beginning-position) 5))
-	  (split-input (-> input csound-util-chomp split-string)))
-      (read-csound-repl (intern (first split-input)) csound-repl--udp-client-proc split-input)
+	  (input-string (-> input csound-util-chomp)))
+      (read-csound-repl (intern (first (split-string input-string)))
+			csound-repl--udp-client-proc input-string)
       ;; (comint-output-filter proc (format "%s\n" return-val))
       (push (cons id input) csound-repl--input)
       ;; (message "%s" input)
@@ -229,46 +230,6 @@
 	    "SSDIR" "SADIR"
 	    "MFDIR"))))
 
-;; (defun csound-repl--restart ()
-;;   (when csound-repl--csound-instance
-;;     (progn
-;;       (setq csound-repl--csound-instance (csoundCreate))
-;;       (sleep-for 0.1)
-;;       (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
-;; 				CSOUNDINIT_NO_SIGNAL_HANDLER))
-;;       (when (not (string-empty-p csound-repl--process-tty-name))
-;;       	(csoundMessageTty csound-repl--csound-instance csound-repl--process-tty-name))
-;;       (csound-repl--set-default-dir-options)
-;;       (csoundSetOption csound-repl--csound-instance "-odac")
-;;       (csoundSetOption csound-repl--csound-instance "-d")
-;;       (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
-;;       (csoundInputMessage csound-repl--csound-instance "e 0 360000")
-;;       ;; TODO make this customizeable or automatic
-;;       (csoundStart csound-repl--csound-instance)
-;;       (csoundAsyncPerform csound-repl--csound-instance))))
-
-
-
-;; (defun csound-repl--boot-instance ()
-;;   (if csound-repl--csound-instance
-;;       (csound-repl--restart)
-;;     (progn
-;;       (csoundInitialize (logior CSOUNDINIT_NO_ATEXIT
-;; 				CSOUNDINIT_NO_SIGNAL_HANDLER))
-;;       (setq csound-repl--csound-instance (csoundCreate))
-;;       (sleep-for 0.1)
-;;       (when (not (string-blank-p csound-repl--process-tty-name))
-;; 	(csoundMessageTty csound-repl--csound-instance csound-repl--process-tty-name))
-;;       (csound-repl--set-default-dir-options)
-;;       (csoundSetOption csound-repl--csound-instance "-odac")
-;;       (csoundSetOption csound-repl--csound-instance "-d")
-;;       ;; TODO make this customizeable or automatic
-;;       (csoundCompileOrc csound-repl--csound-instance (csound-repl-get-options))
-;;       ;; (csoundReadScore csound-repl--csound-instance "e 0 3600")
-;;       (csoundInputMessage csound-repl--csound-instance "e 0 360000")
-;;       (csoundStart csound-repl--csound-instance)
-;;       (csoundAsyncPerform csound-repl--csound-instance))))
-
 (defun csound-repl--expression-at-point ()
   (save-excursion 
     (end-of-line)
@@ -298,21 +259,33 @@
 		     (line-end-position 0))))
     (list beg-block end-block)))
 
+(setq csound-repl--filter-multline-hackfix nil)
+
 (defun csound-repl--filter (_ msg)
   (save-current-buffer
     (set-buffer csound-repl-buffer-name)
     (goto-char (buffer-size))
-    (let ((msg (replace-regexp-in-string "\0\\|\n" "" msg)))
+    (let ((msg (->> msg
+		    (replace-regexp-in-string "\0\\|\n" "")
+		    (replace-regexp-in-string ">>>" " >>> "))))
+      (when (string-match-p ">>>" msg)
+	(setq csound-repl--filter-multline-hackfix t))
+      (when (string-match-p "<<<" msg)
+	(setq csound-repl--filter-multline-hackfix nil))
       (if (prog2 (beginning-of-line)
 	      (search-forward csound-repl-prompt nil t 1))
 	  (progn 
 	    (beginning-of-line)
 	    (end-of-line 0)
-	    (insert (concat msg "\n")))
+	    (if csound-repl--filter-multline-hackfix
+		(insert msg)
+	      (insert (concat msg "\n"))))
 	(progn 
 	  (goto-char (buffer-size))
 	  (end-of-line 1)
-	  (insert (concat msg "\n"))))
+	  (if csound-repl--filter-multline-hackfix
+	      (insert msg)
+	    (insert (concat msg "\n")))))
       (when (or (string-match-p  "rtjack\\: error" msg)
 		(string-match-p "rtjack\\: could not connect" msg))
 	(insert "REPL ERROR: Something went wrong, please restart the repl to continue.\n")))
@@ -501,7 +474,7 @@
 
 (defun csound-repl--start-server (port console-port sr ksmps nchnls zero-db-fs)
   (start-process "Csound Server" csound-repl-buffer-name
-		 "csound" "--realtime"
+		 "csound" "-odac"
 		 (format "--port=%s" port)
 		 (format "--udp-console=127.0.0.1:%s" console-port)
 		 (format "--sample-rate=%s" sr)

@@ -76,31 +76,24 @@
 ;; 	      (with-current-buffer (buffer-name) (funcall 'iimage-mode))
 ;; 	      (switch-to-buffer-other-window prev-buffer))))))))
 
-(defvar csound-repl-interaction--last-callback)
+(setq csound-repl-interaction--last-callback nil)
 
-(defun csound-input-message (csound args)
-  (let ((callback (lambda () (csoundInputMessage csound args))))
+(defun csound-input-message (csound-udp input)
+  (let ((callback (lambda () (process-send-string csound-udp (concat "$" input)))))
     (funcall callback)
     (setq csound-repl-interaction--last-callback callback)))
 
 (defmulti read-csound-repl (op csound &rest _)
   op)
 
-(defmulti-method read-csound-repl 'i (_ csound-udp args)
-  (process-send-string csound-udp (csound-score-trim-time
-				   (string-join args " ")))
-  ;; (let ((callback (lambda ()
-  ;; 		    (csoundInputMessage csound (csound-score-trim-time
-  ;; 						(string-join args " "))))))
-  ;;   (funcall callback)
-  ;;   )
-  )
+(defmulti-method read-csound-repl 'i (_ csound-udp input)
+  (csound-input-message csound-udp (csound-score-trim-time input)))
 
-(defmulti-method read-csound-repl 'f (_ csound-udp args)
-  (let ((callback (lambda ()
-		    (process-send-string csound-udp (string "$" (string-join args " "))))))
-    (funcall callback)
-    (setq csound-repl-interaction--last-callback callback)))
+(defmulti-method read-csound-repl 'f (_ csound-udp input)
+  (csound-input-message csound-udp input))
+
+(defmulti-method-fallback read-csound-repl (_ csound-udp input)
+  (process-send-string csound-udp input))
 
 ;; (defmulti-method read-csound-repl 'table (_ csound-udp args)
 ;;   (let ((callback (lambda ()

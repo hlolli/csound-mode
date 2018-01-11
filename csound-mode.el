@@ -147,14 +147,14 @@
   
   (setq-local compilation-scroll-output t)
   (setq-local ad-redefinition-action 'accept)
-  
+  (setq-local font-lock-comment-end-skip "\n")
   (add-hook 'completion-at-point-functions #'csound-opcode-completion-at-point nil t)
   ;; (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t) 
   (font-lock-add-keywords nil csound-font-lock-list)
   (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
   (setq-local font-lock-fontify-buffer-function 'csound-font-lock-flush-buffer)
-  (setq-local jit-lock-mode t)
-  (setq-local jit-lock-contextually t)
+  ;; (setq-local jit-lock-mode t)
+  ;; (setq-local jit-lock-contextually t)
   (shut-up
     (with-silent-modifications
       (csound-font-lock-flush-buffer))))
