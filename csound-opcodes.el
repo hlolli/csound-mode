@@ -69,7 +69,7 @@ karray[] vbapg kazim [,kelev] [, kspread] [, ilayout]" :doc "Calculates the gain
 (puthash "freeverb" '(:template "aoutL, aoutR freeverb ainL, ainR, kRoomSize, kHFDamp[, iSRate[, iSkip]]" :doc "Opcode version of Jezar's Freeverb") csdoc-opcode-database)
 (puthash "repluck" '(:template "ares repluck iplk, kamp, icps, kpick, krefl, axcite" :doc "Physical model of the plucked string.") csdoc-opcode-database)
 (puthash "pvsout" '(:template "pvsout fsig, kchan" :doc "Write a fsig to the pvs output bus.") csdoc-opcode-database)
-(puthash "mp3scal" '(:template "asig, asig2, ktime mp3scal Sfile,ktimescal,kpitch, kamp [,iskip,ifftsize, idecim, ilock]" :doc "Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'.") csdoc-opcode-database)
+(puthash "mp3scal" '(:template "asig, asig2, ktime mp3scal Sfile, ktimescal, kpitch, kamp[, iskip, ifftsize, idecim, ilock]" :doc "Phase-locked vocoder processing with onset detection/processing, 'tempo-scaling'.") csdoc-opcode-database)
 (puthash "gogobel" '(:template "ares gogobel kamp, kfreq, ihrd, ipos, imp, kvibf, kvamp, ivfn" :doc "Audio output is a tone related to the striking of a cow bell or similar.") csdoc-opcode-database)
 (puthash "fink" '(:template "fink ifilename, iskipframes, iformat, kin1 [, kin2] [, kin3] [,...]" :doc "Read signals from a file at k-rate.") csdoc-opcode-database)
 (puthash "clear" '(:template "clear avar1 [, avar2] [, avar3] [...]" :doc "Zeroes a list of audio signals.") csdoc-opcode-database)
@@ -466,7 +466,7 @@ tableshufflei itablenum" :doc "shuffles the content of a function table so that 
 (puthash "vbap4" '(:template "ar1, ar2, ar3, ar4 vbap4 asig, kazim [, kelev] [, kspread]" :doc "Distributes an audio signal among 4 channels.") csdoc-opcode-database)
 (puthash "pset" '(:template "pset icon1 [, icon2] [...]" :doc "Defines and initializes numeric arrays at orchestra load time.") csdoc-opcode-database)
 (puthash "vaddv_i" '(:template "vaddv_i ifn1, ifn2, ielements [, idstoffset] [, isrcoffset]" :doc "Performs addition between two vectorial control signals at init time.") csdoc-opcode-database)
-(puthash "setscorepos" '(:template "setscorepos ipos" :doc "Sets the playback position of the current score performance to a given position.") csdoc-opcode-database)
+(puthash "setscorepos" '(:template "setscoreposipos" :doc "Sets the playback position of the current score performance to a given position.") csdoc-opcode-database)
 (puthash "ptable3" '(:template "ares ptable3 andx, ifn [, ixmode] [, ixoff] [, iwrap]
 ires ptable3 indx, ifn [, ixmode] [, ixoff] [, iwrap]
 kres ptable3 kndx, ifn [, ixmode] [, ixoff] [, iwrap]" :doc "Accesses table values by direct indexing with cubic interpolation.") csdoc-opcode-database)
@@ -972,6 +972,7 @@ kres cauchy kalpha" :doc "WTF: ") csdoc-opcode-database)
 (puthash "dripwater" '(:template "ares dripwater kamp, idettack [, inum] [, idamp] [, imaxshake] [, ifreq] [, ifreq1] [, ifreq2]" :doc "Semi-physical model of a water drop.") csdoc-opcode-database)
 (puthash "vtablewi" '(:template "vtablewi indx, ifn, ixmode, inarg1 [, inarg2, inarg3 , .... , inargN ]" :doc "Write vectors (to tables -or arrays of vectors).") csdoc-opcode-database)
 (puthash "zkr" '(:template "kres zkr kndx" :doc "Reads from a location in zk space at k-rate.") csdoc-opcode-database)
+(puthash "midiout_i" '(:template "midiout_i istatus, ichan, idata1, idata2" :doc "Sends a generic MIDI message to the MIDI OUT port.") csdoc-opcode-database)
 (puthash "pdhalfy" '(:template "aout pdhalfy ain, kShapeAmount [, ibipolar [, ifullscale]]" :doc "Distorts a phasor for reading two unequal portions of a table in equal periods.") csdoc-opcode-database)
 (puthash "vmult" '(:template "vmult ifn, kval, kelements [, kdstoffset] [, kverbose]" :doc "Multiplies a vector in a table by a scalar value.") csdoc-opcode-database)
 (puthash "outipc" '(:template "outipc ichn, iprog, imin, imax" :doc "Sends MIDI program change messages at i-rate") csdoc-opcode-database)
@@ -1065,6 +1066,7 @@ kans getseed" :doc "Reads the global seed value.") csdoc-opcode-database)
 (puthash "zacl" '(:template "zacl kfirst, klast" :doc "Clears one or more variables in the za space.") csdoc-opcode-database)
 (puthash "strcat" '(:template "Sdst strcat Ssrc1, Ssrc2" :doc "Concatenate strings") csdoc-opcode-database)
 (puthash "tabplay" '(:template "tabplay ktrig, knumtics, kfn, kout1 [,kout2,..., koutN]" :doc "Playing-back control signals.") csdoc-opcode-database)
+(puthash "squinewave" '(:template "aout [, asyncout] squinewave acps, aClip, aSkew [, asyncin] [, iMinSweep] [, iphase]" :doc "A mostly bandlimited shape-shifting square-pulse-saw-sinewave oscillator with hardsync.") csdoc-opcode-database)
 (puthash "printk2" '(:template "printk2 kvar [, inumspaces]" :doc "Prints a new value every time a control variable changes.") csdoc-opcode-database)
 (puthash "filter2" '(:template "ares filter2 asig, iM, iN, ib0, ib1, ..., ibM, ia1, ia2, ..., iaN
 kres filter2 ksig, iM, iN, ib0, ib1, ..., ibM, ia1, ia2, ..., iaN" :doc "Performs filtering using a transposed form-II digital filter lattice with no time-varying control.") csdoc-opcode-database)
@@ -1081,7 +1083,7 @@ karray[] vbapgmove idur, ispread, ifldnum, ifld1 [, ifld2] [...]" :doc "Calculat
 (puthash "passign" '(:template "ivar1, ... passign [istart]" :doc "Assigns a range of p-fields to ivariables.") csdoc-opcode-database)
 (puthash "writescratch" '(:template "writescratchival[, index]" :doc "writes a value into the scratchpad of the instance of an instrument.") csdoc-opcode-database)
 (puthash "readk" '(:template "kres readk ifilname, iformat, iprd" :doc "Periodically reads an orchestra control-signal value from an external file.") csdoc-opcode-database)
-(puthash "OSCsend" '(:template "OSCsend kwhen, ihost, iport, idestination, itype [, xdata1, xdata2, ...]" :doc "Sends data to other processes using the OSC protocol") csdoc-opcode-database)
+(puthash "OSCsend" '(:template "OSCsend kwhen, ihost, iport, idestination[, itype , xdata1, xdata2, ...]" :doc "Sends data to other processes using the OSC protocol") csdoc-opcode-database)
 (puthash "pinkish" '(:template "ares pinkish xin [, imethod] [, inumbands] [, iseed] [, iskip]" :doc "Generates approximate pink noise.") csdoc-opcode-database)
 (puthash "linenr" '(:template "ares linenr xamp, irise, idec, iatdec
 kres linenr kamp, irise, idec, iatdec" :doc "The") csdoc-opcode-database)
@@ -1182,7 +1184,8 @@ kres tablekt kndx, kfn [, ixmode] [, ixoff] [, iwrap]" :doc "Provides k-rate con
 (puthash "chnset" '(:template "chnset ival, Sname
 chnset kval, Sname
 chnset aval, Sname
-chnset Sval, Sname" :doc "Writes data to the named software bus.") csdoc-opcode-database)
+chnset Sval, Sname
+chnsetks Sval, Sname" :doc "Writes data to the named software bus.") csdoc-opcode-database)
 (puthash "midinoteoncps" '(:template "midinoteoncps xcps, xvelocity" :doc "Gets a MIDI note number as a cycles-per-second frequency.") csdoc-opcode-database)
 (puthash "fmb3" '(:template "ares fmb3 kamp, kfreq, kc1, kc2, kvdepth, kvrate[, ifn1, ifn2, ifn3, ifn4, ivfn]" :doc "Uses FM synthesis to create a Hammond B3 organ sound.") csdoc-opcode-database)
 (puthash "phaser2" '(:template "ares phaser2 asig, kfreq, kq, kord, kmode, ksep, kfeedback" :doc "Second-order allpass filters arranged in a series.") csdoc-opcode-database)
@@ -1418,7 +1421,8 @@ kres polyaft inote [, ilow] [, ihigh]" :doc "Returns the polyphonic after-touch 
 (puthash "chnget" '(:template "ival chnget Sname
 kval chnget Sname
 aval chnget Sname
-Sval chnget Sname" :doc "Reads data from the software bus.") csdoc-opcode-database)
+Sval chnget Sname
+Sval chngetks Sname" :doc "Reads data from the software bus.") csdoc-opcode-database)
 (puthash "partikkelsync" '(:template "async [,aphase] partikkelsync iopcode_id" :doc "Outputs") csdoc-opcode-database)
 (puthash "mpulse" '(:template "ares mpulse kamp, kintvl [, ioffset]" :doc "Generates a set of impulses.") csdoc-opcode-database)
 (puthash "envlpx" '(:template "ares envlpx xamp, irise, idur, idec, ifn, iatss, iatdec [, ixmod]
@@ -1566,7 +1570,7 @@ iout duserrnd itableNum
 kout duserrnd ktableNum" :doc "Discrete USER-defined-distribution RaNDom generator.") csdoc-opcode-database)
 (puthash "wgbow" '(:template "ares wgbow kamp, kfreq, kpres, krat, kvibf, kvamp [, ifn] [, iminfreq]" :doc "Creates a tone similar to a bowed string.") csdoc-opcode-database)
 (puthash "vdelayxw" '(:template "aout vdelayxw ain, adl, imd, iws [, ist]" :doc "Variable delay opcodes with high quality interpolation.") csdoc-opcode-database)
-(puthash "slicearray" '(:template "karray slicearray kinarray, istart, iend" :doc "Take a slice of a vector.") csdoc-opcode-database)
+(puthash "slicearray" '(:template "karray slicearray kinarray, istart, iend [,istride]" :doc "Take a slice of a vector.") csdoc-opcode-database)
 (puthash "ptrack" '(:template "kcps, kamp ptrack asig, ihopsize[,ipeaks]" :doc "Tracks the pitch of a signal.") csdoc-opcode-database)
 (puthash "dssiactivate" '(:template "dssiactivate ihandle, ktoggle" :doc "Activates or deactivates a DSSI or LADSPA plugin.") csdoc-opcode-database)
 (puthash "vdelayxq" '(:template "aout1, aout2, aout3, aout4 vdelayxq ain1, ain2, ain3, ain4, adl, imd, iws [, ist]" :doc "A 4-channel variable delay opcode with high quality interpolation.") csdoc-opcode-database)

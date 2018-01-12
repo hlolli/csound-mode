@@ -67,10 +67,5 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
 <kbd>M-.</kbd> `csound-score-find-instr-def` cursor needs to be within a score block
 
 
-## Known bugs
-* Only one REPL instance can run at each moment
-* Unexpected crashing of csound within the repl can sometimes lead to Emacs crashing, if Csound crashes (example when the audio server crashes), save your work and restart Emacs.
-
-
 [badge-license]: https://img.shields.io/badge/license-GPL_3-green.svg
 [COPYING]: http://www.gnu.org/copyleft/gpl.html

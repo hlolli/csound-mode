@@ -24,6 +24,7 @@
 
 ;;; Code:
 
+(require 'csound-opcodes)
 
 (defun csound-util-chomp (str)
   "Chomp leading and tailing whitespace from STR."
@@ -72,6 +73,23 @@ The chance of generating the same UUID is much higher than a robust algorithm.."
 (defun csound-util-strip-text-properties (txt)
   (set-text-properties 0 (length txt) nil txt)
   txt)
+
+
+(defun csound-util-opcode-completion-at-point ()
+  (let ((bounds (bounds-of-thing-at-point 'word)))
+    (when bounds
+      (list (car bounds)
+            (cdr bounds)
+            csdoc-opcode-database
+            :exclusive 'no
+            :company-docsig (lambda (cand)
+			      (csound-util-chomp (replace-regexp-in-string
+						  "\n\\|\s+" "\s"
+						  (nth 3 (gethash cand csdoc-opcode-database)))))
+            :company-doc-buffer (lambda (cand)
+				  (prin1-to-string (nth 11 (gethash cand csdoc-opcode-database))))
+	    ;;:company-location (lambda (cand) (nth 11 (gethash cand csdoc-opcode-database)))
+	    ))))
 
 
 (provide 'csound-util)

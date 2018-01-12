@@ -149,7 +149,7 @@
 	 csound-repl-buffer-name)
 	(split-window-sensibly)
 	(switch-to-buffer-other-window csound-repl-buffer-name)
-	(with-current-buffer (buffer-name) (funcall 'csound-interactive-mode))
+	(with-current-buffer (buffer-name) (funcall 'csound-repl-mode))
 	(switch-to-buffer-other-window prev-buffer)))))
 
 (defun csound-repl-last-visited-csd ()
@@ -177,16 +177,17 @@
 
 
 (defconst csound-repl-prompt
-  (let ((prompt "csnd> ")) 
-    (put-text-property 0 (1- (length prompt)) 'read-only t prompt)
+  (let ((prompt "csnd> "))
+    (put-text-property 0 (length prompt) 'read-only t prompt)
     prompt))
+
 
 (defvar csound-repl--input nil)
 
 (defvar csound-repl--input-history (make-hash-table :test 'equal))
 
 (defun csound-repl--input-sender (proc input)
-  (unless (eq 0 (length input)) 
+  (unless (eq 0 (length (csound-util-chomp input)))
     (let ((id (csound-util--generate-random-uuid))
 	  (buffer-read-only nil)
 	  (lb (- (line-beginning-position) 5))
@@ -209,11 +210,11 @@
 		  "|   )    )|   )|   )| | )|   )     |   )|   )|   )|    \n"
 		  "|__/  __/ |__/ |__/ | |/ |__/      |  / |__/ |__/ |__  \n"))
 	 (s (format (concat "\n"
-			    ";;  file: " cur-file "\n"
-			    ";;  sr: %s\n"
-			    ";;  ksmps: %s\n"
-			    ";;  nchnls: %s\n"
-			    ";;  0dbfs: %s\n\n\n")
+			    "file: " cur-file "\n"
+			    "sr: %s\n"
+			    "ksmps: %s\n"
+			    "nchnls: %s\n"
+			    "0dbfs: %s\n\n\n")
 		    sr
 		    ksmps
 		    nchnls
@@ -261,13 +262,26 @@
 
 (setq csound-repl--filter-multline-hackfix nil)
 
+(setq csound-repl--filter-multline-hackfix-rtevent nil)
+
 (defun csound-repl--filter (_ msg)
   (save-current-buffer
     (set-buffer csound-repl-buffer-name)
     (goto-char (buffer-size))
     (let ((msg (->> msg
 		    (replace-regexp-in-string "\0\\|\n" "")
-		    (replace-regexp-in-string ">>>" " >>> "))))
+		    (replace-regexp-in-string ">>>" " >>> ")
+		    (replace-regexp-in-string "\\s-+rtevent:\\s-+" "rtevent: ")))
+	  (hackfix-p csound-repl--filter-multline-hackfix))
+      (when (string-match-p "rtevent:" msg)
+	(setq csound-repl--filter-multline-hackfix-rtevent 0
+	      csound-repl--filter-multline-hackfix t))
+      (when (numberp csound-repl--filter-multline-hackfix-rtevent)
+	(if (eq 2 csound-repl--filter-multline-hackfix-rtevent)
+	    (setq csound-repl--filter-multline-hackfix-rtevent nil
+		  csound-repl--filter-multline-hackfix nil)
+	  (setq csound-repl--filter-multline-hackfix-rtevent
+		(1+ csound-repl--filter-multline-hackfix-rtevent))))
       (when (string-match-p ">>>" msg)
 	(setq csound-repl--filter-multline-hackfix t))
       (when (string-match-p "<<<" msg)
@@ -277,13 +291,13 @@
 	  (progn 
 	    (beginning-of-line)
 	    (end-of-line 0)
-	    (if csound-repl--filter-multline-hackfix
+	    (if hackfix-p
 		(insert msg)
-	      (insert (concat msg "\n"))))
+	      (insert (concat "\n" msg))))
 	(progn 
 	  (goto-char (buffer-size))
 	  (end-of-line 1)
-	  (if csound-repl--filter-multline-hackfix
+	  (if hackfix-p
 	      (insert msg)
 	    (insert (concat msg "\n")))))
       (when (or (string-match-p  "rtjack\\: error" msg)
@@ -391,7 +405,7 @@
   "Evaluate csound expression on current line."
   (interactive)
   (if (not (csound-repl-buffer-running-p))
-      (message "csound-repl instance was not found")
+      (message "csound-repl is not started")
     (if (save-excursion
 	  (search-backward-regexp "<CsScore" nil t 1))
 	(csound-repl-evaluate-score-region
@@ -436,11 +450,11 @@
 ;; 	(csound-repl-interaction--plot (string-to-number table-num))))))
 
 (defvar csound-repl--font-lock-list
-  '((";+.*" . font-lock-comment-face)
+  '((";.*" . font-lock-comment-face)
     ("SECTION [0-9]+:" . font-lock-string-face)
     ("new alloc.*" . font-lock-comment-face)
-    ("error:" . font-lock-warning-face)
-    ("\\<T[^_]\\|\\<TT\\|M:" . csound-font-lock-i-rate)
+    ("error:\\|instrerror:" . font-lock-warning-face)
+    ;; ("\\<T[^_]\\|\\<TT\\|M:" . csound-font-lock-i-rate)
     (">>>.*<<<" . csound-font-lock-s-variables)
     ("\\<\\w*[^0-9]:\\B" . csound-font-lock-a-rate)))
 
@@ -482,8 +496,16 @@
 		 (format "--nchnls=%s" nchnls)
 		 (format "--0dbfs=%s" zero-db-fs)))
 
+(setq csound-repl-map
+      (let ((map comint-mode-map))
+	(define-key map (kbd "<S-return>")
+	  (lambda ()
+	    (interactive)
+	    (insert "\n      ")))
+	map))
+
 (define-derived-mode
-  csound-interactive-mode comint-mode "CsoundInteractive"
+  csound-repl-mode comint-mode "CsoundRepl"
   "Csound Interactive Message Buffer and REPL."
   :syntax-table csound-mode-syntax-table
   (setq-local comint-input-sender 'csound-repl--input-sender)
@@ -508,14 +530,18 @@
 					ksmps
 					nchnls
 					0dbfs))
-      
+      (add-hook 'completion-at-point-functions #'csound-opcode-completion-at-point nil t)
       (set-process-filter csound-repl--csound-server (lambda (_ stdin) nil))
       (setq csound-repl--udp-client-proc (csound-repl--start-client port))
       (setq csound-repl--console-client-proc (csound-repl--console-client console-port))
       (set-process-query-on-exit-flag csound-repl--csound-server nil)
       (set-process-query-on-exit-flag csound-repl--udp-client-proc nil)
       (set-process-query-on-exit-flag csound-repl--console-client-proc nil)
-      (setq-local font-lock-defaults '(csound-repl--font-lock-list))
+      (setq-local font-lock-defaults '(csound-font-lock-list
+				       csound-repl--font-lock-list))
+      (setq-local comment-start ";; ")
+      (setq-local eldoc-documentation-function 'csound-eldoc-function)
+      (add-hook 'completion-at-point-functions #'csound-util-opcode-completion-at-point nil t)
       ;; (setq-local comint-prompt-read-only t)
       (setq-local comint-scroll-to-bottom-on-input t)
       (setq-local comint-scroll-to-bottom-on-output t)
@@ -524,6 +550,5 @@
       (comint-output-filter csound-repl--console-client-proc csound-repl-prompt))))
 
 (provide 'csound-repl)
-
 
 ;;; csound-repl.el ends here

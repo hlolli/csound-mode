@@ -330,7 +330,8 @@
 			     (or (save-excursion (beginning-of-buffer)
 						 (search-forward-regexp "<CsScore" end t 1))
 				 0)))
-	    (orchestra-boundry (if (string-match-p ".orc$" (buffer-name (current-buffer)))
+	    (orchestra-boundry (if (or (string-match-p ".orc$" (buffer-name (current-buffer)))
+				       (string-match-p ".udo$" (buffer-name (current-buffer))))
 				   (buffer-size)
 				 (or (save-excursion (beginning-of-buffer)
 						     (search-forward-regexp "</CsInstruments>" end t 1))
@@ -346,7 +347,7 @@
 		(font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil))
 	      (next-line))))))))
 
-(defun csound-font-lock-param--flush-buffer ()
+(defun csound-font-lock--flush-buffer ()
   (save-excursion
     (end-of-buffer)
     (let ((line-count (line-number-at-pos)))
@@ -355,7 +356,7 @@
 	(save-excursion (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil))
 	(next-line)))))
 
-(defun csound-font-lock-param--flush-score ()
+(defun csound-font-lock--flush-score ()
   (when csound-font-lock-rainbow-score-parameters-p
     (save-excursion
       (beginning-of-buffer)
@@ -366,18 +367,9 @@
 	(when (and score-beg score-end)
 	  (csound-font-lock--fontify-score score-beg score-end))))))
 
-(defun csound-font-lock-param--bugfix ()
-  (save-excursion
-    (when (search-forward-regexp "</CsoundSynthesizer>" nil t 1)
-      (beginning-of-line)
-      (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil))))
-
 (defun csound-font-lock-flush-buffer ()
-  (progn (csound-font-lock-param--flush-buffer)
-	 (csound-font-lock-param--flush-score)
-	 ;; (csound-font-lock--flush-block-comments)
-	 ;; (csound-font-lock-param--bugfix)
-	 ))
+  (progn (csound-font-lock--flush-buffer)
+	 (csound-font-lock--flush-score)))
 
 (provide 'csound-font-lock)
 

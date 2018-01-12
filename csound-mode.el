@@ -29,7 +29,6 @@
 
 (require 'font-lock)
 (require 'cl)
-(require 'csound-opcodes)
 (require 'csound-eldoc)
 (require 'csound-font-lock)
 (require 'csound-repl)
@@ -93,22 +92,6 @@
 		       ("24" "-3")
 		       (t "-s"))))))
 
-(defun csound-opcode-completion-at-point ()
-  (let ((bounds (bounds-of-thing-at-point 'word)))
-    (when bounds
-      (list (car bounds)
-            (cdr bounds)
-            csdoc-opcode-database
-            :exclusive 'no
-            :company-docsig (lambda (cand)
-			      (csound-util-chomp (replace-regexp-in-string
-						  "\n\\|\s+" "\s"
-						  (nth 3 (gethash cand csdoc-opcode-database)))))
-            :company-doc-buffer (lambda (cand)
-				  (prin1-to-string (nth 11 (gethash cand csdoc-opcode-database))))
-	    ;;:company-location (lambda (cand) (nth 11 (gethash cand csdoc-opcode-database)))
-	    ))))
-
 
 (defun csound-repl-start ()
   "Start the csound-repl."
@@ -148,7 +131,7 @@
   (setq-local compilation-scroll-output t)
   (setq-local ad-redefinition-action 'accept)
   (setq-local font-lock-comment-end-skip "\n")
-  (add-hook 'completion-at-point-functions #'csound-opcode-completion-at-point nil t)
+  (add-hook 'completion-at-point-functions #'csound-util-opcode-completion-at-point nil t)
   ;; (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t) 
   (font-lock-add-keywords nil csound-font-lock-list)
   (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
@@ -157,7 +140,7 @@
   ;; (setq-local jit-lock-contextually t)
   (shut-up
     (with-silent-modifications
-      (csound-font-lock-flush-buffer))))
+      (csound-font-lock--flush-score))))
 
 
 (add-to-list 'auto-mode-alist `(,(concat "\\." (regexp-opt '("csd" "orc" "sco" "udo")) "\\'") . csound-mode))
