@@ -4,6 +4,7 @@
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
 ;; Version: 0.2.0
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -1804,5 +1805,5 @@ kres xadsr iatt, idec, islev, irel [, idel]" :doc "Calculates the classical ADSR
 (puthash "printks" '(:template "printks "string", itime [, kval1] [, kval2] [...]" :doc "Prints at k-rate using a printf() style syntax.") csdoc-opcode-database)
 (puthash "printks2" '(:template "printks2 "string", kval" :doc "Prints a new value every time a control variable changes using a printf() style syntax.") csdoc-opcode-database)
 
- (provide 'csound-opcodes)
+(provide 'csound-opcodes)
 ;;; csound-opcodes.el ends here

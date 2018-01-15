@@ -4,6 +4,7 @@
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
 ;; Version: 0.2.0
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -110,6 +111,7 @@
 	;; REPL Keybindings
 	(define-key map (kbd "C-c C-z") 'csound-repl-start)
 	(define-key map (kbd "C-M-x")   'csound-repl-evaluate-region)
+	(define-key map (kbd "C-c C-c") 'csound-repl-evaluate-region)
 	(define-key map (kbd "C-x C-e") 'csound-repl-evaluate-line)
 	(define-key map (kbd "C-c C-l") 'csound-repl-interaction-evaluate-last-expression)
 	;; Utilities
@@ -120,7 +122,7 @@
 
 ;;;###autoload
 (define-derived-mode csound-mode
-  prog-mode "Csound Mode"
+  fundamental-mode "Csound Mode"
   "A major mode for interacting and coding Csound"
   :syntax-table csound-mode-syntax-table
   (setq-local eldoc-documentation-function 'csound-eldoc-function)
@@ -133,7 +135,7 @@
   (setq-local font-lock-comment-end-skip "\n")
   (add-hook 'completion-at-point-functions #'csound-util-opcode-completion-at-point nil t)
   ;; (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t) 
-  (font-lock-add-keywords nil csound-font-lock-list)
+  (font-lock-add-keywords nil csound-font-lock-list t)
   (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
   (setq-local font-lock-fontify-buffer-function 'csound-font-lock-flush-buffer)
   ;; (setq-local jit-lock-mode t)

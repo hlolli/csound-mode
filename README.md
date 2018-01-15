@@ -56,7 +56,7 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
 
 <kbd>C-c C-z</kbd> `csound-repl-start`
 
-<kbd>C-M-x</kbd> `csound-evaluate-region`
+<kbd>C-M-x</kbd>/<kbd>C-M-x</kbd> `csound-evaluate-region`
 
 <kbd>C-x C-e</kbd> `csound-evaluate-line`
 

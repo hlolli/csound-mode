@@ -1,13 +1,21 @@
 # Changelog
-## [master]
-### Major Change
-- Csound API Removed in favour of UDP
+
+## [0.2.0]
+### Major Changes
+- Csound API Removed in favour of UDP (requires Csound 6.10+)
+- No more dependency on Emacs `modules`
+- `csound-repl-plot-ftgen` removed
+
 ### Other Changes
 - Repl: +/. in p2 score snippets supported
 - Repl: + in p3 score snippet supported
 - Score: `csound-score--align-cols` improved to decrease col width as well
 - Indentation: `csound-indentation-aggressive-score` customizeable variable added 
-
+- Font-lock: Bug causing slower font-locking fixed
+- Keybinding `C-c C-c` added for region evaluation
+- Repl: Newline in the prompt supported via <Ctrl-Return>
+- Repl: Completions added to the promt
+- Csound-mode repl welcome string prints the audio configuration from the csound-mode buffer
 
 ## [0.1.2]
 - Font-lock: Single line comments within score repaired
@@ -23,4 +31,4 @@
 ## [0.1.1]
 
 ### Bug fixes
-- Csound'd eldoc function was missing from the major-mode function
+- Csound eldoc function was missing from the major-mode function

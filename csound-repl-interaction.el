@@ -5,6 +5,7 @@
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
 ;; Version: 0.2.0
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -78,7 +79,7 @@
 
 (setq csound-repl-interaction--last-callback nil)
 
-(defun csound-input-message (csound-udp input)
+(defun csound-repl-interaction-input-message (csound-udp input)
   (let ((callback (lambda () (process-send-string csound-udp (concat "$" input)))))
     (funcall callback)
     (setq csound-repl-interaction--last-callback callback)))
@@ -87,10 +88,10 @@
   op)
 
 (defmulti-method read-csound-repl 'i (_ csound-udp input)
-  (csound-input-message csound-udp (csound-score-trim-time input)))
+  (csound-repl-interaction-input-message csound-udp (csound-score-trim-time input)))
 
 (defmulti-method read-csound-repl 'f (_ csound-udp input)
-  (csound-input-message csound-udp input))
+  (csound-repl-interaction-input-message csound-udp input))
 
 (defmulti-method-fallback read-csound-repl (_ csound-udp input)
   (process-send-string csound-udp input))
