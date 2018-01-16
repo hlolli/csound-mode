@@ -1,4 +1,5 @@
 [![License GPL 3][badge-license]][copying]
+[![MELPA Stable](https://stable.melpa.org/packages/csound-mode-badge.svg)](https://stable.melpa.org/#/csound-mode)
 [![Melpa Status](http://melpa.milkbox.net/packages/csound-mode-badge.svg)](http://melpa.milkbox.net/#/csound-mode)
 
 
@@ -20,7 +21,7 @@ You can install `csound-mode` from `MELPA` using the following command:
 
 <kbd>M-x package-install [RET] csound-mode [RET]</kbd>
 
-Alternatively, [download latest release.](https://github.com/hlolli/csound-mode/releases/download/v0.1.2/csound-mode-0.1.2.zip)
+Alternatively, [download latest release.](https://github.com/hlolli/csound-mode/releases/download/v0.2.0/csound-mode-0.2.0.zip)
 and add it manually to load-path like shown here:
 
 ```el
