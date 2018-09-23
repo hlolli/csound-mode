@@ -30,6 +30,7 @@
 (require 'csound-util)
 (require 'csound-score)
 
+
 (defcustom csound-indentation-spaces 2
   "Set how many spaces are in indentation."
   :type 'integer
@@ -104,6 +105,92 @@
 			      (search-forward-regexp "goto" (csound-util-line-boundry) t 1))
 			 (1+ cnt) cnt)))))
 
+
+(defun csound-indentation-line-break-escape-p ()
+  (save-excursion
+    (beginning-of-line 0)
+    (let ((line-as-string (buffer-substring (point) (csound-util-line-boundry))))
+      (string-match-p "\\\\[[:space:]]*$" line-as-string))))
+
+
+(defun csound-indentation-expression-first-arg (expr-string non-comma-cnt initial-recur-p)
+  (let ((trimmed-str (csound-util-chomp expr-string)))
+    (let* ((beginning-of-delimination (string-match "[\s\t,]" trimmed-str 0))
+           (end-of-delimination (when beginning-of-delimination
+                                  (string-match "[^\s^\t^,]" trimmed-str beginning-of-delimination)))
+           (comma-inbetween  (when end-of-delimination
+                               (string-match-p ","
+                                               (substring-no-properties trimmed-str beginning-of-delimination
+                                                                        end-of-delimination))))
+           (next-form (when end-of-delimination
+                        (substring-no-properties trimmed-str end-of-delimination (length trimmed-str))))
+           (next-beginning (string-match "[\s\t,]" next-form 0))
+           (next-end (when next-beginning
+                       (string-match "[^\s^\t^,]" next-form next-beginning)))
+           (next-comma (when next-end
+                         (string-match-p ","
+                                         (substring-no-properties next-form next-beginning next-end)))))
+      (if (or (not (= 0 non-comma-cnt))
+              (and initial-recur-p (not comma-inbetween) next-comma))
+          (substring-no-properties trimmed-str end-of-delimination
+                                   (or (string-match "[\s\|\t]" trimmed-str end-of-delimination)
+                                       (length trimmed-str)))
+        (when next-form
+          (csound-indentation-expression-first-arg
+           next-form
+           (if comma-inbetween non-comma-cnt (1+ non-comma-cnt)) nil))))))
+
+(defun csound-indentation-line-break-indent ()
+  ;; If it's the second occourance in a row
+  (if (save-excursion
+        (beginning-of-line 0)
+        (csound-indentation-line-break-escape-p))
+      (indent-line-to (save-excursion
+                        (beginning-of-line 0)
+                        (search-forward-regexp "[^\s^\t]" (line-end-position 1) t 1)
+                        (1- (current-column))))
+    (let* ((assignment-operator (save-excursion
+                                  (beginning-of-line 0)
+                                  (search-forward-regexp "=" (csound-util-line-boundry) t 1)))
+           (paren-open (when assignment-operator
+                         (save-excursion
+                           (goto-char assignment-operator)
+                           (search-forward-regexp "(" (csound-util-line-boundry) t 1)))))
+      (cond
+       ;; ivar = poscil( |ival, ival2)
+       ((and assignment-operator paren-open)
+        (indent-line-to (save-excursion
+                          (goto-char paren-open)
+                          (search-forward-regexp "[^\s^\t^(]" (csound-util-line-boundry) t 1)
+                          (1- (current-column)))))
+       ;; ivar = |"coulbeanything"
+       ((and assignment-operator (not paren-open))
+        (indent-line-to (save-excursion
+                          (goto-char assignment-operator)
+                          (search-forward-regexp "[^\s^\t]" (csound-util-line-boundry) t 1)
+                          (current-column))))
+       ;; First element that has comma after an element without comma
+       (t (let* ((first-arg
+                  (csound-indentation-expression-first-arg
+                   (csound-util-remove-comment-in-string
+                    (buffer-substring-no-properties
+                     (line-beginning-position 0)
+                     (line-end-position 0)))
+                   0 t))
+                 (first-arg-pos
+                  (save-excursion
+                    (beginning-of-line 0)
+                    (search-forward first-arg (line-end-position 1) t 1)
+                    (current-column))))
+            (if (and first-arg first-arg-pos)
+                (indent-line-to (- first-arg-pos (length first-arg)))
+              ;; Fallback, ident +2 from first non-whitespace char above
+              (indent-line-to
+               (save-excursion
+                 (beginning-of-line 0)
+                 (search-forward-regexp "[^\s^\t]" (csound-util-line-boundry) t 1)
+                 (current-column))))))))))
+
 (defun csound-indentation-inside-expression-calc (expr-type)
   (let* ((beginning-of-expr (if (eq 'instr expr-type)
 				(save-excursion
@@ -118,6 +205,7 @@
 			  (point-max)))
 	 (ending-of-current-line (line-end-position))
 	 (expression-to-point (buffer-substring beginning-of-expr (line-end-position 1)))
+         (expression-to-line-above (buffer-substring beginning-of-expr (line-end-position 0)))
 	 (count-if-statements (csound-util-recursive-count  "\\b\\(if\\)\\b" expression-to-point 0))
 	 (goto-if-mix (save-excursion
 			(prog2
@@ -127,6 +215,8 @@
 	 (count-endif-statements (csound-util-recursive-count "\\b\\(endif\\)\\b" expression-to-point 0))
 	 (count-while-statements (csound-util-recursive-count "\\b\\(while\\)\\b" expression-to-point 0))
 	 (count-od-statements (csound-util-recursive-count "\\b\\(od\\)\\b" expression-to-point 0))
+         (count-multiline-string-open (csound-util-recursive-count "{{" expression-to-line-above 0))
+	 (count-multiline-string-close (csound-util-recursive-count "}}" expression-to-point 0))
 	 (after-goto-statement (if (string-match-p "\\<\\w*:\\B" expression-to-point) 1 0))
 	 (line-at-goto-statement (if (save-excursion
 				       (beginning-of-line)
@@ -136,6 +226,7 @@
 	 (begin-of-bool-p (csound-indentation-beginning-of-bool-p))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
 				     after-goto-statement
+                                     count-multiline-string-open
 				     ;; count-elseif-statements
 				     count-while-statements)
 				  count-endif-statements
@@ -143,10 +234,11 @@
 				  begin-of-bool-p
 				  line-at-goto-statement
 				  goto-if-mix
+                                  count-multiline-string-close
 				  ;;end-of-bool-p
 				  )))))
     ;; (message "gotos: %d, bool-begin: %d, line-at-goto: %d, count-if: %d, mix %d" after-goto-statement begin-of-bool-p line-at-goto-statement count-if-statements goto-if-mix)
-    ;; (message "tab: %d begin-bool: %d " tab-count begin-of-bool-p)
+    ;; (message "multistr-open: %d multistr-close: %d " count-multiline-string-open count-multiline-string-close)
     ;; (when (and (eq 't end-of-bool-p) (not (eq 't begin-of-bool-p))) (indent-line-to (* csound-indentation-spaces (1- tab-count))))
     (indent-line-to (* csound-indentation-spaces tab-count))))
 
@@ -165,6 +257,7 @@
 		(indent-line-to 0)))
      ((csound-indentation-begin-of-expr-p) (indent-line-to 0))
      ((csound-indentation-end-of-expr-p) (indent-line-to 0))
+     ((csound-indentation-line-break-escape-p) (csound-indentation-line-break-indent))
      ((csound-indentation-inside-instr-p) (csound-indentation-inside-expression-calc 'instr))
      ((csound-indentation-inside-opcode-p) (csound-indentation-inside-expression-calc 'opcode))
      (t (indent-line-to 0)))))

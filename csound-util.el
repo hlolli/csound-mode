@@ -40,8 +40,14 @@
   str)
 
 (defun csound-util-line-boundry ()
-  (save-excursion
-    (or (search-forward ";" (line-end-position 1) t 1) (line-end-position 1))))
+  (let ((comment (save-excursion
+                   (search-forward ";" (line-end-position 1) t 1)))
+        (multi-comment (save-excursion
+                         (search-forward "/*" (line-end-position 1) t 1))))
+    (cond
+     (comment (1- comment))
+     (multi-comment (1- (1- multi-comment)))
+     (t (line-end-position 1)))))
 
 (defun csound-util-remove-comment-in-string (string)
   (->> string
