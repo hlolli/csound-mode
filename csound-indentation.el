@@ -217,7 +217,9 @@
 	 (count-od-statements (csound-util-recursive-count "\\b\\(od\\)\\b" expression-to-point 0))
          (count-multiline-string-open (csound-util-recursive-count "{{" expression-to-line-above 0))
 	 (count-multiline-string-close (csound-util-recursive-count "}}" expression-to-point 0))
-	 (after-goto-statement (if (string-match-p "\\<\\w*:\\B" expression-to-point) 1 0))
+	 (after-goto-statement (if (and (string-match-p "\\<\\w*:\\B" expression-to-point)
+                                        (= 0 (- count-multiline-string-open count-multiline-string-close)))
+                                   1 0))
 	 (line-at-goto-statement (if (save-excursion
 				       (beginning-of-line)
 				       (search-forward-regexp "\\<\\w*:" (line-end-position 1) t 1))

@@ -236,7 +236,7 @@
       ;; Regex for `i` events in score
       (push '("\\<i\\'" . csound-font-lock-i) csound-font-lock-list)
       ;; Single line comments (use syntactic fontification?)
-      ;; (push '(";+.*" . font-lock-comment-face)  csound-font-lock-list)
+      (push '("//.*" . font-lock-comment-face)  csound-font-lock-list)
       )))
 
 

@@ -54,16 +54,14 @@
     (modify-syntax-entry ?! "w" st)
     (modify-syntax-entry ?% "-" st)    
     (modify-syntax-entry ?\" "\"\"" st)
-    ;; (modify-syntax-entry ?| "\"" st) 
-    (modify-syntax-entry ?\\ "\\" st)
     ;; Comment syntax
+    (modify-syntax-entry ?\; "<" st)
+    (modify-syntax-entry ?\n ">" st)
+    (modify-syntax-entry ?/ ". 12" st)
+    (modify-syntax-entry ?\n "> " st)
     ;; good read: https://www.lunaryorn.com/posts/syntactic-fontification-in-emacs.html
-    (modify-syntax-entry ?\/ ". 124b" st)
+    (modify-syntax-entry ?/ ". 14b" st)
     (modify-syntax-entry ?* ". 23b" st)
-    (modify-syntax-entry ?\; "<" st
-    			 )
-    (modify-syntax-entry ?\n ">" st
-    			 )
     st)
   "Syntax table for csound-mode")
 
