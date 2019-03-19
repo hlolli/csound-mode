@@ -58,6 +58,11 @@
   :group 'csound-mode-repl
   :type 'integer)
 
+(defcustom csound-repl-kr 750000
+  "kr value of the csound repl"
+  :group 'csound-mode-repl
+  :type 'integer)
+
 (defcustom csound-repl-ksmps 32
   "ksmps value of the csound repl"
   :group 'csound-mode-repl
@@ -73,60 +78,76 @@
   :group 'csound-mode-repl
   :type 'integer)
 
+(defcustom csound-repl-start-server-p t
+  "When non nil, start csound server." 
+  :group 'csound-mode-repl
+  :type 'boolean)
+
 (defun csound-repl--get-sr (buf)
-  (if buf
-      (save-excursion
-	(switch-to-buffer buf)
-	(beginning-of-buffer)
-	(search-forward-regexp "^\\s-*sr\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
-	(let ((sr (match-string-no-properties 1)))
-	  (switch-to-prev-buffer)
-	  sr))
-    (number-to-string csound-repl-sr)))
+  (cond
+   ((and buf csound-repl-start-server-p)
+    (save-excursion
+	    (switch-to-buffer buf)
+	    (beginning-of-buffer)
+	    (search-forward-regexp "^\\s-*sr\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
+	    (let ((sr (match-string-no-properties 1)))
+	      (switch-to-prev-buffer)
+	      sr))
+    (number-to-string csound-repl-sr))
+   (buf (number-to-string csound-repl-sr))))
+ 
 
 (defun csound-repl--get-kr (buf)
-  (if buf
-      (save-excursion
-	(switch-to-buffer buf)
-	(beginning-of-buffer)
-	(search-forward-regexp "^\\s-*kr\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
-	(let ((sr (match-string-no-properties 1)))
-	  (switch-to-prev-buffer)
-	  sr))
-    (number-to-string csound-repl-ksmps)))
+  (cond ((and buf csound-repl-start-server-p)
+         (save-excursion
+	         (switch-to-buffer buf)
+	         (beginning-of-buffer)
+	         (search-forward-regexp
+            "^\\s-*kr\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
+	         (let ((sr (match-string-no-properties 1)))
+	           (switch-to-prev-buffer)
+	           sr))
+         (number-to-string csound-repl-kr))
+        (buf (number-to-string csound-repl-kr))))
 
 (defun csound-repl--get-ksmps (buf)
-  (if buf
-      (save-excursion
-	(switch-to-buffer buf)
-	(beginning-of-buffer)
-	(search-forward-regexp "^\\s-*ksmps\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
-	(let ((sr (match-string-no-properties 1)))
-	  (switch-to-prev-buffer)
-	  sr))
-    (number-to-string csound-repl-ksmps)))
+  (cond ((and buf csound-repl-start-server-p)
+         (save-excursion
+	         (switch-to-buffer buf)
+	         (beginning-of-buffer)
+	         (search-forward-regexp
+            "^\\s-*ksmps\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
+	         (let ((sr (match-string-no-properties 1)))
+	           (switch-to-prev-buffer)
+	           sr))
+         (number-to-string csound-repl-ksmps))
+        (buf "64")))
 
 (defun csound-repl--get-0dbfs (buf)
-  (if buf
-      (save-excursion
-	(switch-to-buffer buf)
-	(beginning-of-buffer)
-	(search-forward-regexp "^\\s-*0dbfs\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
-	(let ((sr (match-string-no-properties 1)))
-	  (switch-to-prev-buffer)
-	  sr))
-    (number-to-string csound-repl-0dbfs)))
+  (cond ((and buf csound-repl-start-server-p)
+         (save-excursion
+	         (switch-to-buffer buf)
+	         (beginning-of-buffer)
+	         (search-forward-regexp
+            "^\\s-*0dbfs\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
+	         (let ((sr (match-string-no-properties 1)))
+	           (switch-to-prev-buffer)
+	           sr))
+         (number-to-string csound-repl-0dbfs))
+        (buf (number-to-string csound-repl-0dbfs))))
 
 (defun csound-repl--get-nchnls (buf)
-  (if buf
-      (save-excursion
-	(switch-to-buffer buf)
-	(beginning-of-buffer)
-	(search-forward-regexp "^\\s-*nchnls\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
-	(let ((sr (match-string-no-properties 1)))
-	  (switch-to-prev-buffer)
-	  sr))
-    (number-to-string csound-repl-nchnls)))
+  (cond ((and buf csound-repl-start-server-p)
+         (save-excursion
+	         (switch-to-buffer buf)
+	         (beginning-of-buffer)
+	         (search-forward-regexp
+            "^\\s-*nchnls\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
+	         (let ((sr (match-string-no-properties 1)))
+	           (switch-to-prev-buffer)
+	           sr))
+         (number-to-string csound-repl-nchnls))
+        (buf "2")))
 
 (defun csound-repl-buffer-running-p ()
   (let ((indx 0)
@@ -512,31 +533,44 @@
   :syntax-table csound-mode-syntax-table
   (setq-local comint-input-sender 'csound-repl--input-sender)
   (iimage-mode t)
-  (unless (comint-check-proc (current-buffer))
+ (unless (comint-check-proc (current-buffer))
     (let* ((last-csound-buffer (csound-repl-last-visited-csd))
 	   (buffer-name (when last-csound-buffer
 			  (nth 1 last-csound-buffer)))
 	   (buffer (when last-csound-buffer
 		     (nth 2 last-csound-buffer)))
-	   (port 6000)
-	   (console-port 6001)
+		 (port (if csound-repl-start-server-p 6000 8099))
+     (console-port (if csound-repl-start-server-p 6001 8100))
 	   (sr (csound-repl--get-sr buffer))
 	   (ksmps (csound-repl--get-ksmps buffer))
 	   (nchnls (csound-repl--get-nchnls buffer))
 	   (0dbfs (csound-repl--get-0dbfs buffer)))
       (insert (csound-repl--generate-welcome-message buffer-name sr ksmps nchnls 0dbfs))
-      (setq csound-repl--csound-server (csound-repl--start-server
-					port
-					console-port
-					sr
-					ksmps
-					nchnls
-					0dbfs))
+      (if csound-repl-start-server-p
+          (setq csound-repl--csound-server (csound-repl--start-server
+					                                  port
+					                                  console-port
+					                                  sr
+					                                  ksmps
+					                                  nchnls
+					                                  0dbfs))
+       (let ((fake-proc
+         (condition-case nil
+           (start-process "ijsm" (current-buffer) "hexl")
+         (file-error (start-process "ijsm" (current-buffer) "cat")))))
+            (set-process-query-on-exit-flag fake-proc nil)
+      ;; Add a silly header
+      ;;  (insert "Interactive Javascript Mode\n")
+       (set-marker
+      (process-mark fake-proc) (point))
+       (comint-output-filter fake-proc csound-repl-prompt)))
       (add-hook 'completion-at-point-functions #'csound-opcode-completion-at-point nil t)
-      (set-process-filter csound-repl--csound-server (lambda (_ stdin) nil))
+      (when csound-repl-start-server-p
+        (set-process-filter csound-repl--csound-server (lambda (_ stdin) nil)))
       (setq csound-repl--udp-client-proc (csound-repl--start-client port))
       (setq csound-repl--console-client-proc (csound-repl--console-client console-port))
-      (set-process-query-on-exit-flag csound-repl--csound-server nil)
+      (when csound-repl-start-server-p
+         (set-process-query-on-exit-flag csound-repl--csound-server nil))
       (set-process-query-on-exit-flag csound-repl--udp-client-proc nil)
       (set-process-query-on-exit-flag csound-repl--console-client-proc nil)
       (setq-local font-lock-defaults '(csound-font-lock-list
@@ -548,8 +582,9 @@
       (setq-local comint-scroll-to-bottom-on-input t)
       (setq-local comint-scroll-to-bottom-on-output t)
       (setq-local comint-move-point-for-output t)
-      (set-marker (process-mark csound-repl--console-client-proc) (point))
-      (comint-output-filter csound-repl--console-client-proc csound-repl-prompt))))
+      ;; (set-marker (process-mark csound-repl--console-client-proc) (point))
+      ;; (comint-output-filter csound-repl--console-client-proc csound-repl-prompt)
+    )))
 
 (provide 'csound-repl)
 
