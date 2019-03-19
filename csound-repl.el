@@ -147,7 +147,7 @@
 	           (switch-to-prev-buffer)
 	           sr))
          (number-to-string csound-repl-nchnls))
-        (buf "2")))
+        ((number-to-string csound-repl-nchnls))))
 
 (defun csound-repl-buffer-running-p ()
   (let ((indx 0)
