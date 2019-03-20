@@ -47,3 +47,7 @@ flycheck_*.el
 #in development
 csound-interaction.el
 releases
+
+# nix
+result
+test/result

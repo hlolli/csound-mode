@@ -1,0 +1,10 @@
+branches:
+  only:
+  - master
+language: nix
+nix: 2.2.1
+sudo: no
+os:
+- linux
+script:
+- nix-build test/test.nix
