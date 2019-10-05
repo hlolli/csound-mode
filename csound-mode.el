@@ -151,7 +151,7 @@
     (with-silent-modifications
       (csound-font-lock--flush-score))))
 
-
+;;;###autoload
 (add-to-list 'auto-mode-alist `(,(concat "\\." (regexp-opt '("csd" "orc" "sco" "udo")) "\\'") . csound-mode))
 
 (provide 'csound-mode)
