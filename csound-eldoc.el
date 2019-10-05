@@ -2,8 +2,8 @@
 ;;  Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.0
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; Version: 0.2.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@
 
 (require 'csound-opcodes)
 (require 'csound-util)
+(require 'cl-lib)
 
 (defun csound-eldoc-get-template (opcode-list)
   (let ((templ nil)
@@ -55,12 +56,10 @@
        (line-beginning-position countback)
        (csound-util-line-boundry)))))
 
-
 (defun csound-eldoc-statement-list (string-statement)
   (split-string
    (csound-util-untab (csound-util-chomp string-statement))
    "\\(,+\s*\\)+\\|\\(\s+,*\\)+"))
-
 
 (defun csound-eldoc-template-lookup (statement-list)
   (let ((result nil)
@@ -80,11 +79,11 @@
       (save-excursion (progn (setq cand (thing-at-point 'symbol (search-backward-regexp "(" (line-beginning-position) t 1)))
                              (when (= 1 (length cand))
                                (setq rate-cand cand))
-                             (while (or (and (not cand) 
+                             (while (or (and (not cand)
                                              (not (eq (point) (line-beginning-position))))
                                         (= 1 (length cand)))
                                (setq cand (thing-at-point 'symbol))
-                               (backward-char)) 
+                               (backward-char))
                              (when (gethash cand csdoc-opcode-database)
                                (setq result (csound-eldoc-get-template
                                              (gethash cand csdoc-opcode-database))
@@ -148,8 +147,8 @@
 
 ;;;###autoload
 (defun csound-eldoc-function ()
-  "Returns a doc string appropriate for the current context, or nil." 
-  (let* ((csound-statement (csound-eldoc-statement)) 
+  "Returns a doc string appropriate for the current context, or nil."
+  (let* ((csound-statement (csound-eldoc-statement))
          (statement-list (csound-eldoc-statement-list csound-statement))
          (template-lookup (csound-eldoc-template-lookup statement-list)))
     (when template-lookup
@@ -160,11 +159,11 @@
                                (replace-regexp-in-string
                                 "\\[, " "["
                                 (nth 1 template-lookup))))
-             (template-list (csound-eldoc-statement-list csound-template)) 
+             (template-list (csound-eldoc-statement-list csound-template))
              (template-list-length (1- (length template-list)))
              (opcode-index (csound-eldoc-opcode-index opcode-match template-list))
              (template-list (if (nth 2 template-lookup)
-                                (subseq template-list opcode-index)
+                                (cl-subseq template-list opcode-index)
                               template-list))
              (argument-index (csound-eldoc-argument-index opcode-match opcode-index point-on-opcode?))
              (infinite-args? (string= "[...]" (car (last template-list))))
@@ -173,7 +172,7 @@
              (eldocstr "")
              (inf-arg nil))
         (dolist (arg template-list)
-          (setq 
+          (setq
            inf-arg (if (and infinite-args?
                             (< template-list-length argument-index))
                        t nil)
@@ -203,7 +202,7 @@
                     (if (> 0 indx)
                         (1- indx)
                       (1+ indx))))
-           list-index (1+ list-index))) 
+           list-index (1+ list-index)))
         eldocstr))))
 
 

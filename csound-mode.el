@@ -2,8 +2,8 @@
 ;;  Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.0
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; Version: 0.2.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@
 
 
 (require 'font-lock)
-(require 'cl)
+(require 'cl-lib)
 (require 'csound-eldoc)
 (require 'csound-font-lock)
 (require 'csound-repl)
@@ -106,9 +106,9 @@
   (if (and csound-repl-start-server-p
            (not (executable-find "csound")))
       (error "Csound is not installed on your computer")
-    (csound-repl--buffer-create))
+    (csound-repl--buffer-create)))
 
-  (defvar csound-mode-map nil))
+(defvar csound-mode-map nil)
 
 (setq csound-mode-map
       (let ((map (make-sparse-keymap)))

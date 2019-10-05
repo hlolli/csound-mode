@@ -3,8 +3,8 @@
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.0
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; Version: 0.2.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -247,7 +247,7 @@
 (defun csound-indentation--for-each-line (start end fn)
   (while (< (point) end)
     (funcall fn)
-    (next-line)))
+    (forward-line)))
 
 (defun csound-indentation-line ()
   "Indent current line."

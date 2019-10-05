@@ -47,3 +47,6 @@ flycheck_*.el
 #in development
 csound-interaction.el
 releases
+
+#clj
+.nrepl-port

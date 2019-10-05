@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1]
+### Minor Changes
+- bytecode compilation errors fixed
+- non-rainbow score syntax highlight improved
+- minidocs and syopsis updated
+- requiring highligh for missing hlt-highlight symbols
+- new flash colors
+
 ## [0.2.0]
 ### Major Changes
 - Csound API Removed in favour of UDP (requires Csound 6.10+)
@@ -10,7 +18,7 @@
 - Repl: +/. in p2 score snippets supported
 - Repl: + in p3 score snippet supported
 - Score: `csound-score--align-cols` improved to decrease col width as well
-- Indentation: `csound-indentation-aggressive-score` customizeable variable added 
+- Indentation: `csound-indentation-aggressive-score` customizeable variable added
 - Font-lock: Bug causing slower font-locking fixed
 - Keybinding `C-c C-c` added for region evaluation
 - Repl: Newline in the prompt supported via <Ctrl-Return>

@@ -2,8 +2,8 @@
 ;;  Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.0
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; Version: 0.2.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -31,20 +31,21 @@
 
 (defvar csound-font-lock--missing-faces '())
 
-(defcustom csound-font-lock-rainbow-score-parameters-p t
+(defcustom csound-font-lock-rainbow-score-parameters-p nil
   "Color each parameter field for
    not events within CsScore/.sco"
   :type 'boolean
   :group 'csound-mode-font-lock)
 
 (defface csound-font-lock-eval-flash
-  '((((class color)) (:background "#0AD600" :foreground "white" :bold t))
+  '((((class color) (background light)) (:foreground "#999601" :background "#42ff42"))
+    (((class color) (background dark)) (:background "#637863" :foreground "#00e4f0"))
     (t (:inverse-video t)))
   "Face for highlighting during evaluation."
   :group 'csound-mode-font-lock)
 
 (defface csound-font-lock-eval-flash-error
-  '((((class color)) (:foreground "#D60000" :bold t))
+  '((((class color)) (:foreground "#5e0d0d" :bold t))
     (t (:inverse-video t)))
   "Face for highlighting signaled errors during evaluation."
   :group 'csound-mode-font-lock)
@@ -162,6 +163,7 @@
 	csound-font-lock-strings
 	csound-font-lock-xml-tags))
 
+;;;###autoload
 (defvar csound-font-lock-list '())
 
 (defconst csound-font-lock-keywords
@@ -169,7 +171,7 @@
     (eval-when-compile
       ;; Regex for i-rates
       (push '("\\<i+\\w*" . csound-font-lock-i-rate) csound-font-lock-list)
-      
+
       ;; Regex for global i-rates
       (push '("\\<\\(gi\\)+\\w*" . csound-font-lock-global-i-rate) csound-font-lock-list)
 
@@ -209,7 +211,7 @@
       ;; Regex for csound macros types
       (push '("\\#\\w*\\|\\$\\w*" . csound-font-lock-macros) csound-font-lock-list)
 
-      ;; Regex for csound string types  (use syntactic fontification?) 
+      ;; Regex for csound string types  (use syntactic fontification?)
       ;; (push '("\\s\"\\(.*?\\)[^\\]\\s\"" . csound-font-lock-strings) csound-font-lock-list)
 
       ;; Regex for core csound xml tags
@@ -268,16 +270,11 @@
 	   "-face")))
 
 (defun csound-font-lock--fontify-score (beg end)
-  (let ((backward-search-limit (if (string-match-p ".sco$" (buffer-name (current-buffer)))
-				   0
-				 (save-excursion
-				   (end-of-buffer)
-				   (or (search-backward "<CsScore" nil t 1) 0))))
-	;; (score-end-line-num (or (search-forward "</CsScore" nil t 1) (line-number-at-pos (point-max))))
-	(beg-line-num (line-number-at-pos beg))
-	(end-line-num (1+ (line-number-at-pos end))))
+  (let ((beg-line-num (line-number-at-pos beg))
+	(end-line-num (min (line-number-at-pos (max-char))
+                           (+ 2 (line-number-at-pos end)))))
     (save-excursion
-      (goto-line beg-line-num)
+      (beginning-of-line)
       (while (< (line-number-at-pos) end-line-num)
 	(let* ((beg-word nil)
 	       (end-word nil)
@@ -306,61 +303,60 @@
 		    (setq depth (1+ depth)))
 		;; If passed i marker
 		(progn
-		  ;; (message "line: %d" (line-number-at-pos))
-		  (setq beg-word (min (1- (or (save-excursion (search-forward-regexp "[-?0-9a-zA-Z\\[\\.\\+\\<\\>\"]" (line-end-position) t 1)) 
+		  (setq beg-word (min (1- (or (save-excursion (search-forward-regexp "[-?0-9a-zA-Z\\[\\.\\+\\<\\>\"]" (line-end-position) t 1))
 					      (line-end-position))))
 			end-word (save-excursion
 				   (goto-char beg-word)
 				   (let ((e (search-forward-regexp "\\s-\\|$" (line-end-position))))
 				     (if (< e end-line)
 					 e end-line))))
-		  ;; (message "beg: %d end: %d" beg-word end-word)
 		  (goto-char end-word)
-		  ;; (add-text-properties beg-word end-word `(face ,(funcall #'csound-font-lock-param-delimiters-default-pick-face depth)))
 		  (font-lock-prepend-text-property beg-word end-word 'face (funcall #'csound-font-lock-param-delimiters-default-pick-face depth))
 		  (setq depth (1+ depth)))))))
-	(next-line)))))
+        (forward-line)))))
 
 (defun csound-font-lock-fontify-region (beg end &optional loud)
-  (shut-up
-    (save-excursion
-      (let ((within-score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
-				(string-match-p ".sco$" (buffer-name (current-buffer)))))
-	    (score-boundry (if (string-match-p ".sco$" (buffer-name (current-buffer)))
-			       0
-			     (or (save-excursion (beginning-of-buffer)
-						 (search-forward-regexp "<CsScore" end t 1))
-				 0)))
-	    (orchestra-boundry (if (or (string-match-p ".orc$" (buffer-name (current-buffer)))
-				       (string-match-p ".udo$" (buffer-name (current-buffer))))
-				   (buffer-size)
-				 (or (save-excursion (beginning-of-buffer)
-						     (search-forward-regexp "</CsInstruments>" end t 1))
-				     (buffer-size)))))
-	(if (and within-score-p csound-font-lock-rainbow-score-parameters-p)
-	    (csound-font-lock--fontify-score (max score-boundry beg) end)
-	  ;; All normal font-lock calls
-	  (let ((end-line (line-number-at-pos (min end orchestra-boundry))))
-	    (goto-char beg)
-	    (beginning-of-line)
-	    (while (< (line-number-at-pos) (1+ end-line))
-	      (save-excursion
-		(font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil))
-	      (next-line))))))))
+  (save-excursion
+    (let ((within-score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
+                              (string-match-p ".sco$" (buffer-name (current-buffer)))))
+          (score-boundry (if (string-match-p ".sco$" (buffer-name (current-buffer)))
+                             (max-char)
+                           (or (save-excursion (goto-char (point-min))
+                                               (search-forward-regexp "<CsScore" nil t 1))
+                               nil)))
+          (orchestra-boundry (if (or (string-match-p ".orc$" (buffer-name (current-buffer)))
+                                     (string-match-p ".udo$" (buffer-name (current-buffer))))
+                                 (buffer-size)
+                               (or (save-excursion (goto-char (point-min))
+                                                   (search-forward-regexp "</CsInstruments>" end t 1))
+                                   (buffer-size)))))
+      (if (and within-score-p score-boundry csound-font-lock-rainbow-score-parameters-p)
+          (csound-font-lock--fontify-score (max score-boundry beg) (min end (max-char)))
+        ;; All normal font-lock calls, but let's keep rainbow delimited fonts untouched
+        (let ((end-line (1- (line-number-at-pos (min end (point-max)))))
+              (end-line (if (and score-boundry csound-font-lock-rainbow-score-parameters-p)
+                            (line-number-at-pos score-boundry)
+                          end-line)))
+          (goto-char beg)
+          (beginning-of-line)
+          (while (< (line-number-at-pos) (1+ end-line))
+            (save-excursion
+              (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil))
+            (forward-line)))))))
 
 (defun csound-font-lock--flush-buffer ()
   (save-excursion
-    (end-of-buffer)
+    (goto-char (point-max))
     (let ((line-count (line-number-at-pos)))
-      (beginning-of-buffer) 
+      (goto-char (point-min))
       (while (< (line-number-at-pos) line-count)
 	(save-excursion (font-lock-default-fontify-region (line-beginning-position) (line-end-position) nil))
-	(next-line)))))
+        (forward-line)))))
 
 (defun csound-font-lock--flush-score ()
   (when csound-font-lock-rainbow-score-parameters-p
     (save-excursion
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (let ((score-beg (if (string-match-p ".sco$" (buffer-name (current-buffer)))
 			   0
 			 (save-excursion (search-forward "<CsScore" nil t 1))))

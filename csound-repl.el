@@ -3,9 +3,9 @@
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.0
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
-;; URL: https:/github.com/hlolli/csound-mode
+;; Version: 0.2.1
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (highlight "0"))
+;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 (require 'csound-repl-interaction)
 (require 'csound-util)
 (require 'font-lock)
+(require 'highlight)
 (require 'shut-up)
 
 (defvar csound-repl--csound-server)
@@ -39,9 +40,9 @@
 
 ;; For flash effects, expression variables,
 ;; need to live longer than the funcall
-(setq-local csound-repl--expression-start 0)
-(setq-local csound-repl--expression-end 0)
-(setq-local csound-repl--expression-tmp-buffer-size 0)
+(defvar csound-repl--expression-start 0)
+(defvar csound-repl--expression-end 0)
+(defvar csound-repl--expression-tmp-buffer-size 0)
 
 (defvar csound-repl--process-tty-name
   ""
@@ -89,7 +90,7 @@
    ((and buf csound-repl-start-server-p)
     (save-excursion
       (switch-to-buffer buf)
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (search-forward-regexp
        "^\\s-*sr\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
       (let ((sr (match-string-no-properties 1)))
@@ -102,7 +103,7 @@
   (cond ((and buf csound-repl-start-server-p)
          (save-excursion
            (switch-to-buffer buf)
-           (beginning-of-buffer)
+           (goto-char (point-min))
            (search-forward-regexp
             "^\\s-*kr\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
            (let ((sr (match-string-no-properties 1)))
@@ -115,7 +116,7 @@
   (cond ((and buf csound-repl-start-server-p)
          (save-excursion
            (switch-to-buffer buf)
-           (beginning-of-buffer)
+           (goto-char (point-min))
            (search-forward-regexp
             "^\\s-*ksmps\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
            (let ((sr (match-string-no-properties 1)))
@@ -128,7 +129,7 @@
   (cond ((and buf csound-repl-start-server-p)
          (save-excursion
            (switch-to-buffer buf)
-           (beginning-of-buffer)
+           (goto-char (point-min))
            (search-forward-regexp
             "^\\s-*0dbfs\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
            (let ((sr (match-string-no-properties 1)))
@@ -141,7 +142,7 @@
   (cond ((and buf csound-repl-start-server-p)
          (save-excursion
            (switch-to-buffer buf)
-           (beginning-of-buffer)
+           (goto-char (point-min))
            (search-forward-regexp
             "^\\s-*nchnls\\s-*=\\s-*\\([0-9]+\\)" nil t 1)
            (let ((sr (match-string-no-properties 1)))
@@ -245,15 +246,15 @@
                     0dbfs)))
     (concat csound-repl---welcome-title s)))
 
-(defun csound-repl--set-default-dir-options ()
-  (let ((filedir (nth 1 (csound-repl-last-visited-csd))))
-    (mapc (lambda (opt)
-            (csoundSetOption csound-repl--csound-instance
-                             (format "--env:%s+=;%s"
-                                     opt filedir)))
-          '("INCDIR" "SFDIR"
-            "SSDIR" "SADIR"
-            "MFDIR"))))
+;; (defun csound-repl--set-default-dir-options ()
+;;   (let ((filedir (nth 1 (csound-repl-last-visited-csd))))
+;;     (mapc (lambda (opt)
+;;             (csoundSetOption csound-repl--csound-instance
+;;                              (format "--env:%s+=;%s"
+;;                                      opt filedir)))
+;;           '("INCDIR" "SFDIR"
+;;             "SSDIR" "SADIR"
+;;             "MFDIR"))))
 
 (defun csound-repl--expression-at-point ()
   (save-excursion
