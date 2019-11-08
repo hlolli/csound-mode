@@ -215,7 +215,7 @@
            (buffer-read-only nil)
            (lb (- (line-beginning-position) 5))
            (input-string (-> input csound-util-chomp))
-           (first-chunk (first (split-string input-string))))
+           (first-chunk (car (split-string input-string))))
       (when (and first-chunk (< 0 (length first-chunk)))
         (read-csound-repl (intern (substring-no-properties first-chunk 0 1))
                           csound-repl--udp-client-proc input-string))
@@ -262,7 +262,7 @@
     (let ((fallback (list (line-beginning-position) (line-end-position)))
           (beg (search-backward-regexp "^\\s-*\\<instr\\>\\|^\\s-*\\<opcode\\>" nil t))
           (end (search-forward-regexp "^\\s-*\\<endin\\>\\|^\\s-*\\<endop\\>" nil t)))
-      (if (and beg end (<= beg (first fallback) end))
+      (if (and beg end (<= beg (car fallback) end))
           (list beg end)
         fallback
         ;; (throw 'no-expression "No instrument or opcode expression was found.")

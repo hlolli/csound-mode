@@ -99,14 +99,14 @@
     (when result
       (let ((rate-list (split-string (replace-regexp-in-string "\n\s" "\n" result) "\n")))
         (if (= (length rate-list) 1)
-            (list opcode (first rate-list) functional-syntax-p)
-          (let ((rate-candidate (or rate-cand (substring (first statement-list) 0 1))))
+            (list opcode (car rate-list) functional-syntax-p)
+          (let ((rate-candidate (or rate-cand (substring (car statement-list) 0 1))))
             (dolist (xrate rate-list)
               (when (string= rate-candidate (substring xrate 0 1))
                 (setq rate-match xrate)))
             (if rate-match
                 (list opcode rate-match functional-syntax-p)
-              (list opcode (first rate-list) functional-syntax-p))))))))
+              (list opcode (car rate-list) functional-syntax-p))))))))
 
 
 (defun csound-eldoc-argument-index (opcode-match opcode-index point-on-opcode?)
@@ -152,7 +152,7 @@
          (statement-list (csound-eldoc-statement-list csound-statement))
          (template-lookup (csound-eldoc-template-lookup statement-list)))
     (when template-lookup
-      (let* ((opcode-match (first template-lookup))
+      (let* ((opcode-match (car template-lookup))
              (point-on-opcode? (string= opcode-match (thing-at-point 'symbol)))
              (csound-template (replace-regexp-in-string
                                "[^\\[]\\.\\.\\." ""
