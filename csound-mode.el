@@ -3,7 +3,7 @@
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
 ;; Version: 0.2.1
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (highlight "0"))
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@
 (require 'csound-score)
 (require 'csound-skeleton)
 (require 'csound-util)
+(require 'dash)
 (require 'shut-up)
 
 
@@ -99,7 +100,6 @@
            Configure rendering to a file in you CSD file's
            <CsOptions> section." ))))
 
-
 (defun csound-repl-start ()
   "Start the csound-repl."
   (interactive)
@@ -145,10 +145,14 @@
   (font-lock-add-keywords nil csound-font-lock-list t)
   (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
   (setq-local font-lock-fontify-buffer-function 'csound-font-lock-flush-buffer)
-  ;; (setq-local jit-lock-mode t)
-  ;; (setq-local jit-lock-contextually t)
+  (setq-local fontification-functions (cons 'csound-font-lock-flush-buffer fontification-functions))
+  (setq-local jit-lock-function 'csound-font-lock-flush-buffer)
+  (setq-local jit-lock-functions '(csound-font-lock-fontify-region))
+  (setq-local jit-lock-mode t)
+  (jit-lock-refontify)
   (shut-up
     (with-silent-modifications
+      (csound-font-lock-flush-buffer)
       (csound-font-lock--flush-score))))
 
 ;;;###autoload
