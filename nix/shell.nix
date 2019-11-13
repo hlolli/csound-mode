@@ -13,6 +13,7 @@ let init-el = pkgs.writeText "init.el" ''
       test-simple
       multi
       dash
+      highlight
     ]));
     emacs26WithPackages = (pkgs.emacsPackagesGen pkgs.emacs26).emacsWithPackages;
     emacs26 = emacs26WithPackages (epkgs: (with epkgs.melpaPackages; [
@@ -20,6 +21,7 @@ let init-el = pkgs.writeText "init.el" ''
       test-simple
       multi
       dash
+      highlight
     ]));
 in stdenv.mkDerivation {
   name = "csound-mode-test";
