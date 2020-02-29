@@ -143,7 +143,6 @@
   (add-hook 'completion-at-point-functions #'csound-util-opcode-completion-at-point nil t)
   ;; (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t)
   (font-lock-add-keywords nil csound-font-lock-list t)
-  (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
   (setq-local font-lock-fontify-buffer-function 'csound-font-lock-flush-buffer)
   (setq-local fontification-functions (cons 'csound-font-lock-flush-buffer fontification-functions))
   (setq-local jit-lock-function 'csound-font-lock-flush-buffer)
