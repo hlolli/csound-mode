@@ -92,7 +92,7 @@
 		         filename
 		         (-> (split-string filename "\\.")
 			     rest first)
-		         (case bit
+		         (cl-case bit
 		           ("32" "-f")
 		           ("24" "-3")
 		           (t "-s"))))
