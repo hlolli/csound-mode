@@ -91,7 +91,7 @@
 		         (buffer-file-name)
 		         filename
 		         (-> (split-string filename "\\.")
-			     cl-rest first)
+			     cl-rest cl-first)
 		         (cl-case bit
 		           ("32" "-f")
 		           ("24" "-3")
