@@ -1,5 +1,9 @@
 # Changelog
 
+## [master]
+### Minor Changes
+- `csound-play-flags` and `csound-render-flags` customizeable variables added
+
 ## [0.2.1]
 ### Minor Changes
 - bytecode compilation errors fixed
