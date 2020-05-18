@@ -66,11 +66,21 @@
     st)
   "Syntax table for csound-mode")
 
+(defcustom csound-play-flags ""
+  "Additional flags to pass to csound when playing the file in current buffer."
+  :group 'csound-mode
+  :type 'string)
+
+(defcustom csound-render-flags ""
+  "Additional flags to pass to csound when rendering csound to file."
+  :group 'csound-mode
+  :type 'string)
+
 (defun csound-play ()
   "Play the csound file in current buffer."
   (interactive)
   (if csound-repl-start-server-p
-      (compile (format "csound -odac %s" (buffer-file-name)))
+      (compile (format "csound -odac %s %s" csound-play-flags (buffer-file-name)))
     (process-send-string csound-repl--udp-client-proc
                          (buffer-substring
                           (point-min) (point-max)))))
@@ -87,7 +97,8 @@
 		      (concat (file-name-base) ".wav")
 		    filename)))
     (if csound-repl-start-server-p
-        (compile (format "csound %s -o %s --format=%s %s"
+        (compile (format "csound %s %s -o %s --format=%s %s"
+		         csound-render-flags
 		         (buffer-file-name)
 		         filename
 		         (-> (split-string filename "\\.")
