@@ -3,8 +3,8 @@
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.0
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; Version: 0.2.2
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -59,7 +59,7 @@
 ;; 	  (shell-command
 ;; 	   (concat
 ;; 	    (format "echo '%s' |" table-str)
-;; 	    (format 
+;; 	    (format
 ;; 	     (concat"gnuplot -e \"set term png size 480,320;"
 ;; 		    (format "set title 'tbl: %s';" table-num)
 ;; 		    "set tics font ', 10';"
@@ -84,7 +84,7 @@
     (funcall callback)
     (setq csound-repl-interaction--last-callback callback)))
 
-(defmulti read-csound-repl (op csound &rest _)
+(defmulti read-csound-repl (op _ &rest _)
   op)
 
 (defmulti-method read-csound-repl 'i (_ csound-udp input)

@@ -2,8 +2,8 @@
 ;;  Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.0
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; Version: 0.2.2
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@
 
 
 (require 'font-lock)
-(require 'cl)
+(require 'cl-lib)
 (require 'csound-eldoc)
 (require 'csound-font-lock)
 (require 'csound-repl)
@@ -37,6 +37,7 @@
 (require 'csound-score)
 (require 'csound-skeleton)
 (require 'csound-util)
+(require 'dash)
 (require 'shut-up)
 
 
@@ -65,11 +66,21 @@
     st)
   "Syntax table for csound-mode")
 
+(defcustom csound-play-flags ""
+  "Additional flags to pass to csound when playing the file in current buffer."
+  :group 'csound-mode
+  :type 'string)
+
+(defcustom csound-render-flags ""
+  "Additional flags to pass to csound when rendering csound to file."
+  :group 'csound-mode
+  :type 'string)
+
 (defun csound-play ()
   "Play the csound file in current buffer."
   (interactive)
   (if csound-repl-start-server-p
-      (compile (format "csound -odac %s" (buffer-file-name)))
+      (compile (format "csound -odac %s %s" csound-play-flags (buffer-file-name)))
     (process-send-string csound-repl--udp-client-proc
                          (buffer-substring
                           (point-min) (point-max)))))
@@ -86,12 +97,13 @@
 		      (concat (file-name-base) ".wav")
 		    filename)))
     (if csound-repl-start-server-p
-        (compile (format "csound %s -o %s --format=%s %s"
+        (compile (format "csound %s %s -o %s --format=%s %s"
+		         csound-render-flags
 		         (buffer-file-name)
 		         filename
 		         (-> (split-string filename "\\.")
-			     rest first)
-		         (case bit
+			     cl-rest cl-first)
+		         (cl-case bit
 		           ("32" "-f")
 		           ("24" "-3")
 		           (t "-s"))))
@@ -99,16 +111,15 @@
            Configure rendering to a file in you CSD file's
            <CsOptions> section." ))))
 
-
 (defun csound-repl-start ()
   "Start the csound-repl."
   (interactive)
   (if (and csound-repl-start-server-p
            (not (executable-find "csound")))
       (error "Csound is not installed on your computer")
-    (csound-repl--buffer-create))
+    (csound-repl--buffer-create)))
 
-  (defvar csound-mode-map nil))
+(defvar csound-mode-map nil)
 
 (setq csound-mode-map
       (let ((map (make-sparse-keymap)))
@@ -143,15 +154,12 @@
   (add-hook 'completion-at-point-functions #'csound-util-opcode-completion-at-point nil t)
   ;; (add-hook 'skeleton-end-hook #'csound-font-lock-flush-buffer nil t)
   (font-lock-add-keywords nil csound-font-lock-list t)
-  (setq-local font-lock-fontify-region-function 'csound-font-lock-fontify-region)
-  (setq-local font-lock-fontify-buffer-function 'csound-font-lock-flush-buffer)
-  ;; (setq-local jit-lock-mode t)
-  ;; (setq-local jit-lock-contextually t)
   (shut-up
     (with-silent-modifications
+      (csound-font-lock-flush-buffer)
       (csound-font-lock--flush-score))))
 
-
+;;;###autoload
 (add-to-list 'auto-mode-alist `(,(concat "\\." (regexp-opt '("csd" "orc" "sco" "udo")) "\\'") . csound-mode))
 
 (provide 'csound-mode)

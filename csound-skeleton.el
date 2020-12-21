@@ -3,8 +3,8 @@
 ;; Copyright (C) 2017  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.0
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1"))
+;; Version: 0.2.2
+;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@
   "<CsOptions>\n</CsOptions>\n"
   "<CsInstruments>\n\n"
   (concat "sr = " (number-to-string csound-skeleton-default-sr) "\n")
-  (concat "ksmps = " (number-to-string csound-skeleton-default-ksmps) "\n") 
+  (concat "ksmps = " (number-to-string csound-skeleton-default-ksmps) "\n")
   "nchnls = 2\n"
   "0dbfs = 1.0\n"
   "\n\n\n"
