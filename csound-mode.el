@@ -65,7 +65,8 @@
     (modify-syntax-entry ?* ". 23b" st)
     st)
   "Syntax table for csound-mode")
-(defcustom csound-play-flags "" "Additional flags to pass to csound when playing the file in current buffer."
+(defcustom csound-play-flags ""
+  "Additional flags to pass to csound when playing the file in current buffer."
   :group 'csound-mode
   :type 'string)
 
@@ -91,7 +92,8 @@
                           (point-min) (point-max)))))
 
 (defun csound-render (bit filename)
-  "Render csound to file." (interactive
+  "Render csound to file."
+  (interactive
    (list
     (read-string "File bit-value(16/24/32), defaults to 16: ")
     (read-string (format "Filename, defaults to %s.wav: " (file-name-base)))))
