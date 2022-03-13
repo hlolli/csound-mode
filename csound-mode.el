@@ -65,6 +65,7 @@
     (modify-syntax-entry ?* ". 23b" st)
     st)
   "Syntax table for csound-mode")
+
 (defcustom csound-play-flags ""
   "Additional flags to pass to csound when playing the file in current buffer."
   :group 'csound-mode
