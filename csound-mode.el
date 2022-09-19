@@ -103,9 +103,9 @@
 		         filename
 		         (-> (split-string filename "\\.")
 			     cl-rest cl-first)
-		         (cl-case bit
-		           ("32" "-f")
-		           ("24" "-3")
+		         (cl-case (string-to-number bit)
+		           (32 "-f")
+		           (24 "-3")
 		           (t "-s"))))
       (message "%s" "You did not start a csound server subprocess.
            Configure rendering to a file in you CSD file's
