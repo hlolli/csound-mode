@@ -260,7 +260,7 @@
      ((csound-indentation-begin-of-expr-p) (indent-line-to 0))
      ((csound-indentation-end-of-expr-p) (indent-line-to 0))
      ((csound-indentation-line-break-escape-p) (csound-indentation-line-break-indent))
-     ((csound-indentation-inside-instr-p) (save-excursion (csound-indentation-inside-expression-calc 'instr)))
+     ((csound-indentation-inside-instr-p) (csound-indentation-inside-expression-calc 'instr))
      ((csound-indentation-inside-opcode-p) (csound-indentation-inside-expression-calc 'opcode))
      (t (indent-line-to 0)))))
 
