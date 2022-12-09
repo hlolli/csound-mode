@@ -80,7 +80,7 @@
   "Play the csound file in current buffer."
   (interactive)
   (if csound-repl-start-server-p
-      (compile (format "csound -odac %s %s" csound-play-flags (buffer-file-name)))
+      (compile (format "csound %s %s" csound-play-flags (buffer-file-name)))
     (process-send-string csound-repl--udp-client-proc
                          (buffer-substring
                           (point-min) (point-max)))))
@@ -94,19 +94,19 @@
   ;;(compile (format "csound -o %s" (buffer-file-name)))
   ;; (message "var1: %s var2: %s" var1 var2)
   (let ((filename (if (string= "" filename)
-		      (concat (file-name-base) ".wav")
-		    filename)))
+                      (concat (file-name-base) ".wav")
+                    filename)))
     (if csound-repl-start-server-p
         (compile (format "csound %s %s -o %s --format=%s %s"
-		         csound-render-flags
-		         (buffer-file-name)
-		         filename
-		         (-> (split-string filename "\\.")
-			     cl-rest cl-first)
-		         (cl-case (string-to-number bit)
-		           (32 "-f")
-		           (24 "-3")
-		           (t "-s"))))
+                         csound-render-flags
+                         (buffer-file-name)
+                         filename
+                         (-> (split-string filename "\\.")
+                             cl-rest cl-first)
+                         (cl-case (string-to-number bit)
+                           (32 "-f")
+                           (24 "-3")
+                           (t "-s"))))
       (message "%s" "You did not start a csound server subprocess.
            Configure rendering to a file in you CSD file's
            <CsOptions> section." ))))
@@ -123,20 +123,20 @@
 
 (setq csound-mode-map
       (let ((map (make-sparse-keymap)))
-	;; Offline keybindings
-	(define-key map (kbd "C-c C-p") 'csound-play)
-	(define-key map (kbd "C-c C-r") 'csound-render)
-	;; REPL Keybindings
-	(define-key map (kbd "C-c C-z") 'csound-repl-start)
-	(define-key map (kbd "C-M-x")   'csound-repl-evaluate-region)
-	(define-key map (kbd "C-c C-c") 'csound-repl-evaluate-region)
-	(define-key map (kbd "C-x C-e") 'csound-repl-evaluate-line)
-	(define-key map (kbd "C-c C-l") 'csound-repl-interaction-evaluate-last-expression)
-	;; Utilities
-	(define-key map (kbd "C-c C-s") 'csound-score-align-block)
-	(define-key map (kbd "M-.")     'csound-score-find-instr-def)
-	;; (define-key map (kbd "C-c C-f") 'csound-repl-plot-ftgen)
-	map))
+        ;; Offline keybindings
+        (define-key map (kbd "C-c C-p") 'csound-play)
+        (define-key map (kbd "C-c C-r") 'csound-render)
+        ;; REPL Keybindings
+        (define-key map (kbd "C-c C-z") 'csound-repl-start)
+        (define-key map (kbd "C-M-x")   'csound-repl-evaluate-region)
+        (define-key map (kbd "C-c C-c") 'csound-repl-evaluate-region)
+        (define-key map (kbd "C-x C-e") 'csound-repl-evaluate-line)
+        (define-key map (kbd "C-c C-l") 'csound-repl-interaction-evaluate-last-expression)
+        ;; Utilities
+        (define-key map (kbd "C-c C-s") 'csound-score-align-block)
+        (define-key map (kbd "M-.")     'csound-score-find-instr-def)
+        ;; (define-key map (kbd "C-c C-f") 'csound-repl-plot-ftgen)
+        map))
 
 ;;;###autoload
 (define-derived-mode csound-mode
