@@ -37,6 +37,7 @@
 (require 'csound-score)
 (require 'csound-skeleton)
 (require 'csound-util)
+(require 'csound-manual-lookup)
 (require 'dash)
 (require 'shut-up)
 
