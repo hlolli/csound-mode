@@ -6,6 +6,12 @@
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; edited by: Ruben Philipp (me@rubenphilipp.com)
+;;; $$ Last modified:  21:10:07 Mon Dec 26 2022 CET
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
@@ -85,6 +91,29 @@
     (process-send-string csound-repl--udp-client-proc
                          (buffer-substring
                           (point-min) (point-max)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; csound-abort-compilation
+;;;
+;;; author: Ruben Philipp
+;;; created: 2022-12-26, Lütgendortmund
+;;; $$ Last modified:  21:11:15 Mon Dec 26 2022 CET
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun csound-abort-compilation ()
+  (interactive)
+  (let ((current-buffer (current-buffer)))
+    (switch-to-buffer "*compilation*")
+    (kill-compilation)
+    (switch-to-buffer current-buffer)))
+
+(eval-after-load 'csound-mode
+  '(define-key csound-mode-map (kbd "C-c C-k") 'abort-csound-compilation))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (defun csound-render (bit filename)
   "Render csound to file."
