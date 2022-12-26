@@ -98,7 +98,7 @@
 ;;;
 ;;; author: Ruben Philipp
 ;;; created: 2022-12-26, Lütgendortmund
-;;; $$ Last modified:  21:11:15 Mon Dec 26 2022 CET
+;;; $$ Last modified:  21:12:50 Mon Dec 26 2022 CET
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun csound-abort-compilation ()
@@ -109,7 +109,7 @@
     (switch-to-buffer current-buffer)))
 
 (eval-after-load 'csound-mode
-  '(define-key csound-mode-map (kbd "C-c C-k") 'abort-csound-compilation))
+  '(define-key csound-mode-map (kbd "C-c C-k") 'csound-abort-compilation))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
