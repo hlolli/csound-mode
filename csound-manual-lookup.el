@@ -31,3 +31,6 @@
 
 (eval-after-load 'csound-mode
   '(define-key csound-mode-map (kbd "C-c C-d h") 'csound-manual-lookup))
+
+
+(provide 'csound-manual-lookup)
