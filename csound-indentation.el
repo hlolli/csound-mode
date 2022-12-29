@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017 - 2022  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.5
+;; Version: 0.2.6
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
@@ -229,7 +229,7 @@
                                    1 0))
 	 (line-at-goto-statement (if (save-excursion
 				       (beginning-of-line)
-				       (search-forward-regexp "\\<\\w*:" (line-end-position 1) t 1))
+				       (search-forward-regexp "\\<\\w+\\:\\s-*$" (line-end-position 1) t 1))
 				     1 0))
 	 ;; (end-of-bool-p (csound-indentation-end-of-bool-p))
 	 (begin-of-bool-p (csound-indentation-beginning-of-bool-p))
@@ -246,7 +246,7 @@
                                   count-multiline-string-close
 				  ;;end-of-bool-p
 				  )))))
-    (message "topoint: %s" expression-to-point)
+    ;; (message "topoint: %s" expression-to-point)
     ;; (message "gotos: %d, bool-begin: %d, ods: %d, line-at-goto: %d, aft-goto: %d, count-if: %d, count-endif: %d mix: %d mls: %d.%d tab-count: %d"
     ;;          after-goto-statement
     ;;          begin-of-bool-p
