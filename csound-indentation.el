@@ -77,7 +77,7 @@
   (save-excursion
     (beginning-of-line 1)
     (if (and (search-forward-regexp
-	      "\\s-?\\(if\\)\\s-\\|\\s-?\\(while\\)\\s-\\|\\s-?\\(else\\)\\s-\\|\\s-\\(elseif\\)\\s-\\|\\s-?\\(until\\)\\s-"
+	      "\\s-?\\(if\\)\\s-\\|\\s-?\\(while\\)\\s-\\|\\s-?\\(else\\)\\s-?\\|\\s-\\(elseif\\)\\s-\\|\\s-?\\(until\\)\\s-"
 	      (csound-util-line-boundry) t 1)
 	     ;; if in mix with gotos
 	     ;; dont have endif therefore
@@ -91,7 +91,7 @@
   (save-excursion
     (beginning-of-line 1)
     (if (search-forward-regexp
-	 "\\s-?\\(endif\\)\\s-\\|\\s-?\\(od\\)\\s-\\|\\s-?\\(else\\)\\s-\\|\\s-?\\(elseif\\)\\s-"
+	 "\\s-?\\(endif\\)\\s-\\|\\s-?\\(od\\)\\s-\\|\\s-?\\(else\\)\\s-\\|\\s-?\\(elseif\\)\\s-|\\s-?\\(enduntil\\)\\s-"
 	 (csound-util-line-boundry) t 1)
 	1 0)))
 
