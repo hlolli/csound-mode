@@ -45,6 +45,11 @@
   :group 'csound-mode)
 
 
+(defun csound-indentation--current-line-empty-p ()
+  (save-excursion
+    (beginning-of-line)
+    (looking-at-p "[[:blank:]]*$")))
+
 (defun csound-indentation-begin-of-expr-p ()
   (save-excursion
     (beginning-of-line 1)
@@ -77,7 +82,7 @@
   (save-excursion
     (beginning-of-line 1)
     (if (and (search-forward-regexp
-	      "\\s-?\\(if\\)\\s-\\|\\s-?\\(while\\)\\s-\\|\\s-?\\(else\\)\\s-?\\|\\s-\\(elseif\\)\\s-\\|\\s-?\\(until\\)\\s-"
+	      "\\<\\(if\\)\\>\\|\\<\\(while\\)\\>\\|\\<\\(else\\)\\>\\|\\<\\(elseif\\)\\>\\|\\<\\(until\\)\\>"
 	      (csound-util-line-boundry) t 1)
 	     ;; if in mix with gotos
 	     ;; dont have endif therefore
@@ -91,7 +96,7 @@
   (save-excursion
     (beginning-of-line 1)
     (if (search-forward-regexp
-	 "\\s-?\\(endif\\)\\s-\\|\\s-?\\(od\\)\\s-\\|\\s-?\\(else\\)\\s-\\|\\s-?\\(elseif\\)\\s-|\\s-?\\(enduntil\\)\\s-"
+	 "\\<\\(endif\\)\\>\\|\\<\\(od\\)\\>\\|\\<\\(else\\)\\>\\|\\<\\(elseif\\)\\>|\\<\\(enduntil\\)\\>"
 	 (csound-util-line-boundry) t 1)
 	1 0)))
 
@@ -101,8 +106,8 @@
     (prog2
 	(beginning-of-line 2)
 	(csound-indentation-count-goto-if-mix
-	 end-of-expr (if (and (search-forward-regexp "\\s-?\\(if\\)\\s-" (csound-util-line-boundry) t 1)
-			      (search-forward-regexp "\\s-?\\(goto\\)\\s-" (csound-util-line-boundry) t 1))
+	 end-of-expr (if (and (search-forward-regexp "\\<\\(if\\)\\>" (csound-util-line-boundry) t 1)
+			      (search-forward-regexp "\\<\\(goto\\)\\>" (csound-util-line-boundry) t 1))
 			 (1+ cnt) cnt)))))
 
 
@@ -206,7 +211,7 @@
 	 (ending-of-current-line (line-end-position))
 	 (expression-to-point (buffer-substring beginning-of-expr (line-end-position 1)))
          (expression-to-line-above (buffer-substring beginning-of-expr (line-end-position 0)))
-	 (count-if-statements (csound-util-recursive-count  "\\s-?\\(if\\)\\s-" expression-to-point 0))
+	 (count-if-statements (csound-util-recursive-count  "\\<\\(if\\)\\s-" expression-to-point 0))
 	 (goto-if-mix (save-excursion
 			(prog2
 			    (goto-char beginning-of-expr)
@@ -214,7 +219,7 @@
 	 ;; (count-elseif-statements (recursive-count "\\b\\(elseif\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
 	 (count-endif-statements (csound-util-recursive-count "\\s-?\\(endif\\)\\s-?" expression-to-point 0))
 	 (count-while-statements (csound-util-recursive-count "\\s-?\\(while\\)\\s-?" expression-to-point 0))
-	 (count-od-statements (csound-util-recursive-count "\\s-?\\(od\\)\\s-?" expression-to-point 0))
+	 (count-od-statements (csound-util-recursive-count "\\<\\(od\\)\\>" expression-to-point 0))
          (count-multiline-string-open (csound-util-recursive-count "{{" expression-to-line-above 0))
 	 (count-multiline-string-close (csound-util-recursive-count "}}" expression-to-point 0))
 	 (after-goto-statement (if (and (string-match-p "\\<\\w*:\\B" expression-to-point)
@@ -239,7 +244,18 @@
                                   count-multiline-string-close
 				  ;;end-of-bool-p
 				  )))))
-    ;; (message "gotos: %d, bool-begin: %d, line-at-goto: %d, count-if: %d, count-endif: %d mix %d" after-goto-statement begin-of-bool-p line-at-goto-statement count-if-statements count-endif-statements goto-if-mix)
+    ;; (message "gotos: %d, bool-begin: %d, ods: %d, line-at-goto: %d, aft-goto: %d, count-if: %d, count-endif: %d mix: %d mls: %d.%d tab-count: %d"
+    ;;          after-goto-statement
+    ;;          begin-of-bool-p
+    ;;          count-od-statements
+    ;;          line-at-goto-statement
+    ;;          after-goto-statement
+    ;;          count-if-statements
+    ;;          count-endif-statements
+    ;;          goto-if-mix
+    ;;          count-multiline-string-open
+    ;;          count-multiline-string-close
+    ;;          tab-count)
     ;; (message "multistr-open: %d multistr-close: %d " count-multiline-string-open count-multiline-string-close)
     ;; (when (and (eq 't end-of-bool-p) (not (eq 't begin-of-bool-p))) (indent-line-to (* csound-indentation-spaces (1- tab-count))))
     (indent-line-to (* csound-indentation-spaces tab-count))))
@@ -249,10 +265,10 @@
     (funcall fn)
     (forward-line)))
 
-(defun csound-indentation-line ()
-  "Indent current line."
+(defun csound-indentation--do-indent ()
   (let ((score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
 		     (string-match-p ".sco$" (buffer-name (current-buffer))))))
+
     (cond
      (score-p (if csound-indentation-aggressive-score
 		  (csound-score-align-block)
@@ -263,6 +279,12 @@
      ((csound-indentation-inside-instr-p) (csound-indentation-inside-expression-calc 'instr))
      ((csound-indentation-inside-opcode-p) (csound-indentation-inside-expression-calc 'opcode))
      (t (indent-line-to 0)))))
+
+(defun csound-indentation-line ()
+  "Indent current line."
+  (if (csound-indentation-current-line-empty-p)
+      (csound-indentation--do-indent)
+    (save-excursion (csound-indentation--do-indent))))
 
 (provide 'csound-indentation)
 
