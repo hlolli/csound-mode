@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017 - 2022  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.4
+;; Version: 0.2.5
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
@@ -198,7 +198,7 @@
 
 (defun csound-indentation-inside-expression-calc (expr-type)
   (let* ((beginning-of-expr (if (eq 'instr expr-type)
-				(save-excursion
+                                (save-excursion
 				  (search-backward-regexp "\\s-?\\(instr\\)\\s-" nil t))
 			      (save-excursion
 				(search-backward-regexp "\\s-?\\(opcode\\)\\s-" nil t))))
@@ -209,7 +209,9 @@
 			      (search-forward-regexp "\\s-?\\(endop\\)\\s-" nil t)))
 			  (point-max)))
 	 (ending-of-current-line (line-end-position))
-	 (expression-to-point (buffer-substring beginning-of-expr (line-end-position 1)))
+	 (expression-to-point (replace-regexp-in-string
+                               "\".*\"\\|;;.*\\|//.*" ""
+                               (buffer-substring beginning-of-expr (line-end-position 1)) ))
          (expression-to-line-above (buffer-substring beginning-of-expr (line-end-position 0)))
 	 (count-if-statements (csound-util-recursive-count  "\\<\\(if\\)\\s-" expression-to-point 0))
 	 (goto-if-mix (save-excursion
@@ -244,6 +246,7 @@
                                   count-multiline-string-close
 				  ;;end-of-bool-p
 				  )))))
+    (message "topoint: %s" expression-to-point)
     ;; (message "gotos: %d, bool-begin: %d, ods: %d, line-at-goto: %d, aft-goto: %d, count-if: %d, count-endif: %d mix: %d mls: %d.%d tab-count: %d"
     ;;          after-goto-statement
     ;;          begin-of-bool-p
@@ -256,6 +259,7 @@
     ;;          count-multiline-string-open
     ;;          count-multiline-string-close
     ;;          tab-count)
+    ;; (message "str-open: %d str-close: %d " count-string-open count-string-close)
     ;; (message "multistr-open: %d multistr-close: %d " count-multiline-string-open count-multiline-string-close)
     ;; (when (and (eq 't end-of-bool-p) (not (eq 't begin-of-bool-p))) (indent-line-to (* csound-indentation-spaces (1- tab-count))))
     (indent-line-to (* csound-indentation-spaces tab-count))))
