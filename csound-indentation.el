@@ -282,7 +282,7 @@
 
 (defun csound-indentation-line ()
   "Indent current line."
-  (if (csound-indentation-current-line-empty-p)
+  (if (csound-indentation--current-line-empty-p)
       (csound-indentation--do-indent)
     (save-excursion (csound-indentation--do-indent))))
 
