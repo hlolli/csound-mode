@@ -1,9 +1,9 @@
 ;;; csound-skeleton.el --- A major mode for interacting and coding Csound
 
-;; Copyright (C) 2017  Hlöðver Sigurðsson
+;; Copyright (C) 2017 - 2022  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.3
+;; Version: 0.2.4
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 

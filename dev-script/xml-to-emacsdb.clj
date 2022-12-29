@@ -77,7 +77,7 @@
    str
    (map
     #(format
-      "(puthash \"%s\" '(:template \"%s\" :doc \"%s\") csdoc-opcode-database)\n"     
+      "(puthash \"%s\" '(:template \"%s\" :doc \"%s\") csdoc-opcode-database)\n"
       (nth % 0)
       (nth % 1)
       (nth % 2))
@@ -100,7 +100,7 @@
              ELPA-requirements-prefix "\n"
              "(setq csdoc-opcode-database (make-hash-table :test 'equal))\n"
              out missing-opcodes
-             "\n (provide 'csound-opcodes)\n" 
+             "\n (provide 'csound-opcodes)\n"
              ELPA-requirements-postfix)
             (let [doc (first docs)
                   id (-> doc :attrs :id)
@@ -138,3 +138,5 @@
 
 ;; DANGEROUS version bump function
 ;; find ./ -type f -exec sed -i -e 's/;; Version: 0\.1\.1/;; Version: 0.1.2/g' {} \;
+;; OSX version bump
+;; find ./ -type f -exec sed -i '' -e 's/;; Version: 0\.1\.1/;; Version: 0.1.2/g' {} \;
