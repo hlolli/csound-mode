@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017 - 2022  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.6
+;; Version: 0.2.7
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
@@ -44,11 +44,35 @@
   :type 'boolean
   :group 'csound-mode)
 
+(defun csound-indentation--current-line-breaks-p ()
+  (if (save-excursion
+        (beginning-of-line 0)
+        (search-forward-regexp "\\B\\\\\\B" (csound-util-line-boundry) t 1))
+      t nil))
+
+(defun csound-indentation--previous-line-breaks-p ()
+  (if (save-excursion
+        (beginning-of-line 0)
+        (search-forward-regexp "\\B\\\\\\B" (csound-util-line-boundry) t 1))
+      t nil))
 
 (defun csound-indentation--current-line-empty-p ()
-  (save-excursion
-    (beginning-of-line)
-    (looking-at-p "[[:blank:]]*$")))
+  (and
+   (save-excursion
+     (beginning-of-line)
+     (looking-at-p "[[:blank:]]*$"))
+   ;; don't account for line continuation token being empty
+   (not (and (csound-indentation--previous-line-breaks-p)
+             (csound-indentation--current-line-breaks-p)))))
+
+(defun csound-indentation--cursor-behind-indentation-point-p ()
+  (> (or
+      (save-excursion
+        (beginning-of-line)
+        (search-forward-regexp "^\\s-*" (csound-util-line-boundry) t 1))
+      (point))
+     (point)))
+
 
 (defun csound-indentation-begin-of-expr-p ()
   (save-excursion
@@ -62,8 +86,8 @@
 
 (defun csound-indentation-inside-instr-p ()
   (let* ((case-fold-search nil)
-	 (last-instr (save-excursion (search-backward-regexp "\\(instr\\)\\b" nil t)))
-	 (last-endin (save-excursion (search-backward-regexp "\\(endin\\)\\b" nil t))))
+	 (last-instr (save-excursion (search-backward-regexp "^\\s-*\\(instr\\)\\b" nil t)))
+	 (last-endin (save-excursion (search-backward-regexp "^\\s-*\\(endin\\)\\b" nil t))))
     (cond ((eq 'nil last-instr) nil)
 	  ((and (numberp last-instr) (eq 'nil last-endin)) t)
 	  ((< last-endin last-instr) t)
@@ -71,8 +95,8 @@
 
 (defun csound-indentation-inside-opcode-p ()
   (let* ((case-fold-search nil)
-	 (last-opcode (save-excursion (search-backward-regexp "\\(opcode\\)\\b" nil t)))
-	 (last-endop (save-excursion (search-backward-regexp "\\(endop\\)\\b" nil t))))
+	 (last-opcode (save-excursion (search-backward-regexp "^\\s-*\\(opcode\\)\\b" nil t)))
+	 (last-endop (save-excursion (search-backward-regexp "^\\s-*\\(endop\\)\\b" nil t))))
     (cond ((eq 'nil last-opcode) nil)
 	  ((and (numberp last-opcode) (eq 'nil last-endop)) t)
 	  ((< last-endop last-opcode) t)
@@ -100,22 +124,17 @@
 	 (csound-util-line-boundry) t 1)
 	1 0)))
 
-(defun csound-indentation-count-goto-if-mix (end-of-expr cnt)
-  (if (<= end-of-expr (point))
+(defun csound-indentation-count-goto-if-mix (end-of-expr cnt current-depth)
+  (if (or (> current-depth 50)  (<= end-of-expr (point)))
       cnt
     (prog2
 	(beginning-of-line 2)
 	(csound-indentation-count-goto-if-mix
-	 end-of-expr (if (and (search-forward-regexp "\\<\\(if\\)\\>" (csound-util-line-boundry) t 1)
-			      (search-forward-regexp "\\<\\(goto\\)\\>" (csound-util-line-boundry) t 1))
-			 (1+ cnt) cnt)))))
-
-
-(defun csound-indentation-line-break-escape-p ()
-  (save-excursion
-    (beginning-of-line 0)
-    (let ((line-as-string (buffer-substring (point) (csound-util-line-boundry))))
-      (string-match-p "\\\\[[:space:]]*$" line-as-string))))
+	 end-of-expr
+         (if (and (search-forward-regexp "\\<\\(if\\)\\>" (csound-util-line-boundry) t 1)
+		  (search-forward-regexp "\\<\\(goto\\)\\>" (csound-util-line-boundry) t 1))
+	     (1+ cnt) cnt)
+         (1+ current-depth)))))
 
 
 (defun csound-indentation-expression-first-arg (expr-string non-comma-cnt initial-recur-p)
@@ -217,7 +236,7 @@
 	 (goto-if-mix (save-excursion
 			(prog2
 			    (goto-char beginning-of-expr)
-			    (csound-indentation-count-goto-if-mix end-of-expr 0))))
+			    (csound-indentation-count-goto-if-mix end-of-expr 0 0))))
 	 ;; (count-elseif-statements (recursive-count "\\b\\(elseif\\)\\b" (buffer-substring beginning-of-expr (line-end-position 1)) 0))
 	 (count-endif-statements (csound-util-recursive-count "\\s-?\\(endif\\)\\s-?" expression-to-point 0))
 	 (count-while-statements (csound-util-recursive-count "\\s-?\\(while\\)\\s-?" expression-to-point 0))
@@ -233,11 +252,13 @@
 				     1 0))
 	 ;; (end-of-bool-p (csound-indentation-end-of-bool-p))
 	 (begin-of-bool-p (csound-indentation-beginning-of-bool-p))
+         (previous-line-break-adjust (if (csound-indentation--previous-line-breaks-p) 1 0))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
 				     after-goto-statement
                                      count-multiline-string-open
 				     ;; count-elseif-statements
-				     count-while-statements)
+				     count-while-statements
+                                     previous-line-break-adjust)
 				  count-endif-statements
 				  count-od-statements
 				  begin-of-bool-p
@@ -272,21 +293,21 @@
 (defun csound-indentation--do-indent ()
   (let ((score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
 		     (string-match-p ".sco$" (buffer-name (current-buffer))))))
-
     (cond
      (score-p (if csound-indentation-aggressive-score
 		  (csound-score-align-block)
 		(indent-line-to 0)))
      ((csound-indentation-begin-of-expr-p) (indent-line-to 0))
      ((csound-indentation-end-of-expr-p) (indent-line-to 0))
-     ((csound-indentation-line-break-escape-p) (csound-indentation-line-break-indent))
+     ;; ((csound-indentation-line-break-escape-p) (csound-indentation-line-break-indent))
      ((csound-indentation-inside-instr-p) (csound-indentation-inside-expression-calc 'instr))
      ((csound-indentation-inside-opcode-p) (csound-indentation-inside-expression-calc 'opcode))
      (t (indent-line-to 0)))))
 
 (defun csound-indentation-line ()
   "Indent current line."
-  (if (csound-indentation--current-line-empty-p)
+  (if (or (csound-indentation--current-line-empty-p)
+          (csound-indentation--cursor-behind-indentation-point-p))
       (csound-indentation--do-indent)
     (save-excursion (csound-indentation--do-indent))))
 
