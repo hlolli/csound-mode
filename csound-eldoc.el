@@ -2,7 +2,7 @@
 ;;  Copyright (C) 2017 - 2022  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.7
+;; Version: 0.2.8
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
@@ -121,7 +121,8 @@
                                  (replace-regexp-in-string
                                   opcode-match
                                   (concat "," opcode-match ",")
-                                  statement) ","))
+                                  statement)
+                                 ","))
              (indx 0)
              (pos nil))
         (dolist (i komma-format-list)
@@ -203,7 +204,7 @@
                         (1- indx)
                       (1+ indx))))
            list-index (1+ list-index)))
-        eldocstr))))
+        (replace-regexp-in-string ",$" "" (csound-util-chomp eldocstr))))))
 
 
 (provide 'csound-eldoc)

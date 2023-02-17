@@ -2,7 +2,7 @@
 ;;  Copyright (C) 2017 - 2022  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.7
+;; Version: 0.2.8
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
@@ -224,7 +224,8 @@
 	      . csound-font-lock-xml-tags)
 	    csound-font-lock-list)
       ;; Some opcodes got missing but dont need docstrings
-      (setq csound-font-lock--missing-faces '("then" "do" "od" "else" "elseif" "endif"))
+      (setq csound-font-lock--missing-faces
+            '("then" "do" "od" "else" "elseif" "endif" "switch" "endsw" "case" "default"))
       ;; Add opcodes to font-lock table csdoc-opdocde-database hash-table
       (let ((mutz '()))
 	(maphash (lambda (k v)

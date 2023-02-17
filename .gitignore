@@ -50,3 +50,6 @@ releases
 
 #clj
 .nrepl-port
+
+# devfile
+test.csd

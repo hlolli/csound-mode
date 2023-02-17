@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017 - 2022  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.7
+;; Version: 0.2.8
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
@@ -41,6 +41,12 @@
    calls in a score file or within CsScore tags. Works well
    when used in combination with aggressive-indent mode.
    (defaults to nil(false))"
+  :type 'boolean
+  :group 'csound-mode)
+
+(defcustom csound-indentation-indent-goto t
+  "If true, then anything that comes after goto symbol
+   will be indented."
   :type 'boolean
   :group 'csound-mode)
 
@@ -106,7 +112,9 @@
   (save-excursion
     (beginning-of-line 1)
     (if (and (search-forward-regexp
-	      "\\<\\(if\\)\\>\\|\\<\\(while\\)\\>\\|\\<\\(else\\)\\>\\|\\<\\(elseif\\)\\>\\|\\<\\(until\\)\\>"
+              (concat
+	       "\\<\\(if\\)\\>\\|\\<\\(while\\)\\>\\|\\<\\(else\\)\\>\\|"
+               "\\<\\(elseif\\)\\>\\|\\<\\(until\\)\\>|\\<\\(switch\\)\\>")
 	      (csound-util-line-boundry) t 1)
 	     ;; if in mix with gotos
 	     ;; dont have endif therefore
@@ -120,7 +128,10 @@
   (save-excursion
     (beginning-of-line 1)
     (if (search-forward-regexp
-	 "\\<\\(endif\\)\\>\\|\\<\\(od\\)\\>\\|\\<\\(else\\)\\>\\|\\<\\(elseif\\)\\>|\\<\\(enduntil\\)\\>"
+         (concat
+	  "\\<\\(endif\\)\\>\\|\\<\\(od\\)\\>\\|\\<\\(else\\)\\>\\|"
+          "\\<\\(elseif\\)\\>|\\<\\(enduntil\\)\\>|\\<\\(endsw\\)\\>")
+
 	 (csound-util-line-boundry) t 1)
 	1 0)))
 
@@ -131,7 +142,7 @@
 	(beginning-of-line 2)
 	(csound-indentation-count-goto-if-mix
 	 end-of-expr
-         (if (and (search-forward-regexp "\\<\\(if\\)\\>" (csound-util-line-boundry) t 1)
+         (if (and (search-forward-regexp "\\<\\(if\\)\\((\\|\\>\\)" (csound-util-line-boundry) t 1)
 		  (search-forward-regexp "\\<\\(goto\\)\\>" (csound-util-line-boundry) t 1))
 	     (1+ cnt) cnt)
          (1+ current-depth)))))
@@ -232,7 +243,7 @@
                                "\".*\"\\|;;.*\\|//.*" ""
                                (buffer-substring beginning-of-expr (line-end-position 1)) ))
          (expression-to-line-above (buffer-substring beginning-of-expr (line-end-position 0)))
-	 (count-if-statements (csound-util-recursive-count  "\\<\\(if\\)\\s-" expression-to-point 0))
+	 (count-if-statements (save-excursion (csound-util-recursive-count "\\<\\(if\\)\\((\\|\\>\\)" expression-to-point 0)))
 	 (goto-if-mix (save-excursion
 			(prog2
 			    (goto-char beginning-of-expr)
@@ -241,35 +252,41 @@
 	 (count-endif-statements (csound-util-recursive-count "\\s-?\\(endif\\)\\s-?" expression-to-point 0))
 	 (count-while-statements (csound-util-recursive-count "\\s-?\\(while\\)\\s-?" expression-to-point 0))
 	 (count-od-statements (csound-util-recursive-count "\\<\\(od\\)\\>" expression-to-point 0))
+         (count-switch-statements (csound-util-recursive-count "\\s-?\\(switch\\)\\s-?" expression-to-point 0))
+         (count-endw-statements (csound-util-recursive-count "\\s-?\\(endsw\\)\\s-?" expression-to-point 0))
          (count-multiline-string-open (csound-util-recursive-count "{{" expression-to-line-above 0))
 	 (count-multiline-string-close (csound-util-recursive-count "}}" expression-to-point 0))
-	 (after-goto-statement (if (and (string-match-p "\\<\\w*:\\B" expression-to-point)
-                                        (= 0 (- count-multiline-string-open count-multiline-string-close)))
-                                   1 0))
-	 (line-at-goto-statement (if (save-excursion
-				       (beginning-of-line)
-				       (search-forward-regexp "\\<\\w+\\:\\s-*$" (line-end-position 1) t 1))
+	 (after-goto-statement (if csound-indentation-indent-goto
+                                (if (and (string-match-p "\\<\\w*:\\B" expression-to-point)
+                                         (= 0 (- count-multiline-string-open count-multiline-string-close)))
+                                    1 0)
+                                0))
+	 (line-at-goto-statement (if (and csound-indentation-indent-goto
+                                          (save-excursion
+				            (beginning-of-line)
+				            (search-forward-regexp "\\<\\w+\\:\\s-*$" (line-end-position 1) t 1)))
 				     1 0))
 	 ;; (end-of-bool-p (csound-indentation-end-of-bool-p))
 	 (begin-of-bool-p (csound-indentation-beginning-of-bool-p))
          (previous-line-break-adjust (if (csound-indentation--previous-line-breaks-p) 1 0))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
-				     after-goto-statement
+                                     after-goto-statement
                                      count-multiline-string-open
 				     ;; count-elseif-statements
 				     count-while-statements
+                                     count-switch-statements
                                      previous-line-break-adjust)
 				  count-endif-statements
 				  count-od-statements
+                                  count-endw-statements
 				  begin-of-bool-p
-				  line-at-goto-statement
+				  (if (> after-goto-statement 0)  line-at-goto-statement 0)
 				  goto-if-mix
                                   count-multiline-string-close
 				  ;;end-of-bool-p
 				  )))))
     ;; (message "topoint: %s" expression-to-point)
-    ;; (message "gotos: %d, bool-begin: %d, ods: %d, line-at-goto: %d, aft-goto: %d, count-if: %d, count-endif: %d mix: %d mls: %d.%d tab-count: %d"
-    ;;          after-goto-statement
+    ;; (message "bool-begin: %d, ods: %d, line-at-goto: %d, aft-goto: %d, count-if: %d, count-endif: %d mix: %d mls: %d.%d tab-count: %d"
     ;;          begin-of-bool-p
     ;;          count-od-statements
     ;;          line-at-goto-statement
@@ -280,6 +297,7 @@
     ;;          count-multiline-string-open
     ;;          count-multiline-string-close
     ;;          tab-count)
+    ;; (message "RES %d"  (* csound-indentation-spaces tab-count))
     ;; (message "str-open: %d str-close: %d " count-string-open count-string-close)
     ;; (message "multistr-open: %d multistr-close: %d " count-multiline-string-open count-multiline-string-close)
     ;; (when (and (eq 't end-of-bool-p) (not (eq 't begin-of-bool-p))) (indent-line-to (* csound-indentation-spaces (1- tab-count))))
