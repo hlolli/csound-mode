@@ -1,13 +1,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Csound manual lookup
 ;;;
-;;; an extension enabling interactive lookup of csound function
-;;; definitions
-;;; Extension to the Emacs Csound-mode
+;;; DESCRIPTION
+;;; This extension enables the interactive lookup of Csound functions in the
+;;; Csound reference manual located at the Csound homepage.
+;;; 
+;;; TODO:
+;;; - Implement a global variable referring to the Csound manual base url.
+;;;   This might be handy e.g. when the manual is installed locally.
 ;;;
-;;; author: Ruben Philipp
-;;; created: 2022-12-26, Lütgendortmund
-;;; $$ Last modified:  21:04:37 Mon Dec 26 2022 CET
+;;; AUTHOR
+;;; Ruben Philipp
+;;;
+;;; CREATED
+;;; 2022-12-26, Lütgendortmund
+;;; 
+;;; $$ Last modified:  23:58:26 Mon Apr 17 2023 CEST
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -18,6 +26,8 @@
 (defun csound-manual-lookup ()
   (interactive)
   (let* ((lemma (thing-at-point 'word 'no-properties))
+         ;;; cf. TODO
+         ;;; RP  Mon Apr 17 23:58:01 2023
          (csound-manual-url "http://www.csounds.com/manual/html/")
          (lookup-lemma (if (gethash lemma
                                     csdoc-opcode-database)
@@ -34,3 +44,6 @@
 
 
 (provide 'csound-manual-lookup)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; EOF csound-manual-lookup.el

@@ -8,7 +8,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; edited by: Ruben Philipp (me@rubenphilipp.com)
-;;; $$ Last modified:  21:10:07 Mon Dec 26 2022 CET
+;;; $$ Last modified:  23:52:36 Mon Apr 17 2023 CEST
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -96,9 +96,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; csound-abort-compilation
 ;;;
+;;; DESCRIPTION:
+;;; This function aborts the compilation of a Csound file. This is simply
+;;; done by killing the compilation process in the main compilation buffer
+;;; (i.e. *compilation*)
+;;;
+;;; TODO:
+;;; - Make this context-sensitive, in case multiple compilation buffers are
+;;;   active in an Emacs session.
+;;;
 ;;; author: Ruben Philipp
 ;;; created: 2022-12-26, Lütgendortmund
-;;; $$ Last modified:  21:12:50 Mon Dec 26 2022 CET
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun csound-abort-compilation ()
