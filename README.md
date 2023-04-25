@@ -15,13 +15,11 @@ as well as a REPL for fast feedback when composing/sound-designing using Csound.
 * Indentation rules
 * Syntax highlighting and rainbow delimited score parameters
 
-## About this fork
-
-This fork implements a few additions to the original code which are suited to the workflow of the author. 
-
 ## Installation
 
-It is recommended to install the package manually, e.g. by pulling the code into the `.emacs.d` folder and adding the following lines to your Emacs init-file.
+You can install `csound-mode` from `MELPA` using the following command:
+
+<kbd>M-x package-install [RET] csound-mode [RET]</kbd>
 
 Alternatively, [download latest release.](https://github.com/hlolli/csound-mode/releases/download/v9.2.0/csound-mode-0.2.0.zip)
 and add it manually to load-path like shown here:
@@ -31,7 +29,6 @@ and add it manually to load-path like shown here:
 (add-to-list 'load-path "~/.emacs.d/csound-mode/")
 (require 'csound-mode)
 ```
-
 
 ## Requirements
 
@@ -60,7 +57,7 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
 
 <kbd>C-c C-z</kbd> `csound-repl-start`
 
-<kbd>C-c C-k</kbd> `csound-abort-compilation` abort compilation (e.g. playback) -- *added with this fork*
+<kbd>C-c C-k</kbd> `csound-abort-compilation` abort compilation (e.g. playback)
 
 <kbd>C-M-x</kbd>/<kbd>C-c C-c</kbd> `csound-evaluate-region`
 
@@ -72,7 +69,7 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
 
 <kbd>M-.</kbd> `csound-score-find-instr-def` cursor needs to be within a score block
 
-<kbd>C-c C-d h</kbd> `csound-manual-lookup` searches for a function definition in the Csound-manual -- *added with this fork*
+<kbd>C-c C-d h</kbd> `csound-manual-lookup` searches for a function definition in the Csound-manual
 
 
 ## Run the tests

@@ -54,3 +54,8 @@ releases
 
 # devfile
 test.csd
+
+### MacOS
+
+.DS_Store
+
