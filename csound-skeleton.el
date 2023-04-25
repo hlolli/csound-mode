@@ -24,7 +24,7 @@
 ;;  Skeleton for when creating new .csd file.
 
 ;; Initialize defaults values
-(defcustom csound-skeleton-default-sr 48000
+(defcustom csound-skeleton-default-sr 44100
   "Set the default sr value when creating new csound file."
   :type 'integer
   :group 'csound-mode)
@@ -38,7 +38,7 @@
   "Skeleton for auto-insert in csound-mode."
   nil
   "<CsoundSynthesizer>\n"
-  "<CsOptions>\n-f\n</CsOptions>\n"
+  "<CsOptions>\n</CsOptions>\n"
   "<CsInstruments>\n\n"
   (concat "sr = " (number-to-string csound-skeleton-default-sr) "\n")
   (concat "ksmps = " (number-to-string csound-skeleton-default-ksmps) "\n")
@@ -53,9 +53,9 @@
 (eval-when-compile
   (define-auto-insert "\\.csd\\'"
     [csound-skeleton-new-csd (lambda ()
-                               (goto-line 11)
-                               (run-with-idle-timer 0.15 nil
-                                                    (lambda () (csound-font-lock-flush-buffer))))]))
+			       (goto-line 11)
+			       (run-with-idle-timer 0.15 nil
+						    (lambda () (csound-font-lock-flush-buffer))))]))
 
 (provide 'csound-skeleton)
 
