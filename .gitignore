@@ -51,5 +51,11 @@ releases
 #clj
 .nrepl-port
 
+
 # devfile
 test.csd
+
+### MacOS
+
+.DS_Store
+

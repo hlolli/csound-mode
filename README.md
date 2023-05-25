@@ -44,9 +44,9 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
 ```Clojure
 (use-package csound-mode
   :mode (("\\.csd\\'" . csound-mode)
-  	 ("\\.orc\\'" . csound-mode)
-  	 ("\\.sco\\'" . csound-mode)
-  	 ("\\.udo\\'" . csound-mode))
+     ("\\.orc\\'" . csound-mode)
+     ("\\.sco\\'" . csound-mode)
+     ("\\.udo\\'" . csound-mode))
   :load-path "packages/csound-mode/")
 ```
 
@@ -57,6 +57,8 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
 
 <kbd>C-c C-z</kbd> `csound-repl-start`
 
+<kbd>C-c C-k</kbd> `csound-abort-compilation` abort compilation (e.g. playback)
+
 <kbd>C-M-x</kbd>/<kbd>C-c C-c</kbd> `csound-evaluate-region`
 
 <kbd>C-x C-e</kbd> `csound-evaluate-line`
@@ -66,6 +68,8 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
 <kbd>C-c C-s</kbd> `csound-score-align-block` cursor needs to be within a score block
 
 <kbd>M-.</kbd> `csound-score-find-instr-def` cursor needs to be within a score block
+
+<kbd>C-c C-d h</kbd> `csound-manual-lookup` searches for a function definition in the Csound-manual
 
 
 ## Run the tests
