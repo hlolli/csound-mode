@@ -1,4 +1,4 @@
-;;; csound-score.el --- A major mode for interacting and coding Csound
+;;; csound-score.el --- A major mode for interacting and coding Csound -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017 - 2023  Hlöðver Sigurðsson
 
@@ -27,7 +27,6 @@
 
 ;;; Code:
 
-(require 'cl)
 (require 'cl-lib)
 (require 'csound-font-lock)
 (require 'csound-util)
@@ -156,8 +155,10 @@ parameter are of same space width."
       (csound-score--align-cols beginning-of-block ending-of-block))))
 
 (defun csound-score-trim-time (score-string)
-  (let ((trimmed-string (split-string (substring-no-properties
-                                       score-string) "\n"))
+  (let ((trimmed-string (split-string
+                         (substring-no-properties
+                          score-string)
+                         "\n"))
         (min-p2 0)
         (closure-list '())
         (final-str "")
@@ -165,24 +166,24 @@ parameter are of same space width."
         (p2-list '())
         (last-p3 0))
     (dolist (event trimmed-string)
-      (lexical-let* ((lexical-p-list (split-string
-                                      (replace-regexp-in-string
-                                       "\\s-+" " " (csound-util-chomp event))
-                                      " "))
-                     (lex-last-p3 last-p3)
-                     (lex-p2-list (cons (if (< 2 (length lexical-p-list))
-                                            (if (string-equal "+" (nth 2 lexical-p-list))
-                                                (if (car p2-list)
-                                                    (+ (car p2-list) lex-last-p3)
-                                                  last-p3)
-                                              (if (string-equal "." (nth 2 lexical-p-list))
-                                                  (if (car p2-list)
-                                                      (car p2-list)
-                                                    0)
-                                                (string-to-number
-                                                 (nth 2 lexical-p-list))))
-                                          0)
-                                        p2-list)))
+      (let* ((lexical-p-list (split-string
+                              (replace-regexp-in-string
+                               "\\s-+" " " (csound-util-chomp event))
+                              " "))
+             (lex-last-p3 last-p3)
+             (lex-p2-list (cons (if (< 2 (length lexical-p-list))
+                                    (if (string-equal "+" (nth 2 lexical-p-list))
+                                        (if (car p2-list)
+                                            (+ (car p2-list) lex-last-p3)
+                                          last-p3)
+                                      (if (string-equal "." (nth 2 lexical-p-list))
+                                          (if (car p2-list)
+                                              (car p2-list)
+                                            0)
+                                        (string-to-number
+                                         (nth 2 lexical-p-list))))
+                                  0)
+                                p2-list)))
         (setq p2-list lex-p2-list
               closure-list (cons
                             (lambda (min-time)
