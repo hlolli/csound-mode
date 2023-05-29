@@ -27,6 +27,7 @@
 
 ;;; Code:
 
+(require 'cl)
 (require 'cl-lib)
 (require 'csound-font-lock)
 (require 'csound-util)
