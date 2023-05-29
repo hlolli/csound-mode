@@ -1,5 +1,5 @@
 ;;; csound-eldoc.el --- A major mode for interacting and coding Csound
-;;  Copyright (C) 2017 - 2022  Hlöðver Sigurðsson
+;;  Copyright (C) 2017 - 2023  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
 ;; Version: 0.2.7
@@ -41,7 +41,7 @@
 ;;; Ruben Philipp
 ;;;
 ;;; CREATED
-;;; 2022-12-26, Lütgendortmund
+;;; 2023-12-26, Lütgendortmund
 ;;; 
 ;;; $$ Last modified:  00:57:30 Wed Apr 26 2023 CEST
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

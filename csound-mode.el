@@ -1,8 +1,8 @@
 ;;; csound-mode.el --- A major mode for interacting and coding Csound
-;;  Copyright (C) 2017 - 2022  Hlöðver Sigurðsson
+;;  Copyright (C) 2017 - 2023  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.8
+;; Version: 0.2.9
 ;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
@@ -67,7 +67,7 @@
     st)
   "Syntax table for csound-mode")
 
-(defcustom csound-play-flags ""
+(defcustom csound-play-flags "-odac"
   "Additional flags to pass to csound when playing the file in current buffer."
   :group 'csound-mode
   :type 'string)
@@ -100,7 +100,7 @@
 ;;;   active in an Emacs session.
 ;;;
 ;;; author: Ruben Philipp
-;;; created: 2022-12-26, Lütgendortmund
+;;; created: 2023-12-26, Lütgendortmund
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun csound-abort-compilation ()
