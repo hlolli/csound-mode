@@ -334,9 +334,9 @@
           (csound-font-lock--fontify-score (max score-boundry beg) (min end (max-char)))
         ;; All normal font-lock calls, but let's keep rainbow delimited fonts untouched
         (let* ((end-line (1- (line-number-at-pos (min end (point-max)))))
-              (end-line (if (and score-boundry csound-font-lock-rainbow-score-parameters-p)
-                            (line-number-at-pos score-boundry)
-                          end-line)))
+               (end-line (if (and score-boundry csound-font-lock-rainbow-score-parameters-p)
+                             (line-number-at-pos score-boundry)
+                           end-line)))
           (goto-char beg)
           (beginning-of-line)
           (while (< (line-number-at-pos) (1+ end-line))
