@@ -27,6 +27,7 @@
 ;;; Code:
 
 (require 'font-lock)
+(require 'csound-opcodes)
 
 (defvar csound-font-lock--missing-faces '())
 
@@ -162,56 +163,53 @@
 	csound-font-lock-strings
 	csound-font-lock-xml-tags))
 
-;;;###autoload
-(defvar csound-font-lock-list '())
-
-(defconst csound-font-lock-keywords
-  (ignore-errors
-    (eval-when-compile
+(defvar csound-font-lock-list
+  (eval-when-compile
+    (let ((csound-font-lock-keywords '()))
       ;; Regex for i-rates
-      (push '("\\<i+\\w*" . csound-font-lock-i-rate) csound-font-lock-list)
+      (push '("\\<i+\\w*" . csound-font-lock-i-rate) csound-font-lock-keywords)
 
       ;; Regex for global i-rates
-      (push '("\\<\\(gi\\)+\\w*" . csound-font-lock-global-i-rate) csound-font-lock-list)
+      (push '("\\<\\(gi\\)+\\w*" . csound-font-lock-global-i-rate) csound-font-lock-keywords)
 
       ;; Regex for k-rates
-      (push `("\\<k+\\w*" . csound-font-lock-k-rate) csound-font-lock-list)
+      (push `("\\<k+\\w*" . csound-font-lock-k-rate) csound-font-lock-keywords)
 
       ;; Regex for global k-rates
-      (push '("\\<\\(gk\\)+\\w*" . csound-font-lock-global-k-rate) csound-font-lock-list)
+      (push '("\\<\\(gk\\)+\\w*" . csound-font-lock-global-k-rate) csound-font-lock-keywords)
 
       ;; Regex for f-rate variables
-      (push '("\\<f+\\w*" . csound-font-lock-f-rate) csound-font-lock-list)
+      (push '("\\<f+\\w*" . csound-font-lock-f-rate) csound-font-lock-keywords)
 
       ;; Regex for global f-rate variables
-      (push '("\\<\\(gf\\)+\\w*" . csound-font-lock-global-f-rate) csound-font-lock-list)
+      (push '("\\<\\(gf\\)+\\w*" . csound-font-lock-global-f-rate) csound-font-lock-keywords)
 
       ;; Regex for a-rates
-      (push '("\\<a+\\w*" . csound-font-lock-a-rate) csound-font-lock-list)
+      (push '("\\<a+\\w*" . csound-font-lock-a-rate) csound-font-lock-keywords)
 
       ;; Regex for global a-rates
-      (push '("\\<\\(ga\\)+\\w*" . csound-font-lock-global-a-rate) csound-font-lock-list)
+      (push '("\\<\\(ga\\)+\\w*" . csound-font-lock-global-a-rate) csound-font-lock-keywords)
 
       ;; Regex for S variables
-      (push '("\\<S+\\w*" . csound-font-lock-s-variables) csound-font-lock-list)
+      (push '("\\<S+\\w*" . csound-font-lock-s-variables) csound-font-lock-keywords)
 
       ;; Regex for global S variables
-      (push '("\\<\\(gS\\)+\\w*" . csound-font-lock-global-s-variables) csound-font-lock-list)
+      (push '("\\<\\(gS\\)+\\w*" . csound-font-lock-global-s-variables) csound-font-lock-keywords)
 
       ;; Regex for goto symbols ending with colon
-      (push '("\\<\\w*:\\B" . csound-font-lock-goto) csound-font-lock-list)
+      (push '("\\<\\w*:\\B" . csound-font-lock-goto) csound-font-lock-keywords)
 
       ;; Regex for p-fields
-      (push '("\\bp[[:digit:]]+" . csound-font-lock-p) csound-font-lock-list)
+      (push '("\\bp[[:digit:]]+" . csound-font-lock-p) csound-font-lock-keywords)
 
       ;; Regex for `e` statement
-      (push '("\\<[e]\\>" . csound-font-lock-e) csound-font-lock-list)
+      (push '("\\<[e]\\>" . csound-font-lock-e) csound-font-lock-keywords)
 
       ;; Regex for csound macros types
-      (push '("\\#\\w*\\|\\$\\w*" . csound-font-lock-macros) csound-font-lock-list)
+      (push '("\\#\\w*\\|\\$\\w*" . csound-font-lock-macros) csound-font-lock-keywords)
 
       ;; Regex for csound string types  (use syntactic fontification?)
-      ;; (push '("\\s\"\\(.*?\\)[^\\]\\s\"" . csound-font-lock-strings) csound-font-lock-list)
+      ;; (push '("\\s\"\\(.*?\\)[^\\]\\s\"" . csound-font-lock-strings) csound-font-lock-keywords)
 
       ;; Regex for core csound xml tags
       ;; "</?CsoundSynthesizer>\\|</?CsOptions>\\|</?CsInstruments>\\|</?CsScore[=\\\"0-9a-zA-z]?>\\|</?CsLicense>"
@@ -222,7 +220,7 @@
 		       ;; account for preprocessors
 		       "\\|<CsScore[.\\\"]*>\\|</?CsScore>?")
 	      . csound-font-lock-xml-tags)
-	    csound-font-lock-list)
+	    csound-font-lock-keywords)
       ;; Some opcodes got missing but dont need docstrings
       (setq csound-font-lock--missing-faces
             '("then" "do" "od" "else" "elseif" "endif" "switch" "endsw" "case" "default"))
@@ -234,11 +232,11 @@
 		 csdoc-opcode-database)
 	(setq mutz (append mutz csound-font-lock--missing-faces))
 	(setq mutz (regexp-opt mutz 'words))
-	(push `(,mutz . font-lock-builtin-face) csound-font-lock-list))
+	(push `(,mutz . font-lock-builtin-face) csound-font-lock-keywords))
       ;; Regex for `i` events in score
-      (push '("\\<i\\'" . csound-font-lock-i) csound-font-lock-list)
+      (push '("\\<i\\'" . csound-font-lock-i) csound-font-lock-keywords)
       ;; Single line comments (use syntactic fontification?)
-      (push '("//.*" . font-lock-comment-face)  csound-font-lock-list)
+      (push '("//.*" . font-lock-comment-face)  csound-font-lock-keywords)
       )))
 
 
