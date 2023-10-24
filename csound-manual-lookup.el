@@ -43,7 +43,7 @@
 ;;; CREATED
 ;;; 2023-12-26, Lütgendortmund
 ;;; 
-;;; $$ Last modified:  00:57:30 Wed Apr 26 2023 CEST
+;;; $$ Last modified:  16:40:01 Tue Oct 24 2023 CEST
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'csound-opcodes)
@@ -52,13 +52,20 @@
 (require 'browse-url)
 (require 'thingatpt)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; The url to the Csound manual
+;;; Customizing this could be useful e.g. when the manual is
+;;; installed locally.
+;;; RP  Wed Sep 20 19:51:22 2023
+(defcustom csound-manual-url
+  "https://csound.com/docs/manual/"
+  "The URL to the root directory of the Csound manual."
+  :group 'csound-mode-manual-lookup
+  :type 'string)
 
 (defun csound-manual-lookup ()
   (interactive)
   (let* ((lemma (thing-at-point 'word 'no-properties))
-         ;;; cf. TODO
-         ;;; RP  Mon Apr 17 23:58:01 2023
-         (csound-manual-url "http://www.csounds.com/manual/html/")
          (lookup-lemma (if (gethash lemma
                                     csdoc-opcode-database)
                            (downcase lemma)
