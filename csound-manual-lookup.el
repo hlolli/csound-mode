@@ -43,7 +43,7 @@
 ;;; CREATED
 ;;; 2023-12-26, Lütgendortmund
 ;;; 
-;;; $$ Last modified:  20:00:13 Wed Sep 20 2023 CEST
+;;; $$ Last modified:  16:40:01 Tue Oct 24 2023 CEST
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'csound-opcodes)
@@ -58,7 +58,7 @@
 ;;; installed locally.
 ;;; RP  Wed Sep 20 19:51:22 2023
 (defcustom csound-manual-url
-  "http://www.csounds.com/manual/html/"
+  "https://csound.com/docs/manual/"
   "The URL to the root directory of the Csound manual."
   :group 'csound-mode-manual-lookup
   :type 'string)
