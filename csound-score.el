@@ -152,7 +152,10 @@ parameter are of same space width."
                (line-end-position 1) t 1)
               (setq line-num-test (1+ line-num-test))
             (setq ending-of-block (line-end-position 0)))))
-      (csound-score--align-cols beginning-of-block ending-of-block))))
+      ;; workaround to align string instr name correctly
+      (with-syntax-table (make-syntax-table (syntax-table))
+        (modify-syntax-entry ?\" "w")
+        (csound-score--align-cols beginning-of-block ending-of-block)))))
 
 (defun csound-score-trim-time (score-string)
   (let ((trimmed-string (split-string
