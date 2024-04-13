@@ -41,10 +41,10 @@
       (goto-char start)
       (beginning-of-line)
       (while (< (line-number-at-pos (point))
-                line-end)
+                (1+ line-end))
         (indent-line-to 0)
         (forward-line))
-      (let ((statements (-> (buffer-substring start (line-end-position))
+      (let ((statements (-> (buffer-substring start (line-end-position 0))
                             (substring-no-properties)
                             (split-string "\n"))))
         ;; Create matrix of max lengths
