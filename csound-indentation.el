@@ -44,7 +44,7 @@
   :type 'boolean
   :group 'csound-mode)
 
-(defcustom csound-indentation-indent-goto t
+(defcustom csound-indentation-indent-goto nil
   "If true, then anything that comes after goto symbol
    will be indented."
   :type 'boolean
@@ -143,7 +143,7 @@
 	(csound-indentation-count-goto-if-mix
 	 end-of-expr
          (if (and (search-forward-regexp "\\<\\(if\\)\\((\\|\\>\\)" (csound-util-line-boundry) t 1)
-		  (search-forward-regexp "\\<\\(goto\\)\\>" (csound-util-line-boundry) t 1))
+		  (search-forward-regexp "\\<\\([a\\|k\\|i]?goto\\)\\>" (csound-util-line-boundry) t 1))
 	     (1+ cnt) cnt)
          (1+ current-depth)))))
 

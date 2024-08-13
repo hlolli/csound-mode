@@ -108,6 +108,11 @@
   "Symbols that have been defined with goto ending with colon (end:)"
   :group 'csound-mode-font-lock)
 
+(defface csound-font-lock-goto-label
+  '((((class color)) (:inherit font-lock-constant-face)))
+  "Symbols that represent a goto label"
+  :group 'csound-mode-font-lock)
+
 (defface csound-font-lock-p
   '((((class color) (background light)) (:foreground "#A48E32" :bold t))
     (((class color) (background dark)) (:foreground "#F9E79F" :bold t)))
@@ -156,6 +161,7 @@
 	csound-font-lock-s-variables
 	csound-font-lock-global-s-variables
 	csound-font-lock-goto
+	csound-font-lock-goto-label
 	csound-font-lock-p
 	csound-font-lock-i
 	csound-font-lock-e
@@ -198,6 +204,13 @@
 
       ;; Regex for goto symbols ending with colon
       (push '("\\<\\w*:\\B" . csound-font-lock-goto) csound-font-lock-keywords)
+
+      ;; Regex für goto-ähnliche Symbole und das nachfolgende Wort am Zeilenende
+      (push '("\\<\\(goto\\|igoto\\|kgoto\\)\\s-*\\(\\w+\\)" 2 csound-font-lock-goto-label) csound-font-lock-keywords)
+
+
+      ;; (push ("\\<\\([a\\|k\\|i]?goto\\)\\s-+\\(\\w+\\)\\B"
+      ;; 	     . csound-font-lock-goto-keyword) csound-font-lock-keywords)
 
       ;; Regex for p-fields
       (push '("\\bp[[:digit:]]+" . csound-font-lock-p) csound-font-lock-keywords)

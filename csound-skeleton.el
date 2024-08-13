@@ -34,19 +34,35 @@
   :type 'integer
   :group 'csound-mode)
 
+(defcustom csound-skeleton-default-options "-odac"
+  "Set the default option flags when creating new csound file."
+  :type 'string
+  :group 'csound-mode)
+
+(defcustom csound-skeleton-default-additional-header ""
+  "Set the default additional header information when creating new csound file."
+  :type 'string
+  :group 'csound-mode)
+
 (define-skeleton csound-skeleton-new-csd
   "Skeleton for auto-insert in csound-mode."
   nil
   "<CsoundSynthesizer>\n"
-  "<CsOptions>\n</CsOptions>\n"
+  "<CsOptions>\n"
+  (concat csound-skeleton-default-options)
+  "\n</CsOptions>\n"
   "<CsInstruments>\n\n"
   (concat "sr = " (number-to-string csound-skeleton-default-sr) "\n")
   (concat "ksmps = " (number-to-string csound-skeleton-default-ksmps) "\n")
   "nchnls = 2\n"
   "0dbfs = 1.0\n"
-  "\n\n\n"
+  "\n"
+  (concat csound-skeleton-default-additional-header)
+  "\n\n"
+  "instr 1\n\nendin\n\n"
   "</CsInstruments>\n"
-  "<CsScore>\n\n\n"
+  "<CsScore>\n"
+  "i1 0 1\n"
   "</CsScore>\n"
   "</CsoundSynthesizer>\n")
 
