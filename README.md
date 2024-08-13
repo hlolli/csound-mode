@@ -49,6 +49,21 @@ If you're using `csound-mode` directly from the git repo, and you happen to use 
      ("\\.udo\\'" . csound-mode))
   :load-path "packages/csound-mode/")
 ```
+With more options
+```emacs-lisp
+(use-package csound-mode
+  :ensure t
+  :custom
+  (csound-skeleton-default-sr 96000)
+  (csound-skeleton-default-ksmps 16)
+  (csound-skeleton-default-options "-d -oadc -W -3")
+  (csound-skeleton-default-additional-header "#include \"PATH/TO/YOU/UDOs.udo\"")
+  :mode (("\\.csd\\'" . csound-mode)
+         ("\\.orc\\'" . csound-mode)
+         ("\\.sco\\'" . csound-mode)
+         ("\\.udo\\'" . csound-mode))
+  :load-path "~/.emacs.d/elpa/csound-mode/")
+```
 
 ## Keybindings
 <kbd>C-c C-p</kbd> `csound-play` Same as doing `csound filename -odac`
