@@ -35,7 +35,7 @@
   "Set how many spaces are in indentation."
   :type 'integer
   :group 'csound-mode)
-
+0
 (defcustom csound-indentation-aggressive-score nil
   "If true, then align blocks will be called for every indent
    calls in a score file or within CsScore tags. Works well
@@ -50,13 +50,15 @@
   :type 'boolean
   :group 'csound-mode)
 
+
 (defun csound-indentation--current-line-breaks-p ()
   (if (save-excursion
-        (beginning-of-line 0)
+        (beginning-of-line)  ; move to the beginning of the current line
         (search-forward-regexp "\\B\\\\\\B" (csound-util-line-boundry) t 1))
       t nil))
 
 (defun csound-indentation--previous-line-breaks-p ()
+  "searches for a backslash in the previous line"
   (if (save-excursion
         (beginning-of-line 0)
         (search-forward-regexp "\\B\\\\\\B" (csound-util-line-boundry) t 1))
@@ -78,7 +80,6 @@
         (search-forward-regexp "^\\s-*" (csound-util-line-boundry) t 1))
       (point))
      (point)))
-
 
 (defun csound-indentation-begin-of-expr-p ()
   (save-excursion
@@ -112,42 +113,37 @@
   (save-excursion
     (beginning-of-line 1)
     (if (and (search-forward-regexp
-              (concat
+	      (concat
 	       "\\<\\(if\\)\\>\\|\\<\\(while\\)\\>\\|\\<\\(else\\)\\>\\|"
-               "\\<\\(elseif\\)\\>\\|\\<\\(until\\)\\>|\\<\\(switch\\)\\>")
-	      (csound-util-line-boundry) t 1)
-	     ;; if in mix with gotos
-	     ;; dont have endif therefore
-	     ;; dont create logical blocks
-	     (prog2
-		 (beginning-of-line 1)
-		 (not (search-forward-regexp "[a\\|k\\|i]?goto" (csound-util-line-boundry) t))))
-	1 0)))
+	       "\\<\\(elseif\\)\\>\\|\\<\\(until\\)\\>|\\<\\(switch\\)\\>")
+              (csound-util-line-boundry) t 1)
+             ;; If mixed with gotos, don't create logical blocks
+             (not (search-forward-regexp "[a\\|k\\|i]?goto" (csound-util-line-boundry) t)))
+        1 0)))
 
 (defun csound-indentation-end-of-bool-p ()
   (save-excursion
-    (beginning-of-line 1)
+    (beginning-of-line)
     (if (search-forward-regexp
          (concat
 	  "\\<\\(endif\\)\\>\\|\\<\\(od\\)\\>\\|\\<\\(else\\)\\>\\|"
-          "\\<\\(elseif\\)\\>|\\<\\(enduntil\\)\\>|\\<\\(endsw\\)\\>")
-
-	 (csound-util-line-boundry) t 1)
+          "\\<\\(elseif\\)\\>\\|\\<\\(enduntil\\)\\>\\|\\<\\(endsw\\)\\>")
+	 (line-end-position) t)
 	1 0)))
 
 (defun csound-indentation-count-goto-if-mix (end-of-expr cnt current-depth)
-  (if (or (> current-depth 50)  (<= end-of-expr (point)))
+  (if (or (> current-depth 50) (<= end-of-expr (point)))
       cnt
     (prog2
-	(beginning-of-line 2)
-	(csound-indentation-count-goto-if-mix
-	 end-of-expr
-         (if (and (search-forward-regexp "\\<\\(if\\)\\((\\|\\>\\)" (csound-util-line-boundry) t 1)
-		  (search-forward-regexp "\\<\\([a\\|k\\|i]?goto\\)\\>" (csound-util-line-boundry) t 1))
-	     (1+ cnt) cnt)
-         (1+ current-depth)))))
-
-
+        (beginning-of-line 2)
+        (csound-indentation-count-goto-if-mix
+         end-of-expr
+         (if (and (search-forward-regexp "\\<\\(if\\)\\>" (csound-util-line-boundry) t 1)
+                  (search-forward-regexp "\\<\\([a\\|k\\|i]?goto\\)\\>" (csound-util-line-boundry) t 1))
+             (1+ cnt)
+	   cnt)
+         (+ current-depth 2)))))
+  
 (defun csound-indentation-expression-first-arg (expr-string non-comma-cnt initial-recur-p)
   (let ((trimmed-str (csound-util-chomp expr-string)))
     (let* ((beginning-of-delimination (string-match "[\s\t,]" trimmed-str 0))

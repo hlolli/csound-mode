@@ -41,7 +41,7 @@ and add it manually to load-path like shown here:
 
 If you're using `csound-mode` directly from the git repo, and you happen to use the `use-package` macro. Then this could be used in your init.el file.
 
-```Clojure
+```emacs-lisp
 (use-package csound-mode
   :mode (("\\.csd\\'" . csound-mode)
      ("\\.orc\\'" . csound-mode)
@@ -66,6 +66,8 @@ With more options
 ```
 
 ## Keybindings
+<kbd>C-c C-n</kbd> `csound-skeleton-new-csd` creates a new csound template
+
 <kbd>C-c C-p</kbd> `csound-play` Same as doing `csound filename -odac`
 
 <kbd>C-c C-r</kbd> `csound-render` Same as doing `csound filename -o filename.wav`
