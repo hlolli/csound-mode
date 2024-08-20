@@ -41,26 +41,34 @@
   str)
 
 (defun csound-util-line-boundry ()
-  (let ((comment (save-excursion
-                   (search-forward ";" (line-end-position 1) t 1)))
-        (multi-comment (save-excursion
-                         (search-forward "/*" (line-end-position 1) t 1))))
+  "returns the end point of the line and stops befor the occurence of
+a commentary"
+  (let ((comment (save-excursion 
+                   (search-forward ";" (line-end-position 1) t 1))) 
+	(multi-comment (save-excursion
+                         (search-forward
+			  "/*" (line-end-position 1) t 1))))
     (cond
      (comment (1- comment))
      (multi-comment (1- (1- multi-comment)))
      (t (line-end-position 1)))))
 
 (defun csound-util-remove-comment-in-string (string)
+  "replaces comments in a string with an empty string and gives back the string without the
+comments"
   (->> string
        (replace-regexp-in-string ";.*" "")
        (replace-regexp-in-string "/\\*\\(.\\|\n\\)*\\*/" "")))
 
 (defun csound-util-recursive-count* (regex string start)
+  "counts the appearence of the regex in the given string"
   (if (string-match regex string start)
       (+ 1 (csound-util-recursive-count* regex string (match-end 0)))
     0))
 
 (defun csound-util-recursive-count (regex string start)
+  "counts only the appearence of the regex in the given string with
+comments removed"
   (csound-util-recursive-count* regex (csound-util-remove-comment-in-string string) start))
 
 
