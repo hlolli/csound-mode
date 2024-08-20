@@ -205,7 +205,7 @@
       ;; Regex for goto symbols ending with colon
       (push '("\\<\\w*:\\B" . csound-font-lock-goto) csound-font-lock-keywords)
 
-      ;; Regex für goto labels
+      ;; Regex for goto labels
       (push '("\\<\\(goto\\|igoto\\|kgoto\\)\\s-*\\(\\w+\\)" 2 csound-font-lock-goto-label) csound-font-lock-keywords)
 
       ;; Regex for p-fields
