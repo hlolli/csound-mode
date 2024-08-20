@@ -60,7 +60,7 @@
     (modify-syntax-entry ?\; "<" st)
     (modify-syntax-entry ?\n ">" st)
     (modify-syntax-entry ?/ ". 12" st)
-    (modify-syntax-entry ?\n "> " st)
+     (modify-syntax-entry ?\n "> " st)
     ;; good read: https://www.lunaryorn.com/posts/syntactic-fontification-in-emacs.html
     (modify-syntax-entry ?/ ". 14b" st)
     (modify-syntax-entry ?* ". 23b" st)
