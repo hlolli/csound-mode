@@ -205,12 +205,8 @@
       ;; Regex for goto symbols ending with colon
       (push '("\\<\\w*:\\B" . csound-font-lock-goto) csound-font-lock-keywords)
 
-      ;; Regex für goto-ähnliche Symbole und das nachfolgende Wort am Zeilenende
+      ;; Regex for goto labels
       (push '("\\<\\(goto\\|igoto\\|kgoto\\)\\s-*\\(\\w+\\)" 2 csound-font-lock-goto-label) csound-font-lock-keywords)
-
-
-      ;; (push ("\\<\\([a\\|k\\|i]?goto\\)\\s-+\\(\\w+\\)\\B"
-      ;; 	     . csound-font-lock-goto-keyword) csound-font-lock-keywords)
 
       ;; Regex for p-fields
       (push '("\\bp[[:digit:]]+" . csound-font-lock-p) csound-font-lock-keywords)
