@@ -32,6 +32,7 @@
 (require 'csound-util)
 (require 'font-lock)
 (require 'dash)
+(require 'highlight)
 
 (defun csound-score--align-cols (start end)
   (save-excursion
@@ -43,6 +44,8 @@
       (while (< (line-number-at-pos (point))
                 (1+ line-end))
         (indent-line-to 0)
+        (when (re-search-forward ";\\|//" (line-end-position) t)
+          (replace-match " \\&"))
         (forward-line))
       (let ((statements (-> (buffer-substring start (line-end-position 0))
                             (substring-no-properties)
@@ -50,11 +53,11 @@
         ;; Create matrix of max lengths
         (dolist (stm statements)
           ;; Remove comments and extra whitespaces
-          (let* ((stm* (->> (replace-regexp-in-string ";.*" "" stm)
+          (let* ((stm* (->> (replace-regexp-in-string "\\(;\\|//\\).*" "" stm)
                             csound-util-chomp
                             (replace-regexp-in-string "\\s-+" " ")))
                  (param-list (split-string stm* " "))
-                 (param-num (length param-list))
+                 ;; (param-num (length param-list))
                  (max-matrix-len (length max-matrix))
                  (index 0))
             ;; (print stm*)
@@ -71,21 +74,24 @@
       (while (< (line-number-at-pos (point))
                 (1+ line-end))
         (beginning-of-line)
-        (forward-word)
+        (re-search-forward "\\S-+" nil t)
         (let ((index 0)
               (line-num (line-number-at-pos (point))))
           (while (= (line-number-at-pos (point)) line-num)
-            ;; (print (length (thing-at-point 'symbol)))
             (let ((space-beg-point (point))
-                  (param-length (length (thing-at-point 'symbol))))
-              (when (re-search-forward "\\w\\|\\+" (line-end-position) t 1)
+                  (param-length
+                   (save-excursion
+                     (- (skip-chars-backward "^[:space:]" (line-beginning-position))))))
+              (when (re-search-forward "\\S-" (line-end-position) t)
                 (backward-char)
                 (let ((spaces-to-add (- (1+ (nth index max-matrix))
                                         (+ param-length
                                            (- (point) space-beg-point))))
                       (possibly-after-comment
-                       (save-excursion
-                         (search-backward-regexp "\\;\\|\\/" (line-beginning-position) t 1))))
+                       (when (or (= (following-char) ?\;)
+                                 (and (= (following-char) ?/)
+                                      (= (char-after (1+ (point))) ?/)))
+                         (point))))
                   (if possibly-after-comment
                       (let* ((subvec (cl-subseq max-matrix index))
                              (before-comment-spaces (- (+ (apply #'+ subvec)
@@ -96,7 +102,7 @@
                         (goto-char possibly-after-comment)
                         ;; Align comments nicely at the end
                         (if (<= 0 before-comment-spaces)
-                            (insert (make-string before-comment-spaces  ?\040))
+                            (insert (make-string before-comment-spaces ?\040))
                           (delete-char before-comment-spaces))
                         (forward-line))
                     (prog2 (goto-char space-beg-point)
@@ -104,14 +110,7 @@
                             (insert
                              (make-string spaces-to-add ?\040))
                           (delete-char (abs spaces-to-add)))))))
-              (let ((possible-overseen-plus
-                     (save-excursion
-                       (search-forward "+" (line-end-position) t 1))))
-                (forward-word)
-                (when possible-overseen-plus
-                  (when (and (< possible-overseen-plus (point))
-                             (= (line-number-at-pos (point)) line-num))
-                    (goto-char possible-overseen-plus)))))
+              (re-search-forward "\\S-+" nil t))
             (setq index (1+ index))))))))
 
 
@@ -152,10 +151,7 @@ parameter are of same space width."
                (line-end-position 1) t 1)
               (setq line-num-test (1+ line-num-test))
             (setq ending-of-block (line-end-position 0)))))
-      ;; workaround to align string instr name correctly
-      (with-syntax-table (make-syntax-table (syntax-table))
-        (modify-syntax-entry ?\" "w")
-        (csound-score--align-cols beginning-of-block ending-of-block)))))
+      (csound-score--align-cols beginning-of-block ending-of-block))))
 
 (defun csound-score-trim-time (score-string)
   (let ((trimmed-string (split-string
@@ -165,7 +161,7 @@ parameter are of same space width."
         (min-p2 0)
         (closure-list '())
         (final-str "")
-        (lex-p2-list '())
+        ;; (lex-p2-list '())
         (p2-list '())
         (last-p3 0))
     (dolist (event trimmed-string)
