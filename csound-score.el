@@ -38,19 +38,10 @@
   (save-excursion
     (let ((line-end (line-number-at-pos end))
           (max-matrix '()))
-      ;; Move all lines to beginning of line
-      (goto-char start)
-      (beginning-of-line)
-      (while (< (line-number-at-pos (point))
-                (1+ line-end))
-        (indent-line-to 0)
-        (when (re-search-forward ";\\|//" (line-end-position) t)
-          (replace-match " \\&"))
-        (forward-line))
-      (let ((statements (-> (buffer-substring start (line-end-position 0))
+      ;; Create matrix of max lengths
+      (let ((statements (-> (buffer-substring start end)
                             (substring-no-properties)
                             (split-string "\n"))))
-        ;; Create matrix of max lengths
         (dolist (stm statements)
           ;; Remove comments and extra whitespaces
           (let* ((stm* (->> (replace-regexp-in-string "\\(;\\|//\\).*" "" stm)
@@ -70,48 +61,46 @@
                           (max (length param)
                                (nth index max-matrix)))
                     (setq index (1+ index))))))))
+      ;; Align the region
       (goto-char start)
-      (while (< (line-number-at-pos (point))
-                (1+ line-end))
+      (while (<= (line-number-at-pos (point)) line-end)
+        ;; Remove indent and add a space before comment
+        (indent-line-to 0)
+        (when (re-search-forward ";\\|//" (line-end-position) t)
+          (replace-match " \\&"))
+        ;; Align the line
         (beginning-of-line)
-        (re-search-forward "\\S-+" nil t)
-        (let ((index 0)
-              (line-num (line-number-at-pos (point))))
+        (let* ((line-num (line-number-at-pos (point)))
+               ;; Move to the end of next parameter and get the length
+               (param-length (skip-chars-forward "^[:space:]"))
+               (index 0))
           (while (= (line-number-at-pos (point)) line-num)
-            (let ((space-beg-point (point))
-                  (param-length
-                   (save-excursion
-                     (- (skip-chars-backward "^[:space:]" (line-beginning-position))))))
-              (when (re-search-forward "\\S-" (line-end-position) t)
-                (backward-char)
-                (let ((spaces-to-add (- (1+ (nth index max-matrix))
-                                        (+ param-length
-                                           (- (point) space-beg-point))))
-                      (possibly-after-comment
-                       (when (or (= (following-char) ?\;)
-                                 (and (= (following-char) ?/)
-                                      (= (char-after (1+ (point))) ?/)))
-                         (point))))
-                  (if possibly-after-comment
-                      (let* ((subvec (cl-subseq max-matrix index))
-                             (before-comment-spaces (- (+ (apply #'+ subvec)
-                                                          (1+ (length subvec)))
-                                                       (+ (- possibly-after-comment
-                                                             space-beg-point)
-                                                          param-length))))
-                        (goto-char possibly-after-comment)
-                        ;; Align comments nicely at the end
-                        (if (<= 0 before-comment-spaces)
-                            (insert (make-string before-comment-spaces ?\040))
-                          (delete-char before-comment-spaces))
-                        (forward-line))
-                    (prog2 (goto-char space-beg-point)
-                        (if (<= 0 spaces-to-add)
-                            (insert
-                             (make-string spaces-to-add ?\040))
-                          (delete-char (abs spaces-to-add)))))))
-              (re-search-forward "\\S-+" nil t))
-            (setq index (1+ index))))))))
+            ;; Align the parameter
+            (let* ((margin-length (skip-chars-forward "[:space:]"))
+                   (before-comment (or (= (following-char) ?\;)
+                                       (and (= (following-char) ?/)
+                                            (= (char-after (1+ (point))) ?/))))
+                   (spaces-to-add
+                    (- (if before-comment
+                           ;; needed length before comment
+                           (let ((subvec (nthcdr index max-matrix)))
+                             (+ (apply '+ subvec) (length subvec) 1))
+                         (if (= (point) (line-end-position))
+                             ;; needed length before line end
+                             param-length
+                           ;; needed length before next parameter
+                           (1+ (nth index max-matrix))))
+                       ;; current length
+                       (+ param-length margin-length))))
+              ;; Adjust the margin
+              (if (<= 0 spaces-to-add)
+                  (insert (make-string spaces-to-add ?\040))
+                (delete-char spaces-to-add))
+              (if before-comment
+                  (forward-line)
+                (progn
+                  (setq param-length (skip-chars-forward "^[:space:]"))
+                  (setq index (1+ index)))))))))))
 
 
 (defun csound-score-align-block ()
