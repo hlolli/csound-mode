@@ -56,12 +56,12 @@
               (if (<= max-matrix-len index)
                   (setq max-matrix (append max-matrix (list (length param)))
                         index (1+ index))
-                (prog2
-                    (setf (nth index max-matrix)
-                          (max (length param)
-                               (nth index max-matrix)))
-                    (setq index (1+ index))))))))
-      ;; Align the region
+                (progn
+                  (setf (nth index max-matrix)
+                        (max (length param)
+                             (nth index max-matrix)))
+                  (setq index (1+ index))))))))
+      ;; Align the block
       (goto-char start)
       (while (<= (line-number-at-pos (point)) line-end)
         ;; Remove indent and add a space before comment
@@ -109,11 +109,11 @@ parameter are of same space width."
   (interactive)
   ;; See if point is on an score event line
   (when (save-excursion
-          (prog2
-              (beginning-of-line 1)
-              (search-forward-regexp
-               "\\(^\\s-*\\|^\\t-*\\)[if]"
-               (line-end-position 1) t 1)))
+          (progn
+            (beginning-of-line 1)
+            (search-forward-regexp
+             "\\(^\\s-*\\|^\\t-*\\)[if]"
+             (line-end-position 1) t 1)))
     ;; Search for beginning of block
     (let ((beginning-of-block nil)
           (line-num-test 1)
