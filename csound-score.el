@@ -27,7 +27,6 @@
 
 ;;; Code:
 
-(require 'cl-lib)
 (require 'csound-font-lock)
 (require 'csound-util)
 (require 'font-lock)
@@ -98,9 +97,8 @@
                 (delete-char spaces-to-add))
               (if before-comment
                   (forward-line)
-                (progn
-                  (setq param-length (skip-chars-forward "^[:space:]"))
-                  (setq index (1+ index)))))))))))
+                (setq param-length (skip-chars-forward "^[:space:]")
+                      index (1+ index))))))))))
 
 
 (defun csound-score-align-block ()
