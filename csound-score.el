@@ -62,18 +62,19 @@
                   (setq index (1+ index))))))))
       ;; Align the block
       (goto-char start)
-      (while (<= (line-number-at-pos (point)) line-end)
+      (while (<= (line-number-at-pos) line-end)
         ;; Remove indent and add a space before comment
         (indent-line-to 0)
-        (if (re-search-forward ";\\|//" (line-end-position) t)
-            (replace-match " \\&"))
+        (if (and (re-search-forward "\\(.\\)\\(;\\|//\\)" (line-end-position) t)
+                 (save-match-data (string-match "\\S-" (match-string 1))))
+            (replace-match "\\1 \\2"))
         ;; Align the line
         (beginning-of-line)
-        (let* ((line-num (line-number-at-pos (point)))
+        (let* ((line-num (line-number-at-pos))
                ;; Move to the end of next parameter and get the length
                (param-length (skip-chars-forward "^[:space:]"))
                (index 0))
-          (while (= (line-number-at-pos (point)) line-num)
+          (while (= (line-number-at-pos) line-num)
             ;; Align the parameter
             (let* ((margin-length (skip-chars-forward "[:space:]"))
                    (before-comment (or (= (following-char) ?\;)
@@ -84,7 +85,7 @@
                            ;; needed length before comment
                            (let ((subvec (nthcdr index max-matrix)))
                              (+ (apply #'+ subvec) (length subvec) 1))
-                         (if (= (point) (line-end-position))
+                         (if (eolp)
                              ;; needed length before line end
                              param-length
                            ;; needed length before next parameter
