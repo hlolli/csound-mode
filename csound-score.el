@@ -65,8 +65,8 @@
       (while (<= (line-number-at-pos (point)) line-end)
         ;; Remove indent and add a space before comment
         (indent-line-to 0)
-        (when (re-search-forward ";\\|//" (line-end-position) t)
-          (replace-match " \\&"))
+        (if (re-search-forward ";\\|//" (line-end-position) t)
+            (replace-match " \\&"))
         ;; Align the line
         (beginning-of-line)
         (let* ((line-num (line-number-at-pos (point)))
@@ -83,7 +83,7 @@
                     (- (if before-comment
                            ;; needed length before comment
                            (let ((subvec (nthcdr index max-matrix)))
-                             (+ (apply '+ subvec) (length subvec) 1))
+                             (+ (apply #'+ subvec) (length subvec) 1))
                          (if (= (point) (line-end-position))
                              ;; needed length before line end
                              param-length
@@ -106,39 +106,39 @@
 parameter are of same space width."
   (interactive)
   ;; See if point is on an score event line
-  (when (save-excursion
-          (progn
-            (beginning-of-line 1)
-            (search-forward-regexp
-             "\\(^\\s-*\\|^\\t-*\\)[if]"
-             (line-end-position 1) t 1)))
-    ;; Search for beginning of block
-    (let ((beginning-of-block nil)
-          (line-num-test 1)
-          (ending-of-line-at-point (line-end-position 1))
-          (beginning-of-line-at-point (line-beginning-position 1))
-          (ending-of-block nil))
-      (save-excursion
-        (while (not (numberp beginning-of-block))
-          (goto-char ending-of-line-at-point)
-          (end-of-line line-num-test)
-          (if (search-backward-regexp
-               "\\(^\\s-*\\|^\\t-*\\)[if]"
-               (line-beginning-position 1) t 1)
-              (setq line-num-test (1- line-num-test))
-            (setq beginning-of-block (line-beginning-position 2)))))
-      (setq line-num-test 1)
-      ;; Search for ending of block
-      (save-excursion
-        (while (not (numberp ending-of-block))
-          (goto-char beginning-of-line-at-point)
-          (beginning-of-line line-num-test)
-          (if (search-forward-regexp
-               "\\(^\\s-*\\|^\\t-*\\)[if]"
-               (line-end-position 1) t 1)
-              (setq line-num-test (1+ line-num-test))
-            (setq ending-of-block (line-end-position 0)))))
-      (csound-score--align-cols beginning-of-block ending-of-block))))
+  (if (save-excursion
+        (progn
+          (beginning-of-line 1)
+          (search-forward-regexp
+           "\\(^\\s-*\\|^\\t-*\\)[if]"
+           (line-end-position 1) t 1)))
+      ;; Search for beginning of block
+      (let ((beginning-of-block nil)
+            (line-num-test 1)
+            (ending-of-line-at-point (line-end-position 1))
+            (beginning-of-line-at-point (line-beginning-position 1))
+            (ending-of-block nil))
+        (save-excursion
+          (while (not (numberp beginning-of-block))
+            (goto-char ending-of-line-at-point)
+            (end-of-line line-num-test)
+            (if (search-backward-regexp
+                 "\\(^\\s-*\\|^\\t-*\\)[if]"
+                 (line-beginning-position 1) t 1)
+                (setq line-num-test (1- line-num-test))
+              (setq beginning-of-block (line-beginning-position 2)))))
+        (setq line-num-test 1)
+        ;; Search for ending of block
+        (save-excursion
+          (while (not (numberp ending-of-block))
+            (goto-char beginning-of-line-at-point)
+            (beginning-of-line line-num-test)
+            (if (search-forward-regexp
+                 "\\(^\\s-*\\|^\\t-*\\)[if]"
+                 (line-end-position 1) t 1)
+                (setq line-num-test (1+ line-num-test))
+              (setq ending-of-block (line-end-position 0)))))
+        (csound-score--align-cols beginning-of-block ending-of-block))))
 
 (defun csound-score-trim-time (score-string)
   (let ((trimmed-string (split-string
