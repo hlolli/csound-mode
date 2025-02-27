@@ -70,9 +70,9 @@
                    (save-match-data (string-match "\\S-" (match-string 1))))
             (replace-match "\\1 \\2")))
         ;; Align the line
-        (let* ((line-num (line-number-at-pos))
-               (param-length 0)
-               (index -1))
+        (let ((line-num (line-number-at-pos))
+              (param-length 0)
+              (index -1))
           (while (= (line-number-at-pos) line-num)
             ;; Align the parameter
             (let* ((margin-length (skip-chars-forward "[:space:]"))
