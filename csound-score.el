@@ -63,17 +63,16 @@
       ;; Align the block
       (goto-char start)
       (while (<= (line-number-at-pos) line-end)
-        ;; Remove indent and add a space before comment
-        (indent-line-to 0)
-        (if (and (re-search-forward "\\(.\\)\\(;\\|//\\)" (line-end-position) t)
-                 (save-match-data (string-match "\\S-" (match-string 1))))
-            (replace-match "\\1 \\2"))
-        ;; Align the line
         (beginning-of-line)
+        ;; Add a space before comment if non
+        (save-excursion
+          (if (and (re-search-forward "\\(^\\|.\\)\\(;\\|//\\)" (line-end-position) t)
+                   (save-match-data (string-match "\\S-" (match-string 1))))
+            (replace-match "\\1 \\2")))
+        ;; Align the line
         (let* ((line-num (line-number-at-pos))
-               ;; Move to the end of next parameter and get the length
-               (param-length (skip-chars-forward "^[:space:]"))
-               (index 0))
+               (param-length 0)
+               (index -1))
           (while (= (line-number-at-pos) line-num)
             ;; Align the parameter
             (let* ((margin-length (skip-chars-forward "[:space:]"))
@@ -81,30 +80,30 @@
                                        (and (= (following-char) ?/)
                                             (= (char-after (1+ (point))) ?/))))
                    (spaces-to-add
-                    (- (if before-comment
-                           ;; needed length before comment
-                           (let ((subvec (nthcdr index max-matrix)))
-                             (+ (apply #'+ subvec) (length subvec) 1))
-                         (if (eolp)
-                             ;; needed length before line end
-                             param-length
+                    (if (or (zerop param-length) (eolp))
+                        ;; after line beginning or before line end
+                        (- margin-length)
+                      (- (if before-comment
+                             ;; needed length before comment
+                             (let ((subvec (nthcdr index max-matrix)))
+                               (+ (apply #'+ subvec) (length subvec) 1))
                            ;; needed length before next parameter
-                           (1+ (nth index max-matrix))))
-                       ;; current length
-                       (+ param-length margin-length))))
+                           (1+ (nth index max-matrix)))
+                         ;; current length
+                         (+ param-length margin-length)))))
               ;; Adjust the margin
               (if (<= 0 spaces-to-add)
                   (insert (make-string spaces-to-add ?\040))
                 (delete-char spaces-to-add))
               (if before-comment
                   (forward-line)
+                ;; Move to the end of next parameter and get the length
                 (setq param-length (skip-chars-forward "^[:space:]")
                       index (1+ index))))))))))
 
 
 (defun csound-score-align-block ()
-  "Align score block so that all
-parameter are of same space width."
+  "Align score block so that all parameter are of same space width."
   (interactive)
   ;; See if point is on an score event line
   (if (save-excursion
@@ -140,6 +139,11 @@ parameter are of same space width."
                 (setq line-num-test (1+ line-num-test))
               (setq ending-of-block (line-end-position 0)))))
         (csound-score--align-cols beginning-of-block ending-of-block))))
+
+(defun csound-score-align-region ()
+  "Align score region so that all parameter are of same space width."
+  (interactive)
+  (csound-score--align-cols (region-beginning) (region-end)))
 
 (defun csound-score-trim-time (score-string)
   (let ((trimmed-string (split-string
