@@ -45,6 +45,8 @@
           ;; Remove comments and extra whitespaces
           (let* ((stm* (->> (replace-regexp-in-string "\\(;\\|//\\).*" "" stm)
                             csound-util-chomp
+                            ;; replace space by _ in [expression]
+                            (replace-regexp-in-string "\\[[^]]*]" #'(lambda (x) (replace-regexp-in-string "\\s-" "_" x)))
                             (replace-regexp-in-string "\\s-+" " ")))
                  (param-list (split-string stm* " "))
                  ;; (param-num (length param-list))
@@ -76,9 +78,7 @@
           (while (= (line-number-at-pos) line-num)
             ;; Align the parameter
             (let* ((margin-length (skip-chars-forward "[:space:]"))
-                   (before-comment (or (= (following-char) ?\;)
-                                       (and (= (following-char) ?/)
-                                            (= (char-after (1+ (point))) ?/))))
+                   (before-comment (looking-at ";\\|//"))
                    (spaces-to-add
                     (if (or (zerop param-length) (eolp))
                         ;; after line beginning or before line end
@@ -92,15 +92,18 @@
                          ;; current length
                          (+ param-length margin-length)))))
               ;; Adjust the margin
-              (if (<= 0 spaces-to-add)
+              (if (< 0 spaces-to-add)
                   (insert (make-string spaces-to-add ?\040))
                 (delete-char spaces-to-add))
               (if before-comment
                   (forward-line)
-                ;; Move to the end of next parameter and get the length
-                (setq param-length (skip-chars-forward "^[:space:]")
-                      index (1+ index))))))))))
-
+                (let ((ex-length
+                       ;; length of [expression] before ]
+                       (if (looking-at "\\[") (skip-chars-forward "^]") 0)))
+                  ;; Move to the end of next parameter and get the length
+                  (setq param-length
+                        (+ ex-length (skip-chars-forward "^[:space:]")))
+                  (setq index (1+ index)))))))))))
 
 (defun csound-score-align-block ()
   "Align score block so that all parameter are of same space width."
