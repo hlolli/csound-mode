@@ -108,45 +108,28 @@
 (defun csound-score-align-block ()
   "Align score block so that all parameter are of same space width."
   (interactive)
-  ;; See if point is on an score event line
-  (if (save-excursion
-        (progn
-          (beginning-of-line 1)
-          (search-forward-regexp
-           "\\(^\\s-*\\|^\\t-*\\)[if]"
-           (line-end-position 1) t 1)))
-      ;; Search for beginning of block
-      (let ((beginning-of-block nil)
-            (line-num-test 1)
-            (ending-of-line-at-point (line-end-position 1))
-            (beginning-of-line-at-point (line-beginning-position 1))
-            (ending-of-block nil))
-        (save-excursion
-          (while (not (numberp beginning-of-block))
-            (goto-char ending-of-line-at-point)
-            (end-of-line line-num-test)
-            (if (search-backward-regexp
-                 "\\(^\\s-*\\|^\\t-*\\)[if]"
-                 (line-beginning-position 1) t 1)
-                (setq line-num-test (1- line-num-test))
-              (setq beginning-of-block (line-beginning-position 2)))))
-        (setq line-num-test 1)
-        ;; Search for ending of block
-        (save-excursion
-          (while (not (numberp ending-of-block))
-            (goto-char beginning-of-line-at-point)
-            (beginning-of-line line-num-test)
-            (if (search-forward-regexp
-                 "\\(^\\s-*\\|^\\t-*\\)[if]"
-                 (line-end-position 1) t 1)
-                (setq line-num-test (1+ line-num-test))
-              (setq ending-of-block (line-end-position 0)))))
-        (csound-score--align-cols beginning-of-block ending-of-block))))
-
-(defun csound-score-align-region ()
-  "Align score region so that all parameter are of same space width."
-  (interactive)
-  (csound-score--align-cols (region-beginning) (region-end)))
+  (let ((re "^\\s-*[[:alpha:]$]"))
+    (if (save-excursion
+          ;; See if point is on an score event line
+          (beginning-of-line)
+          (search-forward-regexp re (line-end-position) t))
+        (let ((beginning-of-block)
+              (end-of-block))
+          (save-excursion
+            ;; Search for beginning of block
+            (forward-line -1)
+            (while (not beginning-of-block)
+              (if (search-forward-regexp re (line-end-position) t)
+                  (forward-line -1)
+                (setq beginning-of-block (line-beginning-position 2)))))
+          (save-excursion
+            ;; Search for end of block
+            (forward-line)
+            (while (not end-of-block)
+              (if (search-forward-regexp re (line-end-position) t)
+                  (forward-line)
+                (setq end-of-block (line-end-position 0)))))
+          (csound-score--align-cols beginning-of-block end-of-block)))))
 
 (defun csound-score-trim-time (score-string)
   (let ((trimmed-string (split-string
