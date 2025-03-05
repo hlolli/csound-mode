@@ -113,22 +113,20 @@
           ;; See if point is on an score event line
           (beginning-of-line)
           (search-forward-regexp re (line-end-position) t))
-        (let ((beginning-of-block)
-              (end-of-block))
-          (save-excursion
-            ;; Search for beginning of block
-            (forward-line -1)
-            (while (not beginning-of-block)
-              (if (search-forward-regexp re (line-end-position) t)
-                  (forward-line -1)
-                (setq beginning-of-block (line-beginning-position 2)))))
-          (save-excursion
-            ;; Search for end of block
-            (forward-line)
-            (while (not end-of-block)
-              (if (search-forward-regexp re (line-end-position) t)
-                  (forward-line)
-                (setq end-of-block (line-end-position 0)))))
+        (let ((beginning-of-block
+               (save-excursion
+                 ;; Search for beginning of block
+                 (forward-line -1)
+                 (while (search-forward-regexp re (line-end-position) t)
+                   (forward-line -1))
+                 (line-beginning-position 2)))
+              (end-of-block
+               (save-excursion
+                 ;; Search for end of block
+                 (forward-line)
+                 (while (search-forward-regexp re (line-end-position) t)
+                   (forward-line))
+                 (line-end-position 0))))
           (csound-score--align-cols beginning-of-block end-of-block)))))
 
 (defun csound-score-trim-time (score-string)
