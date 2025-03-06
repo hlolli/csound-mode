@@ -103,7 +103,10 @@
                   ;; Move to the end of next parameter and get the length
                   (setq param-length
                         (+ ex-length (skip-chars-forward "^[:space:]")))
-                  (setq index (1+ index)))))))))))
+                  (setq index (1+ index))))
+              (if (= (point) (line-end-position))
+                  (setq line-num 0
+                        line-end 0)))))))))
 
 (defun csound-score-align-block ()
   "Align score block so that all parameter are of same space width."
@@ -112,21 +115,21 @@
     (if (save-excursion
           ;; See if point is on an score event line
           (beginning-of-line)
-          (search-forward-regexp re (line-end-position) t))
+          (re-search-forward re (line-end-position) t))
         (let ((beginning-of-block
                (save-excursion
                  ;; Search for beginning of block
-                 (forward-line -1)
-                 (while (search-forward-regexp re (line-end-position) t)
-                   (forward-line -1))
-                 (line-beginning-position 2)))
+                 (beginning-of-line)
+                 (while (re-search-backward re (line-beginning-position 0) t)
+                   (beginning-of-line))
+                 (point)))
               (end-of-block
                (save-excursion
                  ;; Search for end of block
-                 (forward-line)
-                 (while (search-forward-regexp re (line-end-position) t)
-                   (forward-line))
-                 (line-end-position 0))))
+                 (end-of-line)
+                 (while (re-search-forward re (line-end-position 2) t)
+                   (end-of-line))
+                 (point))))
           (csound-score--align-cols beginning-of-block end-of-block)))))
 
 (defun csound-score-trim-time (score-string)
