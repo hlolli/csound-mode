@@ -27,7 +27,6 @@
 
 ;;; Code:
 
-(require 'cl-lib)
 (require 'csound-font-lock)
 (require 'csound-util)
 (require 'font-lock)
@@ -46,6 +45,8 @@
           ;; Remove comments and extra whitespaces
           (let* ((stm* (->> (replace-regexp-in-string "\\(;\\|//\\).*" "" stm)
                             csound-util-chomp
+                            ;; replace space by _ in [expression]
+                            (replace-regexp-in-string "\\[[^]]*]" #'(lambda (x) (replace-regexp-in-string "\\s-" "_" x)))
                             (replace-regexp-in-string "\\s-+" " ")))
                  (param-list (split-string stm* " "))
                  ;; (param-num (length param-list))
@@ -63,84 +64,74 @@
                   (setq index (1+ index))))))))
       ;; Align the block
       (goto-char start)
-      (while (<= (line-number-at-pos (point)) line-end)
-        ;; Remove indent and add a space before comment
-        (indent-line-to 0)
-        (when (re-search-forward ";\\|//" (line-end-position) t)
-          (replace-match " \\&"))
-        ;; Align the line
+      (while (<= (line-number-at-pos) line-end)
         (beginning-of-line)
-        (let* ((line-num (line-number-at-pos (point)))
-               ;; Move to the end of next parameter and get the length
-               (param-length (skip-chars-forward "^[:space:]"))
-               (index 0))
-          (while (= (line-number-at-pos (point)) line-num)
+        ;; Add a space before comment if non
+        (save-excursion
+          (if (and (re-search-forward "\\(^\\|.\\)\\(;\\|//\\)" (line-end-position) t)
+                   (save-match-data (string-match "\\S-" (match-string 1))))
+            (replace-match "\\1 \\2")))
+        ;; Align the line
+        (let ((line-num (line-number-at-pos))
+              (param-length 0)
+              (index -1))
+          (while (= (line-number-at-pos) line-num)
             ;; Align the parameter
             (let* ((margin-length (skip-chars-forward "[:space:]"))
-                   (before-comment (or (= (following-char) ?\;)
-                                       (and (= (following-char) ?/)
-                                            (= (char-after (1+ (point))) ?/))))
+                   (before-comment (looking-at ";\\|//"))
                    (spaces-to-add
-                    (- (if before-comment
-                           ;; needed length before comment
-                           (let ((subvec (nthcdr index max-matrix)))
-                             (+ (apply '+ subvec) (length subvec) 1))
-                         (if (= (point) (line-end-position))
-                             ;; needed length before line end
-                             param-length
+                    (if (or (zerop param-length) (eolp))
+                        ;; after line beginning or before line end
+                        (- margin-length)
+                      (- (if before-comment
+                             ;; needed length before comment
+                             (let ((subvec (nthcdr index max-matrix)))
+                               (+ (apply #'+ subvec) (length subvec) 1))
                            ;; needed length before next parameter
-                           (1+ (nth index max-matrix))))
-                       ;; current length
-                       (+ param-length margin-length))))
+                           (1+ (nth index max-matrix)))
+                         ;; current length
+                         (+ param-length margin-length)))))
               ;; Adjust the margin
-              (if (<= 0 spaces-to-add)
+              (if (< 0 spaces-to-add)
                   (insert (make-string spaces-to-add ?\040))
                 (delete-char spaces-to-add))
               (if before-comment
                   (forward-line)
-                (progn
-                  (setq param-length (skip-chars-forward "^[:space:]"))
-                  (setq index (1+ index)))))))))))
-
+                (let ((ex-length
+                       ;; length of [expression] before ]
+                       (if (looking-at "\\[") (skip-chars-forward "^]") 0)))
+                  ;; Move to the end of next parameter and get the length
+                  (setq param-length
+                        (+ ex-length (skip-chars-forward "^[:space:]")))
+                  (setq index (1+ index))))
+              ;; Exit loop at buffer end
+              (if (eobp)
+                  (setq line-num 0
+                        line-end 0)))))))))
 
 (defun csound-score-align-block ()
-  "Align score block so that all
-parameter are of same space width."
+  "Align score block so that all parameter are of same space width."
   (interactive)
-  ;; See if point is on an score event line
-  (when (save-excursion
-          (progn
-            (beginning-of-line 1)
-            (search-forward-regexp
-             "\\(^\\s-*\\|^\\t-*\\)[if]"
-             (line-end-position 1) t 1)))
-    ;; Search for beginning of block
-    (let ((beginning-of-block nil)
-          (line-num-test 1)
-          (ending-of-line-at-point (line-end-position 1))
-          (beginning-of-line-at-point (line-beginning-position 1))
-          (ending-of-block nil))
-      (save-excursion
-        (while (not (numberp beginning-of-block))
-          (goto-char ending-of-line-at-point)
-          (end-of-line line-num-test)
-          (if (search-backward-regexp
-               "\\(^\\s-*\\|^\\t-*\\)[if]"
-               (line-beginning-position 1) t 1)
-              (setq line-num-test (1- line-num-test))
-            (setq beginning-of-block (line-beginning-position 2)))))
-      (setq line-num-test 1)
-      ;; Search for ending of block
-      (save-excursion
-        (while (not (numberp ending-of-block))
-          (goto-char beginning-of-line-at-point)
-          (beginning-of-line line-num-test)
-          (if (search-forward-regexp
-               "\\(^\\s-*\\|^\\t-*\\)[if]"
-               (line-end-position 1) t 1)
-              (setq line-num-test (1+ line-num-test))
-            (setq ending-of-block (line-end-position 0)))))
-      (csound-score--align-cols beginning-of-block ending-of-block))))
+  (let ((re "^\\s-*[[:alpha:]$]"))
+    (if (save-excursion
+          ;; See if point is on an score event line
+          (beginning-of-line)
+          (re-search-forward re (line-end-position) t))
+        (let ((beginning-of-block
+               (save-excursion
+                 ;; Search for beginning of block
+                 (beginning-of-line)
+                 (while (re-search-backward re (line-beginning-position 0) t)
+                   (beginning-of-line))
+                 (point)))
+              (end-of-block
+               (save-excursion
+                 ;; Search for end of block
+                 (end-of-line)
+                 (while (re-search-forward re (line-end-position 2) t)
+                   (end-of-line))
+                 (point))))
+          (csound-score--align-cols beginning-of-block end-of-block)))))
 
 (defun csound-score-trim-time (score-string)
   (let ((trimmed-string (split-string
