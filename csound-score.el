@@ -105,7 +105,7 @@
                         (+ ex-length (skip-chars-forward "^[:space:]")))
                   (setq index (1+ index))))
               ;; Exit loop at buffer end
-              (if (eolp)
+              (if (eobp)
                   (setq line-num 0
                         line-end 0)))))))))
 
