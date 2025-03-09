@@ -104,7 +104,8 @@
                   (setq param-length
                         (+ ex-length (skip-chars-forward "^[:space:]")))
                   (setq index (1+ index))))
-              (if (= (point) (line-end-position))
+              ;; Exit loop at buffer end
+              (if (eobp)
                   (setq line-num 0
                         line-end 0)))))))))
 
