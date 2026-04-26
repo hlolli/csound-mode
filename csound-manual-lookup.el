@@ -57,9 +57,22 @@
 ;;; Customizing this could be useful e.g. when the manual is
 ;;; installed locally.
 ;;; RP  Wed Sep 20 19:51:22 2023
+;;; Updated by Brandon Hale April 25, 2026
 (defcustom csound-manual-url
   "https://csound.com/docs/manual/"
   "The URL to the root directory of the Csound manual."
+  :group 'csound-mode-manual-lookup
+  :type 'string)
+
+(defcustom csound-browse-manual-url
+  "https://csound.com/docs/manual/index.html"
+  "The URL to the index of the Csound manual, useful for browsing of opcodes and learning the language."
+  :group 'csound-mode-manual-lookup
+  :type 'string)
+
+(defcustom csound-browse-gen-manual-url
+  "https://csound.com/docs/manual/ScoreGenRef.html"
+  "The URL to the GEN routines of the Csound manual, useful for browsing of routines."
   :group 'csound-mode-manual-lookup
   :type 'string)
 
@@ -74,11 +87,32 @@
                         lookup-lemma
                         ".html"))))
 
+(defun csound-gen-manual-lookup ()
+  (interactive)
+  (let* ((cursor-text (thing-at-point 'number 'no-properties))
+	 (user-input (if (not cursor-text)
+			 (read-string "Lookup GEN in Csound manual: ")
+		       (number-to-string cursor-text)))
+	 (use-input (if (= (length user-input) 1)
+			(concat "0" user-input)
+		      user-input)))
+    (browse-url (concat csound-manual-url "GEN" use-input ".html"))))
+
+(defun csound-browse-manual ()
+  (interactive)
+  (browse-url csound-browse-manual-url))
+
+(defun csound-browse-gen-manual ()
+  (interactive)
+  (browse-url csound-browse-gen-manual-url))
+
 ;;; key binding
 
 (eval-after-load 'csound-mode
-  '(define-key csound-mode-map (kbd "C-c C-d h") 'csound-manual-lookup))
-
+  '(define-key csound-mode-map (kbd "C-c C-d h") 'csound-manual-lookup)
+  '(define-key csound-mode-map (kbd "C-c C-d g") 'csound-gen-manual-lookup)
+  '(define-key csound-mode-map (kbd "C-c g") 'csound-browse-gen-manual)
+  '(define-key csound-mode-map (kbd "C-c m") 'csound-browse-manual))
 
 (provide 'csound-manual-lookup)
 
