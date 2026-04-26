@@ -1854,6 +1854,8 @@ kans, kdata[] OSClisten ihandle, idest, itype" :doc "Listen for OSC messages to 
 (puthash "prints" '(:template "prints \"string\" [, kval1] [, kval2] [...]" :doc "Prints at init-time using a printf() style syntax.") csdoc-opcode-database)
 (puthash "printks" '(:template "printks \"string\", itime [, kval1] [,kval2] [...]" :doc "Prints at k-rate using a printf() style syntax.") csdoc-opcode-database)
 (puthash "printks2" '(:template "printks2 \"string\", kval " :doc "Prints a new value every time a control variable changes using a printf() style syntax.") csdoc-opcode-database)
+(puthash "lag" '(:template "aout lag ain, klagtime [, initialvalue=0]
+kout lag kin, klagtime [, initialvalue=0]" :doc "Exponential Lag") csdoc-opcode-database)
 
- (provide 'csound-opcodes)
+(provide 'csound-opcodes)
 ;;; csound-opcodes.el ends here
