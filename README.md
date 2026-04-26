@@ -86,6 +86,11 @@ With more options
 
 <kbd>C-c C-d h</kbd> `csound-manual-lookup` searches for a function definition in the Csound-manual
 
+<kbd>C-c C-d g</kbd> `csound-gen-manual-lookup` searches for a GEN routine in the Csound-manual
+
+<kbd>C-c C-d g</kbd> `csound-browse-manual` opens the Csound-manual index to allow for browsing of opcodes and learning the language
+
+<kbd>C-c C-d g</kbd> `csound-browse-gen-manual` opens the Csound-manual GEN routines to allow for browsing of GEN routines
 
 ## Run the tests
 
