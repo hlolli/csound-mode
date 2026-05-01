@@ -108,11 +108,11 @@
 
 ;;; key binding
 
-(eval-after-load 'csound-mode
-  '(define-key csound-mode-map (kbd "C-c C-d h") 'csound-manual-lookup)
-  '(define-key csound-mode-map (kbd "C-c C-d g") 'csound-gen-manual-lookup)
-  '(define-key csound-mode-map (kbd "C-c g") 'csound-browse-gen-manual)
-  '(define-key csound-mode-map (kbd "C-c m") 'csound-browse-manual))
+(with-eval-after-load 'csound-mode
+  (define-key csound-mode-map (kbd "C-c C-d h") 'csound-manual-lookup)
+  (define-key csound-mode-map (kbd "C-c C-d g") 'csound-gen-manual-lookup)
+  (define-key csound-mode-map (kbd "C-c g") 'csound-browse-gen-manual)
+  (define-key csound-mode-map (kbd "C-c m") 'csound-browse-manual))
 
 (provide 'csound-manual-lookup)
 
