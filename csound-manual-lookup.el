@@ -65,13 +65,13 @@
   :type 'string)
 
 (defcustom csound-browse-manual-url
-  "https://csound.com/docs/manual/index.html"
+  (concat csound-manual-url "index.html")
   "The URL to the index of the Csound manual, useful for browsing of opcodes and learning the language."
   :group 'csound-mode-manual-lookup
   :type 'string)
 
 (defcustom csound-browse-gen-manual-url
-  "https://csound.com/docs/manual/ScoreGenRef.html"
+  (concat csound-manual-url "ScoreGenRef.html")
   "The URL to the GEN routines of the Csound manual, useful for browsing of routines."
   :group 'csound-mode-manual-lookup
   :type 'string)
