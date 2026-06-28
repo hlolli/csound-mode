@@ -1,0 +1,54 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Emacs ${{ matrix.emacs-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs-version:
+          - "30.2"
+          - "29.4"
+          - "28.2"
+          - "27.2"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ github.token }}
+
+      - uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs-version }}
+
+      - name: Install package dependencies
+        shell: bash
+        run: |
+          emacs --batch --no-site-file --no-splash \
+            --eval "(require 'package)" \
+            --eval "(setq package-user-dir (expand-file-name \".emacs.d/elpa\" default-directory))" \
+            --eval "(setq package-archives '((\"gnu\" . \"https://elpa.gnu.org/packages/\") (\"melpa\" . \"https://melpa.org/packages/\")))" \
+            --eval "(package-initialize)" \
+            --eval "(package-refresh-contents)" \
+            --eval "(dolist (pkg '(shut-up multi dash highlight test-simple)) (unless (package-installed-p pkg) (package-install pkg)))"
+
+      - name: Run tests
+        shell: bash
+        run: |
+          emacs --batch --no-site-file --no-splash -L . \
+            --eval "(setq-default indent-tabs-mode nil)" \
+            --eval "(require 'package)" \
+            --eval "(setq package-user-dir (expand-file-name \".emacs.d/elpa\" default-directory))" \
+            --eval "(package-initialize)" \
+            --load test/csound-mode-tests.el

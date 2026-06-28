@@ -291,4 +291,38 @@ endop")
    example-udo-1-expected
    (buffer-substring-no-properties (point-min) (point-max))))
 
+(note "Test manual lookup URLs")
+
+(let ((csound-manual-url "file:///tmp/csound-manual"))
+  (assert-string-equal
+   "file:///tmp/csound-manual/index.html"
+   (csound-manual--file-name-concat csound-manual-url "index.html")))
+
+(let ((csound-manual-url "file:///tmp/csound-manual/"))
+  (assert-string-equal
+   "file:///tmp/csound-manual/ScoreGenRef.html"
+   (csound-manual--file-name-concat csound-manual-url "ScoreGenRef.html")))
+
+(let ((csound-manual-url "file:///tmp/csound-manual")
+      (browse-url-browser-function
+       (lambda (url &rest _args)
+         (setq csound-mode-test--browse-url url)))
+      (csound-mode-test--browse-url nil))
+  (csound-browse-manual)
+  (assert-string-equal
+   "file:///tmp/csound-manual/index.html"
+   csound-mode-test--browse-url))
+
+(test-with-temp-buffer "f 1 0 1024 10 1"
+  (let ((csound-manual-url "file:///tmp/csound-manual")
+        (browse-url-browser-function
+         (lambda (url &rest _args)
+           (setq csound-mode-test--browse-url url)))
+        (csound-mode-test--browse-url nil))
+    (goto-char 3)
+    (csound-gen-manual-lookup)
+    (assert-string-equal
+     "file:///tmp/csound-manual/GEN01.html"
+     csound-mode-test--browse-url)))
+
 (end-tests)

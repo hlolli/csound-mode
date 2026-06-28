@@ -98,7 +98,7 @@ The tests depend on the package _test-simple.el_.
 Run the tests locally from the command line
 
 ```
-emacs --batch --no-site-file --no-splash --load test/csound-mode-tests.el
+emacs --batch --no-site-file --no-splash -L . --load test/csound-mode-tests.el
 ```
 
 
