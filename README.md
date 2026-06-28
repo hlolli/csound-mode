@@ -1,6 +1,6 @@
 [![License GPL 3][badge-license]][copying]
 [![MELPA Stable](https://stable.melpa.org/packages/csound-mode-badge.svg)](https://stable.melpa.org/#/csound-mode)
-[![Melpa Status](http://melpa.milkbox.net/packages/csound-mode-badge.svg)](http://melpa.milkbox.net/#/csound-mode)
+[![MELPA](https://melpa.org/packages/csound-mode-badge.svg)](https://melpa.org/#/csound-mode)
 
 
 # csound-mode
