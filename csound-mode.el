@@ -81,7 +81,7 @@
   "Play the csound file in current buffer."
   (interactive)
   (if csound-repl-start-server-p
-      (compile (format "csound %s %s" csound-play-flags (buffer-file-name)))
+      (compile (format "csound %s %s" (shell-quote-argument csound-play-flags) (shell-quote-argument (buffer-file-name))))
     (process-send-string csound-repl--udp-client-proc
                          (buffer-substring
                           (point-min) (point-max)))))
@@ -131,8 +131,8 @@
     (if csound-repl-start-server-p
         (compile (format "csound %s %s -o %s --format=%s %s"
                          csound-render-flags
-                         (buffer-file-name)
-                         filename
+                         (shell-quote-argument (buffer-file-name))
+                         (shell-quote-argument filename)
                          (-> (split-string filename "\\.")
                              cl-rest cl-first)
                          (cl-case (string-to-number bit)
