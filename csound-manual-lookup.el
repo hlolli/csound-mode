@@ -64,17 +64,8 @@
   :group 'csound-mode-manual-lookup
   :type 'string)
 
-(defcustom csound-browse-manual-url
-  (concat csound-manual-url "index.html")
-  "The URL to the index of the Csound manual, useful for browsing of opcodes and learning the language."
-  :group 'csound-mode-manual-lookup
-  :type 'string)
-
-(defcustom csound-browse-gen-manual-url
-  (concat csound-manual-url "ScoreGenRef.html")
-  "The URL to the GEN routines of the Csound manual, useful for browsing of routines."
-  :group 'csound-mode-manual-lookup
-  :type 'string)
+(defun csound-manual-browse (file)
+  (browse-url (file-name-concat csound-manual-url file)))
 
 (defun csound-manual-lookup ()
   (interactive)
@@ -83,9 +74,7 @@
                                     csdoc-opcode-database)
                            (downcase lemma)
                          (read-string "Lookup function in Csound manual: "))))
-    (browse-url (concat csound-manual-url
-                        lookup-lemma
-                        ".html"))))
+    (csound-manual-browse (concat lookup-lemma ".html"))))
 
 (defun csound-gen-manual-lookup ()
   (interactive)
@@ -96,15 +85,15 @@
 	 (use-input (if (= (length user-input) 1)
 			(concat "0" user-input)
 		      user-input)))
-    (browse-url (concat csound-manual-url "GEN" use-input ".html"))))
+    (csound-manual-browse (concat "GEN" use-input ".html"))))
 
 (defun csound-browse-manual ()
   (interactive)
-  (browse-url csound-browse-manual-url))
+  (csound-manual-browse "index.html"))
 
 (defun csound-browse-gen-manual ()
   (interactive)
-  (browse-url csound-browse-gen-manual-url))
+  (csound-manual-browse "ScoreGenRef.html"))
 
 ;;; key binding
 
