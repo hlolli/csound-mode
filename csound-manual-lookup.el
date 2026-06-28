@@ -1,9 +1,9 @@
-;;; csound-eldoc.el --- A major mode for interacting and coding Csound
+;;; csound-manual-lookup.el --- Browse the Csound manual
 ;;  Copyright (C) 2017 - 2023  Hlöðver Sigurðsson
 
 ;; Author: Hlöðver Sigurðsson <hlolli@gmail.com>
-;; Version: 0.2.7
-;; Package-Requires: ((emacs "25") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
+;; Version: 0.2.9
+;; Package-Requires: ((emacs "27.1") (shut-up "0.3.2") (multi "2.0.1") (dash "2.16.0") (highlight "0"))
 ;; URL: https://github.com/hlolli/csound-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -58,14 +58,27 @@
 ;;; installed locally.
 ;;; RP  Wed Sep 20 19:51:22 2023
 ;;; Updated by Brandon Hale April 25, 2026
+(defgroup csound-mode-manual-lookup nil
+  "Csound manual lookup."
+  :prefix "csound-manual-"
+  :group 'csound-mode)
+
 (defcustom csound-manual-url
   "https://csound.com/docs/manual/"
   "The URL to the root directory of the Csound manual."
   :group 'csound-mode-manual-lookup
   :type 'string)
 
-(defun csound-manual-browse (file)
-  (browse-url (file-name-concat csound-manual-url file)))
+(defun csound-manual--file-name-concat (directory filename)
+  "Return FILENAME under DIRECTORY.
+Use `file-name-concat' when available, and fall back to an Emacs 27
+compatible implementation otherwise."
+  (if (fboundp 'file-name-concat)
+      (file-name-concat directory filename)
+    (concat (file-name-as-directory directory) filename)))
+
+(defun csound-manual--browse (file)
+  (browse-url (csound-manual--file-name-concat csound-manual-url file)))
 
 (defun csound-manual-lookup ()
   (interactive)
@@ -74,7 +87,7 @@
                                     csdoc-opcode-database)
                            (downcase lemma)
                          (read-string "Lookup function in Csound manual: "))))
-    (csound-manual-browse (concat lookup-lemma ".html"))))
+    (csound-manual--browse (concat lookup-lemma ".html"))))
 
 (defun csound-gen-manual-lookup ()
   (interactive)
@@ -85,15 +98,15 @@
 	 (use-input (if (= (length user-input) 1)
 			(concat "0" user-input)
 		      user-input)))
-    (csound-manual-browse (concat "GEN" use-input ".html"))))
+    (csound-manual--browse (concat "GEN" use-input ".html"))))
 
 (defun csound-browse-manual ()
   (interactive)
-  (csound-manual-browse "index.html"))
+  (csound-manual--browse "index.html"))
 
 (defun csound-browse-gen-manual ()
   (interactive)
-  (csound-manual-browse "ScoreGenRef.html"))
+  (csound-manual--browse "ScoreGenRef.html"))
 
 ;;; key binding
 

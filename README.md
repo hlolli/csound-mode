@@ -32,7 +32,7 @@ and add it manually to load-path like shown here:
 
 ## Requirements
 
-- Emacs 25+
+- Emacs 27.1+
 - Csound 6.10+ (any release/compilation after 1. December 2017)
 
 ## Usage
