@@ -160,6 +160,14 @@ otherwise 0"
 	 (csound-util-line-boundry) t 1)
 	1 0)))
 
+(defun csound-indentation--current-line-closes-bool-p ()
+  "Return non-nil when the current line starts a boolean closing token."
+  (save-excursion
+    (beginning-of-line)
+    (search-forward-regexp
+     "^\\s-*\\(endif\\|od\\|else\\|elseif\\)\\>"
+     (line-end-position) t)))
+
 ;;; not needed
 ;; (defun csound-indentation-count-goto-if-mix
 ;;     (end-of-expr cnt current-depth)
@@ -327,8 +335,9 @@ otherwise 0"
 	  (if (csound-indentation--pointer-inside-paren-p)
 	      1 0))
 	 (unbalanced-parens-or-line-break
-	  (if (or (eq 1 unbalanced-parens) (eq 1 previous-line-break-adjust))
-					      1 0))
+	  (if (and (not (csound-indentation--current-line-closes-bool-p))
+	           (or (eq 1 unbalanced-parens) (eq 1 previous-line-break-adjust)))
+	      1 0))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
                                      after-goto-statement
                                      count-multiline-string-open
@@ -374,7 +383,7 @@ otherwise 0"
 
 (defun csound-indentation--do-indent ()
   (let ((score-p (or (save-excursion (search-backward "<CsScore" nil t 1))
-		     (string-match-p ".sco$" (buffer-name (current-buffer))))))
+		     (string-match "\\.sco\\'" (buffer-name (current-buffer))))))
     (cond
      (score-p (if csound-indentation-aggressive-score
 		  (csound-score-align-block)

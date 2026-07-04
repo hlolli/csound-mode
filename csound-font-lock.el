@@ -235,9 +235,9 @@
 		       "\\|<CsScore[.\\\"]*>\\|</?CsScore>?")
 	      . csound-font-lock-xml-tags)
 	    csound-font-lock-keywords)
-      ;; Some opcodes got missing but dont need docstrings
-      (setq csound-font-lock--missing-faces
-            '("then" "do" "od" "else" "elseif" "endif" "switch" "endsw" "case" "default"))
+	      ;; Some opcodes got missing but dont need docstrings
+	      (setq csound-font-lock--missing-faces
+	            '("then" "do" "od" "else" "elseif" "endif" "switch" "endsw" "case" "default" "declare"))
       ;; Add opcodes to font-lock table csdoc-opdocde-database hash-table
       (let ((mutz '()))
 	(maphash (lambda (k v)
