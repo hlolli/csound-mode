@@ -72,9 +72,7 @@ line, otherwise nil"
   (and
    (save-excursion
      (beginning-of-line)
-     ;; (looking-at-p "[[:blank:]]*$") ; is this a mistake? 
-     (search-forward-regexp "[[:blank:]]*$" (csound-util-line-boundry)
-			    t 1))   ; did you mean this instead?
+     (looking-at-p "[[:blank:]]*$"))
    ;; don't account for line continuation token being empty
    (not (and (csound-indentation--previous-line-breaks-p)
              (csound-indentation--current-line-breaks-p)))))
@@ -140,7 +138,7 @@ otherwise 0"
   (save-excursion
     (beginning-of-line 1)
     (if (and (search-forward-regexp
-	      "\\<\\(if\\|while\\|else\\|elseif\\|until\\)\\>"
+	      "\\<\\(if\\|while\\|else\\|elseif\\|until\\|then\\)\\>"
 	      (csound-util-line-boundry) t 1)
  	     ;; if in mix with gotos
 	     ;; dont have endif therefore
@@ -160,12 +158,12 @@ otherwise 0"
 	 (csound-util-line-boundry) t 1)
 	1 0)))
 
-(defun csound-indentation--current-line-closes-bool-p ()
-  "Return non-nil when the current line starts a boolean closing token."
+(defun csound-indentation--current-line-aligns-bool-p ()
+  "Return non-nil when the current line starts a boolean control token."
   (save-excursion
     (beginning-of-line)
     (search-forward-regexp
-     "^\\s-*\\(endif\\|od\\|else\\|elseif\\)\\>"
+     "^\\s-*\\(then\\|endif\\|od\\|else\\|elseif\\)\\>"
      (line-end-position) t)))
 
 ;;; not needed
@@ -335,7 +333,7 @@ otherwise 0"
 	  (if (csound-indentation--pointer-inside-paren-p)
 	      1 0))
 	 (unbalanced-parens-or-line-break
-	  (if (and (not (csound-indentation--current-line-closes-bool-p))
+	  (if (and (not (csound-indentation--current-line-aligns-bool-p))
 	           (or (eq 1 unbalanced-parens) (eq 1 previous-line-break-adjust)))
 	      1 0))
 	 (tab-count (max 1 (1+ (- (+ count-if-statements
@@ -400,7 +398,10 @@ otherwise 0"
   (if (or (csound-indentation--current-line-empty-p)
           (csound-indentation--cursor-behind-indentation-point-p))
       (csound-indentation--do-indent)
-    (save-excursion (csound-indentation--do-indent))))
+    (let ((point-from-end (- (point-max) (point))))
+      (save-excursion (csound-indentation--do-indent))
+      (when (> (- (point-max) point-from-end) (point))
+        (goto-char (- (point-max) point-from-end))))))
 
 (provide 'csound-indentation)
 

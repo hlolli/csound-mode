@@ -321,7 +321,7 @@ endop")
       ithresh <= 0 || \\
       ksig >= 1 || \\
       ksig <= -1) \\
-      then
+  then
     ires = 1
   endif
   xout(ires)
@@ -340,7 +340,26 @@ endop")
   (csound-indentation-line)
   (assert-string-equal
    "  endif"
+   (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+  (search-backward "then")
+  (csound-indentation-line)
+  (assert-string-equal
+   "  then"
    (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+
+(note "Test indentation keeps point after code")
+
+(test-with-temp-buffer "instr TEST
+  prints \"Testing basic formatting behavior\\n\"
+  endin"
+  (goto-char (point-max))
+  (csound-indentation-line)
+  (assert-string-equal
+   "endin"
+   (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+  (assert-equal
+   5
+   (current-column)))
 
 (note "Test manual lookup URLs")
 
